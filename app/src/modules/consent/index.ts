@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { ensureTreeStates } from "@/modules/growth";
 import {
   REQUIRED_KEYS, type CompleteConsentResult, type ConsentItemKey, type ConsentState,
 } from "@/contracts/consent";
@@ -119,6 +120,10 @@ export async function createChildProfile(
       state: "ACTIVE",
     },
   });
+
+  // 🔴 4영역은 고정이다. 활동이 없어도 칸은 존재해야 한다 —
+  //    없으면 화면이 「아직 안 만들어진 것」과 「아직 안 자란 것」을 구별할 수 없다
+  await ensureTreeStates(child.id);
 
   return { ok: true, childId: child.id };
 }
