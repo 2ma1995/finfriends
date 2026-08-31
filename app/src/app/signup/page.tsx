@@ -20,7 +20,7 @@ export default async function SignupPage({
   const { error, email } = await searchParams;
 
   return (
-    <Screen role="부모 화면" title="계정 만들기" sub="1 / 6단계" back={{ href: "/", label: "화면 목록" }}>
+    <Screen role="부모 화면" title="계정 만들기" sub="1 / 6단계" back={{ href: "/screens", label: "화면 목록" }}>
       <form action={signUpAction} className="grid gap-2.5">
         {fields.map((f) => (
           <div key={f.key} className="grid gap-1">

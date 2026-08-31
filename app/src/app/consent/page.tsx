@@ -8,7 +8,7 @@ export default function ConsentPage() {
   const blocked = items.some((i) => i.required && !i.checked);
 
   return (
-    <Screen role="보호자 확인" title="시작하기 전에" sub="만 14세 미만 아동" back={{ href: "/", label: "화면 목록" }}>
+    <Screen role="보호자 확인" title="시작하기 전에" sub="만 14세 미만 아동" back={{ href: "/screens", label: "화면 목록" }}>
       <ul className="grid gap-1.5">
         {items.map((i) => (
           <li key={i.key} className="flex items-start gap-2 rounded-card border border-line bg-surface p-3">

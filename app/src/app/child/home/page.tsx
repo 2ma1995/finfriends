@@ -19,7 +19,7 @@ export default async function ChildHomePage({
   const ownedCount = placed.length;
 
   return (
-    <Screen role="아이 화면" title={`${me.name}의 방`} back={{ href: "/", label: "화면 목록" }}>
+    <Screen role="아이 화면" title={`${me.name}의 방`} back={{ href: "/screens", label: "화면 목록" }}>
       <LiveStars />
 
       <div className="mt-3 rounded-card border border-line bg-surface py-3">

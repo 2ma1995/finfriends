@@ -9,7 +9,7 @@ export default function ParentOnboardingPage() {
   const current = steps.find((s) => s.state === "current");
 
   return (
-    <Screen role="부모 화면" title="시작하기" sub={`${steps.filter((s) => s.state === "done").length} / ${steps.length}단계`} back={{ href: "/", label: "화면 목록" }}>
+    <Screen role="부모 화면" title="시작하기" sub={`${steps.filter((s) => s.state === "done").length} / ${steps.length}단계`} back={{ href: "/screens", label: "화면 목록" }}>
       <ol className="grid gap-1.5">
         {steps.map((s) => (
           <li key={s.n}

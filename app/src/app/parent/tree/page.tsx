@@ -40,7 +40,7 @@ export default function ParentTreePage() {
   const stalled = trees.find((t) => t.stalledDays);
 
   return (
-    <Screen role="부모 화면" title="성장 나무" sub={`${child.name} · ${child.cycleLabel}`} back={{ href: "/", label: "화면 목록" }}>
+    <Screen role="부모 화면" title="성장 나무" sub={`${child.name} · ${child.cycleLabel}`} back={{ href: "/screens", label: "화면 목록" }}>
       {/* ② 4영역 2×2 — 순서를 바꾸지 않는다 (명세 §2.1) */}
       <div className="grid grid-cols-2 gap-2">
         {trees.map((t) => <TreeCard key={t.id} t={t} />)}
