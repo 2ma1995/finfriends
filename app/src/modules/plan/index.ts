@@ -1,6 +1,10 @@
 import "server-only";
 import { prisma } from "@/db";
-import { CATEGORIES, categoryOf, type NewPlanCard, type RetroView, type SpendLineView } from "@/contracts/plan";
+import { grantStar } from "@/modules/star-ledger";
+import {
+  CATEGORIES, categoryOf,
+  type NewPlanCard, type PlanCardView, type RetroView, type SpendLineView,
+} from "@/contracts/plan";
 
 /**
  * 계획 카드 · 계획↔실제 대조 — PLN-001 · PLN-002 · PLN-003 슬라이스.
@@ -111,4 +115,103 @@ export async function createPlanCard(childId: string, input: NewPlanCard) {
     },
     select: { id: true },
   });
+}
+
+/**
+ * ── 적어둔 계획 목록 · 실제로 쓴 돈 적기 ────────────────
+ *
+ * 🔴 **여기까지가 없어서 고리가 끊겨 있었다.** 계획은 저장되는데 아이가 다시 볼 수 없었고,
+ *    실제 지출을 적을 길이 없어 회고가 열리지 않았다 — 시드가 넣은 기록으로만 볼 수 있었다.
+ *
+ * 원래 설계는 실제 지출이 **카드 연동**(`DAT-004`)에서 온다. 그게 붙기 전까지 손으로 적는다.
+ */
+
+export async function getPlanCards(childId: string): Promise<PlanCardView[]> {
+  const rows = await prisma.planCard.findMany({
+    where: { childId },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    select: {
+      id: true, whereText: true, category: true, limitAmount: true,
+      items: true, author: true, createdAt: true,
+      spendings: { select: { id: true, matchResult: true }, take: 1 },
+    },
+  });
+
+  return rows.map((r) => {
+    const cat = categoryOf(r.category);
+    const rec = r.spendings[0] ?? null;
+    return {
+      id: r.id, where: r.whereText, icon: cat.icon, categoryLabel: cat.label,
+      limitAmount: r.limitAmount, items: r.items,
+      whenLabel: whenLabel(r.createdAt, null),
+      byGuardian: r.author === "GUARDIAN",
+      recordId: rec?.id ?? null,
+      match: rec ? (rec.matchResult === "NO_PLAN" ? null : rec.matchResult) : null,
+    };
+  });
+}
+
+export type RecordResult =
+  | { ok: true; recordId: string; met: boolean; starred: boolean }
+  | { ok: false; reason: "NOT_FOUND" | "ALREADY" | "BAD_AMOUNT" };
+
+/** 한 번에 적을 수 있는 금액 — 손이 미끄러진 0 하나를 막는다 */
+export const MAX_ACTUAL = 1_000_000;
+
+/**
+ * 「얼마 썼는지 적기」 → 회고 — PLN-002 · PLN-003.
+ *
+ * 🔴 **⭐ 판정은 금액 단독이다** (ADR-008). 업종이 달라도 금액을 지켰으면 별을 준다.
+ *    섞으면 「업종이 달라서 별을 못 받았다」가 되어 아이가 규칙을 오해한다.
+ * 🔴 **넘겨도 차감하지 않는다** (P-03). 미지급일 뿐이다.
+ * 🔴 **계획 하나에 실제 하나다.** 다시 적어 별을 또 받을 수 없다 — 멱등키도 계획 id 다.
+ * 🔴 지킨 경우는 **실천**이다(성장 나무 「계획 지키기」). `PracticeCredit` 을 남긴다.
+ */
+export async function recordActual(
+  childId: string, planCardId: string, actualAmount: number, actualCategory: string,
+): Promise<RecordResult> {
+  if (!Number.isFinite(actualAmount) || actualAmount < 0 || actualAmount > MAX_ACTUAL) {
+    return { ok: false, reason: "BAD_AMOUNT" };
+  }
+  const plan = await prisma.planCard.findFirst({
+    where: { id: planCardId, childId },
+    select: { id: true, category: true, limitAmount: true, spendings: { select: { id: true }, take: 1 } },
+  });
+  if (!plan) return { ok: false, reason: "NOT_FOUND" };
+  if (plan.spendings.length > 0) return { ok: false, reason: "ALREADY" };
+
+  const amount = Math.floor(actualAmount);
+  const met = amount <= plan.limitAmount;
+  const known = CATEGORIES.some((c) => c.code === actualCategory);
+  const category = known ? actualCategory : plan.category;
+  const now = new Date();
+
+  const rec = await prisma.spendingRecord.create({
+    data: {
+      planCardId: plan.id, childId, actualAmount: amount,
+      merchantCategory: category,
+      matchResult: met ? "MET" : "EXCEEDED",
+      categoryMatch: category === plan.category ? "MATCHED" : "MISMATCHED",
+      occurredAt: now,
+    },
+    select: { id: true },
+  });
+
+  if (!met) return { ok: true, recordId: rec.id, met: false, starred: false };
+
+  const credit = await prisma.practiceCredit.create({
+    data: {
+      childId, triggerCode: "SPENDING_RETRO", triggerPath: "PRACTICE",
+      topic: "SPEND", approvalMode: "auto",
+      earnedAt: now, awardedAt: now,
+      cycleId: now.getFullYear() * 100 + (now.getMonth() + 1),
+    },
+  });
+  const res = await grantStar({
+    childId, triggerCode: "SPENDING_RETRO", delta: 1,
+    idempotencyKey: `retro:${plan.id}`, practiceId: credit.id,
+  });
+
+  return { ok: true, recordId: rec.id, met: true, starred: res.ok && !res.duplicated };
 }

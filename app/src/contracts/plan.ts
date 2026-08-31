@@ -46,3 +46,21 @@ export type RetroView = {
   /** 다른 갈래를 보여줄 때 쓸 id — 인터뷰용 */
   readonly otherBranchId: string | null;
 };
+
+/** 적어둔 계획 한 줄 — 목록이 보는 것 */
+export type PlanCardView = {
+  readonly id: string;
+  readonly where: string;
+  readonly icon: string;
+  readonly categoryLabel: string;
+  readonly limitAmount: number;
+  readonly items: string | null;
+  readonly whenLabel: string;
+  readonly byGuardian: boolean;
+  /**
+   * 🔴 **아직 맞춰보지 않은 계획.** 이게 목록의 존재 이유다 —
+   *    적어만 두고 맞춰보지 않으면 계획 카드는 그냥 메모다.
+   */
+  readonly recordId: string | null;
+  readonly match: "MET" | "EXCEEDED" | null;
+};

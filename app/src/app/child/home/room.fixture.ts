@@ -6,7 +6,7 @@
  * 아이는 둘이 다른 곳인 줄 안다. 미션·배우기·내 별·상점은 탭에 있다.
  */
 export const todo = [
-  { href: "/child/plan/new", emoji: "📝", label: "계획 카드 적기" },
+  { href: "/child/plan",     emoji: "📝", label: "계획 카드" },
   { href: "/child/wishlist", emoji: "🎁", label: "갖고 싶은 것" },
 ];
 
