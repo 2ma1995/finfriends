@@ -2,7 +2,11 @@ import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
-import type { MissionBoardView, MissionBucket, MissionView } from "@/contracts/mission";
+import {
+  OPEN_LIMIT, REWARD_MAX, REWARD_MIN, TITLE_MAX,
+  type CreateMissionInput, type CreateMissionResult,
+  type MissionBoardView, type MissionBucket, type MissionView,
+} from "@/contracts/mission";
 
 /**
  * 미션 — PRC-001 아이 쪽.
@@ -153,4 +157,70 @@ export async function rejectMission(guardianId: string, missionId: string, reaso
     data: { state: "REJECTED", decidedAt: new Date(), rejectReason: reason.trim() || null },
   });
   return r.count === 1;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 미션 만들기 — 보호자 쪽. §6.1 진입점 4번 `createMission`
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 🔴 **미션을 만드는 사람은 보호자뿐이다.** 아이가 자기 미션을 만들 수 있으면
+ *    스스로 조건을 정하고 스스로 해내는 셈이 되어 실천 인정의 근거가 사라진다
+ *    (PRC-001 · 아이가 하는 일은 「했어요」 하나뿐이다).
+ *
+ * 🔴 `childId` 가 정말 그 보호자의 아이인지는 **호출자가 확인해 넘긴다.**
+ *    이 모듈은 activity 쪽이라 identity 를 조인할 수 없다 (REQ-NF-009).
+ */
+export async function createMission(
+  guardianId: string,
+  childId: string,
+  input: CreateMissionInput,
+): Promise<CreateMissionResult> {
+  const title = input.title.trim();
+  if (title.length === 0) return { ok: false, reason: "TITLE_REQUIRED" };
+  if (title.length > TITLE_MAX) return { ok: false, reason: "TITLE_TOO_LONG" };
+
+  if (!(["EARN", "SPEND", "SAVE", "GROW"] as const).includes(input.topic)) {
+    return { ok: false, reason: "TOPIC_INVALID" };
+  }
+  // 「불리기」는 실천 경로가 닫혀 있다. 미션을 열면 아이가 할 수 없는 일을 받는다
+  if (input.topic === "GROW") return { ok: false, reason: "TOPIC_LOCKED" };
+
+  if (!Number.isInteger(input.reward) || input.reward < REWARD_MIN || input.reward > REWARD_MAX) {
+    return { ok: false, reason: "REWARD_OUT_OF_RANGE" };
+  }
+
+  // 아직 안 한 미션이 너무 많으면 아이가 무엇부터 할지 고르지 못한다
+  const open = await prisma.mission.count({
+    where: { childId, state: "PENDING", doneAt: null },
+  });
+  if (open >= OPEN_LIMIT) return { ok: false, reason: "TOO_MANY_OPEN" };
+
+  const mission = await prisma.mission.create({
+    data: {
+      childId,
+      guardianId,
+      title,
+      topic: input.topic,
+      reward: input.reward,
+      // 만들면 「아직 안 함」이다 — doneAt 이 null 인 PENDING
+      state: "PENDING",
+    },
+    select: { id: true },
+  });
+
+  return { ok: true, missionId: mission.id };
+}
+
+/** 보호자 화면이 「아직 안 한 미션」을 보여줄 때 쓴다 */
+export async function listOpenForGuardian(guardianId: string) {
+  const rows = await prisma.mission.findMany({
+    where: { guardianId, state: "PENDING", doneAt: null },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true, title: true, topic: true, reward: true,
+      state: true, doneAt: true, decidedAt: true, rejectReason: true,
+    },
+  });
+  return rows.map(toView);
 }

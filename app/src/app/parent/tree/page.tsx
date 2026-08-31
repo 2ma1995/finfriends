@@ -92,6 +92,26 @@ export default async function ParentTreePage() {
       ) : null}
 
       {/*
+        미션 — 나무가 안 자란 것을 본 부모가 할 수 있는 **다음 행동**이다.
+        US-3 AC3 이 「정체 원인을 본 뒤 다음 주 재방문」을 요구하는데,
+        볼 것만 주고 할 것을 주지 않으면 재방문할 이유가 없다.
+      */}
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Link
+          href="/parent/missions/new"
+          className="flex min-h-touch items-center justify-center rounded-card bg-primary text-[0.86em] font-bold text-white"
+        >
+          미션 만들기
+        </Link>
+        <Link
+          href="/parent/missions"
+          className="flex min-h-touch items-center justify-center rounded-card border border-line-2 text-[0.86em] text-ink-soft"
+        >
+          미션 보기
+        </Link>
+      </div>
+
+      {/*
         ⑤ 실천 근거 — 접지 않는다 (AC-1.2).
         🔴 지금은 근거를 만들 엔진(GRW-001)이 없다. 문장을 지어내지 않고 그 사실을 적는다.
       */}

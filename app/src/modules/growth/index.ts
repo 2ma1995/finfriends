@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { getTopicProgress } from "@/modules/learning";
+import { countWaiting } from "@/modules/mission";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
   STAGE_RULE_EXAMPLE, type Stage, type TreeSlotView, type TreeView,
@@ -43,7 +44,7 @@ export async function ensureTreeStates(childId: string): Promise<void> {
 }
 
 export async function getTreeView(childId: string, childName: string): Promise<TreeView> {
-  const [states, progress, practices] = await Promise.all([
+  const [states, progress, practices, pendingApprovals] = await Promise.all([
     prisma.treeState.findMany({
       where: { childId },
       select: { slot: true, stage: true, practiceCount: true, stallDays: true },
@@ -54,6 +55,8 @@ export async function getTreeView(childId: string, childName: string): Promise<T
       where: { childId },
       _count: { _all: true },
     }),
+    // 🔴 미션 표를 직접 보지 않는다. mission 모듈의 공개 함수를 부른다 (스킬 301 §5)
+    countWaiting(childId),
   ]);
 
   const stateBy = new Map(states.map((s) => [s.slot as Topic, s]));
@@ -93,11 +96,10 @@ export async function getTreeView(childId: string, childName: string): Promise<T
     slots,
     noActivity,
     /**
-     * 🔴 아직 셀 수 없다. 승인 대기는 **미션 표**를 봐야 하는데 Prisma 모델이 없다 (PRC-001).
-     *    앞서 `practice_credits` 를 세고 있었는데 그것은 **이미 승인된** 실천이다 —
-     *    화면에 「승인을 기다리는 미션 1건」이 거짓으로 떴다.
-     *    셀 수 없으면 0 을 준다. 틀린 수를 보여주는 것보다 낫다.
+     * 「했어요」를 눌렀고 아직 판정되지 않은 미션 수.
+     * 🔴 `practice_credits` 를 세면 안 된다 — 그것은 **이미 승인된** 실천이다.
+     *    한동안 그렇게 세어 「승인 대기 1건」이 거짓으로 떴다.
      */
-    pendingApprovals: 0,
+    pendingApprovals,
   };
 }
