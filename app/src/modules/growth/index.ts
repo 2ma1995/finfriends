@@ -43,7 +43,7 @@ export async function ensureTreeStates(childId: string): Promise<void> {
 }
 
 export async function getTreeView(childId: string, childName: string): Promise<TreeView> {
-  const [states, progress, practices, pendingApprovals] = await Promise.all([
+  const [states, progress, practices] = await Promise.all([
     prisma.treeState.findMany({
       where: { childId },
       select: { slot: true, stage: true, practiceCount: true, stallDays: true },
@@ -54,7 +54,6 @@ export async function getTreeView(childId: string, childName: string): Promise<T
       where: { childId },
       _count: { _all: true },
     }),
-    prisma.practiceCredit.count({ where: { childId, approvalMode: "parent" } }).catch(() => 0),
   ]);
 
   const stateBy = new Map(states.map((s) => [s.slot as Topic, s]));
@@ -93,6 +92,12 @@ export async function getTreeView(childId: string, childName: string): Promise<T
     cycleLabel: `${new Date().getMonth() + 1}월`,
     slots,
     noActivity,
-    pendingApprovals,
+    /**
+     * 🔴 아직 셀 수 없다. 승인 대기는 **미션 표**를 봐야 하는데 Prisma 모델이 없다 (PRC-001).
+     *    앞서 `practice_credits` 를 세고 있었는데 그것은 **이미 승인된** 실천이다 —
+     *    화면에 「승인을 기다리는 미션 1건」이 거짓으로 떴다.
+     *    셀 수 없으면 0 을 준다. 틀린 수를 보여주는 것보다 낫다.
+     */
+    pendingApprovals: 0,
   };
 }
