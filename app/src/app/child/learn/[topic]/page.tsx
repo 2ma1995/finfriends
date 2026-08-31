@@ -4,13 +4,20 @@ import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import { currentChild } from "@/lib/session/current-child";
 import { getLessonList } from "@/modules/learning";
+import { getPracticeState } from "@/modules/mission";
+import { claimPracticeAction } from "@/app/actions/learn";
 import { quizTotal } from "@/modules/quiz";
-import { consentRequired, noDevice, quizLabel, readLabel, tryTitle } from "../learn.fixture";
+import { consentRequired, noDevice, practice, quizLabel, readLabel, tryTitle } from "../learn.fixture";
 
 // LRN-001 — 한 영역의 학습 편 목록
 const TOPICS: Record<string, Topic> = { earn: "EARN", spend: "SPEND", save: "SAVE" };
 
-export default async function LearnTopicPage({ params }: { params: Promise<{ topic: string }> }) {
+export default async function LearnTopicPage({
+  params, searchParams,
+}: {
+  params: Promise<{ topic: string }>;
+  searchParams: Promise<{ claimed?: string }>;
+}) {
   const { topic: slug } = await params;
   const topic = TOPICS[slug];
   if (!topic) notFound();
@@ -26,6 +33,14 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
 
   const { lessons, quizCorrect } = await getLessonList(access.childId, topic);
   const allRead = lessons.every((l) => l.read);
+
+  // 🔴 읽은 편의 실천만 보여준다. 안 읽은 것의 「해봤어요」를 먼저 누르게 하면
+  //    배우기를 건너뛰고 별만 받아 가는 길이 된다
+  const readLessons = lessons.filter((l) => l.read);
+  const claimedId = (await searchParams).claimed ?? null;
+  const states = Object.fromEntries(
+    await Promise.all(readLessons.map(async (l) => [l.id, await getPracticeState(access.childId, l.id)] as const)),
+  );
 
   return (
     <Screen role="아이 화면" title={`${TOPIC_ICON[topic]} ${TOPIC_LABEL[topic]}`}
@@ -55,14 +70,43 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
         {quizLabel} · {quizCorrect} / {quizTotal(slug)}개 맞힘
       </Link>
 
-      <div className="mt-3">
-        <Card tone="grow">
-          <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{tryTitle}</h2>
-          <p className="mt-1 text-[0.88em] leading-relaxed">
-            {lessons.find((l) => !l.read)?.tryIt ?? lessons[lessons.length - 1]?.tryIt}
-          </p>
-        </Card>
-      </div>
+      {/* 🔴 읽은 편마다 해볼 것이 하나씩 열린다. 별은 지식이 아니라 **행동**에 붙는다 (D16) */}
+      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{tryTitle}</h2>
+      <p className="mb-1.5 text-[0.74em] text-ink-mute">{practice.hint}</p>
+      <ul className="grid gap-1.5">
+        {readLessons.map((l) => {
+          const st = states[l.id];
+          return (
+            <li key={l.id}
+                className={`rounded-card border p-3 ${
+                  st === "WAITING" ? "border-star bg-star-bg"
+                  : st === "DONE" ? "border-primary-l/50 bg-primary-bg"
+                  : st === "REJECTED" ? "border-miss-line bg-miss-bg"
+                  : "border-line bg-surface"}`}>
+              <p className="text-[0.88em] font-bold leading-relaxed">{l.tryIt}</p>
+              {st === "WAITING" ? (
+                <p className="mt-1 text-[0.78em] text-ink-soft">
+                  {claimedId === l.id ? practice.claimed : practice.waiting} · {practice.waitingBody}
+                </p>
+              ) : st === "DONE" ? (
+                <p className="mt-1 text-[0.8em] font-bold text-primary-d">{practice.done}</p>
+              ) : (
+                <>
+                  {st === "REJECTED" ? (
+                    <p className="mt-1 text-[0.78em] text-miss">{practice.rejected}</p>
+                  ) : null}
+                  <form action={claimPracticeAction} className="mt-2">
+                    <input type="hidden" name="lessonId" value={l.id} />
+                    <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
+                      {practice.claim} · ⭐ 1
+                    </button>
+                  </form>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </Screen>
   );
 }

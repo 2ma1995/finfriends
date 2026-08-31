@@ -5,7 +5,7 @@ import { getQuiz, QUIZ_TOPICS, quizTitle } from "@/modules/quiz";
 import { submitAnswer } from "@/app/actions/quiz";
 import {
   backToTopic, consentRequired, correctLabel, doneLabel, explainTitle, nextLabel,
-  noDevice, retryLabel, starNotice, wrongLabel, wrongNotice,
+  noDevice, starNotice, wrongLabel, wrongNotice, wrongPractice,
 } from "./quiz.fixture";
 
 // LRN-001 — 퀴즈. 🔴 맞히면 **별이 DB 에 남는다**
@@ -62,7 +62,12 @@ export default async function ChildQuizPage({
               {correct ? correctLabel : wrongLabel}
             </b>
             {/* 🔴 틀려도 별을 깎지 않는다. 그 사실을 화면에 적는다 */}
-            {!correct ? <p className="mt-1 text-[0.84em] text-ink-soft">{wrongNotice}</p> : null}
+            {!correct ? (
+              <>
+                <p className="mt-1 text-[0.84em] text-ink-soft">{wrongNotice}</p>
+                <p className="mt-0.5 text-[0.84em] font-bold text-primary-d">{wrongPractice}</p>
+              </>
+            ) : null}
             {sp.star ? <p className="mt-1 text-[0.86em] font-bold text-star-d">{starNotice}</p> : null}
           </div>
 
@@ -72,14 +77,6 @@ export default async function ChildQuizPage({
               <p className="mt-1 text-[0.88em] leading-relaxed">{q.explain}</p>
             </Card>
           </div>
-
-          {/* 🔴 틀린 문제는 다시 풀 수 있다. 넘겨 버리면 배운 게 없다 */}
-          {!correct ? (
-            <Link href={`/child/quiz/${topic}?n=${q.index}`}
-                  className="mt-2 block min-h-touch rounded-card border border-line-2 bg-surface text-center text-[0.86em] leading-[44px] text-ink-soft">
-              {retryLabel}
-            </Link>
-          ) : null}
 
           <Link href={last ? `/child/learn/${topic}` : `/child/quiz/${topic}?n=${q.index + 1}`}
                 className="mt-2 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">

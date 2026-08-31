@@ -9,6 +9,9 @@ export const retroNotice = {
   body: "아이는 이미 했습니다. 승인하면 한 날짜 기준으로 소급해서 반영됩니다",
 };
 
+/** 🔴 아이가 스스로 올린 것은 갈라 보여준다 — 보호자가 자기가 시킨 줄 알면 안 된다 */
+export const fromLessonBadge = "아이가 배우고 스스로 함";
+
 export const approveLabel = "승인";
 export const rejectLabel = "아니요";
 export const bulkLabel = "모두 승인";

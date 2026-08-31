@@ -251,6 +251,9 @@ model Mission {
   rejectReason String?      @map("reject_reason")
   /// 완료 시점 주기. 승인이 늦어도 이 주기에 귀속된다
   cycleId     Int?          @map("cycle_id")
+  /// 학습 편 id. 🔴 null 이면 보호자가 만든 미션, 값이 있으면 **아이가 배우고 스스로 한 것**.
+  ///    한 편당 한 장이다 — 부분 유니크 인덱스가 DB 에서 막는다
+  sourceId    String?       @map("source_id")
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([childId, state])

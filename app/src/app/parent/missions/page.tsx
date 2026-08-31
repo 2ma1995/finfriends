@@ -3,7 +3,7 @@ import { currentGuardian } from "@/lib/session/guardian-session";
 import { listPendingForGuardian } from "@/modules/mission";
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
-  approveLabel, BULK_THRESHOLD, bulkLabel, empty, needLogin,
+  approveLabel, BULK_THRESHOLD, bulkLabel, empty, fromLessonBadge, needLogin,
   reasonPlaceholder, rejectLabel, retroNotice,
 } from "./mission.fixture";
 
@@ -50,6 +50,9 @@ export default async function ParentMissionsPage() {
                   <b className="text-[0.9em]">{p.title}</b>
                   <span className="shrink-0 text-[0.72em] text-ink-mute">{p.whenLabel}</span>
                 </div>
+                {p.fromLesson ? (
+                  <p className="mt-0.5 text-[0.72em] font-bold text-primary-d">📚 {fromLessonBadge}</p>
+                ) : null}
                 <div className="mt-1 flex items-center justify-between">
                   <span className="rounded-full bg-primary-bg px-2 py-0.5 text-[0.7em] text-primary-d">
                     {p.icon} {p.topicLabel}
