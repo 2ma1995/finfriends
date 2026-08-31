@@ -14,7 +14,7 @@ export default async function ChildLayout({ children }: { children: ReactNode })
   return (
     <ModeFrame mode="fun">
       {/* 하단 탭이 내용을 가리지 않게 자리를 비운다 */}
-      <div className="pb-[72px]">{children}</div>
+      <div className="pb-[92px]">{children}</div>
       <ChildTabs todoCount={todoCount} />
     </ModeFrame>
   );

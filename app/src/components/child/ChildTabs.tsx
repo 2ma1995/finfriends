@@ -21,6 +21,11 @@ const TABS = [
   { href: "/child/shop",     emoji: "🛍", label: "상점" },
 ] as const;
 
+/**
+ * 🔴 탭 높이는 **터치 하한(44px)이 아니라 그보다 넉넉히** 잡는다.
+ *    아이 손가락은 어른보다 조준이 나쁘고, 화면 맨 아래는 잡은 손에 가려진다.
+ */
+
 /** 🔴 여기서는 탭을 감춘다 — 튜토리얼은 순서대로 봐야 하고, 잠금은 갈 곳이 없다 */
 const HIDDEN = ["/child/welcome", "/child/locked"];
 
@@ -39,13 +44,13 @@ export function ChildTabs({ todoCount = 0 }: { todoCount?: number }) {
           return (
             <li key={t.href}>
               <Link href={t.href} aria-current={on ? "page" : undefined}
-                    className={`relative grid min-h-touch place-items-center gap-0.5 py-1.5 ${
+                    className={`relative grid min-h-[68px] place-items-center gap-1 py-3 ${
                       on ? "text-primary-d" : "text-ink-mute"}`}>
-                <span className="text-[1.25em] leading-none">{t.emoji}</span>
-                <span className={`text-[0.62em] ${on ? "font-bold" : ""}`}>{t.label}</span>
+                <span className="text-[1.6em] leading-none">{t.emoji}</span>
+                <span className={`text-[0.7em] leading-none ${on ? "font-bold" : ""}`}>{t.label}</span>
                 {/* 할 게 남았다는 표시 — 숫자를 크게 쓰지 않는다. 재촉이 아니라 안내다 */}
                 {badge ? (
-                  <span className="absolute right-[22%] top-1 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-star px-1 text-[0.5em] font-bold tabular-nums text-ink">
+                  <span className="absolute right-[20%] top-2 grid h-4 min-w-4 place-items-center rounded-full bg-star px-1 text-[0.56em] font-bold tabular-nums text-ink">
                     {todoCount}
                   </span>
                 ) : null}
