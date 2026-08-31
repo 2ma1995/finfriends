@@ -1,0 +1,34 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { currentChild } from "@/lib/session/current-child";
+import { createPlanCard } from "@/modules/plan";
+import type { CategoryCode } from "@/contracts/plan";
+
+/**
+ * 계획 카드 저장 — PLN-001. **아이 화면의 첫 쓰기 기능이다.**
+ *
+ * 🔴 첫 줄에서 인가를 확인한다 (§6.6). Server Action 은 공개 엔드포인트와 동등하다 —
+ *    화면에서 감췄다고 호출까지 막히는 것이 아니다.
+ */
+export async function savePlanCard(formData: FormData) {
+  const access = await currentChild();
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fplan%2Fnew");
+
+  const where = String(formData.get("where") ?? "").trim();
+  const category = String(formData.get("category") ?? "") as CategoryCode;
+  const limitAmount = Number(formData.get("limitAmount") ?? 0);
+
+  if (!where || !category || !Number.isFinite(limitAmount) || limitAmount <= 0) {
+    redirect("/child/plan/new?error=1");
+  }
+
+  await createPlanCard(access.childId, {
+    where, category, limitAmount,
+    items: String(formData.get("items") ?? "") || undefined,
+    // 🔴 아이 기기에서 적었으므로 아이다. 보호자가 대신 적는 경로는 보호자 화면에 따로 둔다
+    author: "아이",
+  });
+
+  redirect("/child/plan/new?saved=1");
+}
