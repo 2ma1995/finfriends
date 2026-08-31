@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "note": "외부 스킬은 아직 도입하지 않았다. 아래는 도입 후보와 출처만 기록한 것이며 저장소에 내용을 복사하지 않았다.",
+  "vendored": {},
+  "candidates": {
+    "prisma-client-api": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-client-api/SKILL.md",
+      "vendored": false,
+      "why": "Prisma 쿼리 작성 — 302-data-access-rules 를 보완한다"
+    },
+    "prisma-database-setup": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-database-setup/SKILL.md",
+      "vendored": false,
+      "why": "마이그레이션·커넥션 설정"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "vendored": false,
+      "why": "로컬 Supabase CLI · pg_cron 설정"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/postgres-best-practices/SKILL.md",
+      "vendored": false,
+      "why": "RLS 정책 · 파티셔닝"
+    },
+    "shadcn": {
+      "source": "shadcn-ui/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "vendored": false,
+      "why": "컴포넌트 추가 절차 — C-TEC-004"
+    },
+    "tdd": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "tdd/SKILL.md",
+      "vendored": false,
+      "why": "실패 흐름 테스트 — AC 51건 중 예외 19건"
+    },
+    "webapp-testing": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "webapp-testing/SKILL.md",
+      "vendored": false,
+      "why": "화면 검수 자동화"
+    }
+  },
+  "excluded": {
+    "ai-sdk": "이 프로젝트는 AI를 호출하지 않는다 — REQ-TEC-015 유보 · 스킬 303-no-ai-by-default",
+    "vercel-react-best-practices": "미검토",
+    "web-design-guidelines": "미검토 — UX-001 디자인 토큰이 우선한다"
+  }
+}

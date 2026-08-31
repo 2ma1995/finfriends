@@ -1,0 +1,157 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CATALOG, type Item } from "@/app/child/home/room.fixture";
+import { useWallet, ownedItems } from "@/app/child/home/proto-store";
+import type { Layout } from "./Room3D";
+
+/** three 는 늦게 부른다 — 홈 첫 페인트를 막지 않아야 한다 (STR-003 제약) */
+const Room3D = dynamic(() => import("./Room3D").then((m) => m.Room3D), {
+  ssr: false,
+  loading: () => <div className="h-[234px] w-[300px] animate-pulse rounded-card bg-sand" />,
+});
+
+/** 🔴 프로토타입 전용 저장소. 본 개발에서는 서버가 배치를 갖는다 */
+const KEY = "ff-proto-room-layout";
+
+function baseLayout(items: readonly Item[]): Layout {
+  const out: Layout = {};
+  for (const i of items) {
+    if (i.placement.kind === "floor") out[i.id] = { x: i.placement.x, z: i.placement.z, ry: i.placement.ry ?? 0 };
+    if (i.placement.kind === "beside") out[i.id] = { x: 1.25, z: 1.35, ry: -34 };
+  }
+  return out;
+}
+
+export function RoomStage({ items: fallback, turn = 0, startEdit = false }: {
+  items: readonly Item[]; turn?: number; startEdit?: boolean;
+}) {
+
+  const wallet = useWallet();
+
+  // 지갑이 정하는 것들 — 방에 놓인 것 · 입은 캐릭터 · 착용 아이템
+  const items = useMemo(
+    () => (wallet ? ownedItems(wallet).filter((i) => i.placement.kind !== "avatar") : fallback),
+    [wallet, fallback],
+  );
+  const charModel = useMemo(() => {
+    const id = wallet?.character;
+    return CATALOG.find((i) => i.id === id)?.model ?? "/models/characters/character-female-b.glb";
+  }, [wallet]);
+  const wearItems = useMemo(
+    () => (wallet ? CATALOG.filter((i) => wallet.wear.includes(i.id) && i.placement.kind === "socket") : []),
+    [wallet],
+  );
+  const base = useMemo(() => baseLayout(items), [items]);
+
+  const [layout, setLayout] = useState<Layout>(base);
+  const [edit, setEdit] = useState(startEdit);
+  const [sel, setSel] = useState<string | null>(null);
+
+  // 저장된 배치가 있으면 이어서 쓴다. 없거나 못 읽어도 화면은 그대로 뜬다
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) setLayout({ ...base, ...(JSON.parse(raw) as Layout) });
+    } catch { /* 사생활 보호 모드 등 — 무시한다 */ }
+  }, [base]);
+
+  const persist = useCallback((next: Layout) => {
+    setLayout(next);
+    try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* 무시 */ }
+  }, []);
+
+  // 놓을 때 방 전체가 다시 정렬돼서 온다 — 받침을 치우면 위의 것이 내려온다
+  const onMove = useCallback((id: string, _p: { x: number; z: number; ry: number; y: number }, all: Layout) => {
+    persist({ ...layout, ...all });
+  }, [layout, persist]);
+
+  const rotate = (deg: number) => {
+    if (!sel) return;
+    const cur = layout[sel] ?? { x: 0, z: 0, ry: 0 };
+    persist({ ...layout, [sel]: { ...cur, ry: cur.ry + deg } });
+  };
+
+  const drop = () => {
+    if (!sel) return;
+    const cur = layout[sel];
+    if (!cur) return;
+    persist({ ...layout, [sel]: { ...cur, y: 0 } });   // 바닥으로 내린다
+  };
+
+  const reset = () => {
+    setSel(null);
+    setLayout(base);
+    try { localStorage.removeItem(KEY); } catch { /* 무시 */ }
+  };
+
+  const selName = sel ? items.find((i) => i.id === sel)?.name : null;
+  /** 방에 놓인 것만 — 착용(모자·가방)은 아바타에 붙어 있어 옮길 수 없다 */
+  const movable = items.filter((i) => i.placement.kind !== "socket");
+
+  // 지갑을 아직 못 읽었으면 자리만 잡아 둔다 — 기본 캐릭터로 그렸다가 바꾸면 두 번 그린다
+  if (!wallet) {
+    return <div className="h-[234px] w-[300px] animate-pulse rounded-card bg-sand" />;
+  }
+
+  return (
+    <div className="grid justify-items-center gap-2">
+      <div className={edit ? "rounded-card ring-2 ring-primary" : undefined}>
+        <Room3D items={items} character={charModel} wear={wearItems}
+                turn={turn} edit={edit} layout={layout}
+                onMove={onMove} onSelect={setSel} selectedId={sel} />
+      </div>
+
+      {edit ? (
+        <>
+          {/* 목록 — 다른 물건에 가려 안 눌리는 것도 여기서 고른다 */}
+          <ul className="flex w-full flex-wrap justify-center gap-1">
+            {movable.map((i) => {
+              const on = i.id === sel;
+              const up = (layout[i.id]?.y ?? 0) > 0.001;
+              return (
+                <li key={i.id}>
+                  <button onClick={() => setSel(on ? null : i.id)}
+                          className={`min-h-touch rounded-card border px-2.5 text-[0.74em] ${
+                            on ? "border-primary bg-primary text-white font-bold" : "border-line bg-surface"}`}>
+                    {i.name}{up ? " ↑" : ""}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <p className="text-[0.74em] text-ink-soft">
+            {selName ? (
+              <>
+                「{selName}」를 골랐어요 · <b>끌어서 옮기기</b>
+                {layout[sel!]?.y ? <> · 위에 얹혀 있어요</> : null}
+              </>
+            ) : "옮기고 싶은 것을 눌러 보세요"}
+          </p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            <button onClick={() => rotate(-45)} disabled={!sel}
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em] disabled:opacity-40">↺ 왼쪽</button>
+            <button onClick={() => rotate(45)} disabled={!sel}
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em] disabled:opacity-40">↻ 오른쪽</button>
+            <button onClick={drop} disabled={!sel || !(layout[sel]?.y)}
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em] disabled:opacity-40">↓ 바닥에</button>
+            <button onClick={reset}
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em]">처음으로</button>
+            <button onClick={() => { setEdit(false); setSel(null); }}
+                    className="min-h-touch rounded-card bg-primary px-4 text-[0.84em] font-bold text-white">다 꾸몄어요</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <span className="text-[0.72em] text-ink-mute">끌어서 방을 돌려보기</span>
+          <button onClick={() => setEdit(true)}
+                  className="min-h-touch w-full rounded-card border-2 border-primary bg-primary-bg text-[0.88em] font-bold text-primary-d">
+            🛠 방 꾸미기
+          </button>
+        </>
+      )}
+    </div>
+  );
+}

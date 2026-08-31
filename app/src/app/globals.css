@@ -1,0 +1,286 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+/* ─────────────────────────────────────────────────────────────
+   UX-001 디자인 토큰 — 명세 §4
+   아트보드(2차프로젝트/프로토타입/)에서 추출한 값. 라이트 전용.
+   ───────────────────────────────────────────────────────────── */
+
+/* ────────────────────────────────────────────────────────────────
+   핀프렌즈 듀얼 테마 토큰 — 명세 §4
+   근거: UX-001 · UX-003(아동 Fun) · UX-002(보호자 Clean)
+
+   두 모드가 **같은 토큰 이름을 다른 값으로** 갖는다.
+   컴포넌트는 자기가 어느 모드인지 알지 못한다 — 조상 [data-mode] 가 정한다.
+   ──────────────────────────────────────────────────────────────── */
+
+/* 모드 무관 원시값 */
+:root {
+  --ff-frame: 390px;   /* 모바일 폭 1종 — 명세 §7.2 */
+  --ff-touch: 44px;    /* 아동 터치 타깃 하한 */
+  --ff-sans: 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
+  --ff-serif: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
+}
+
+/* Clean — 보호자. 증거 제시 · 판단 지원. 명세 §4의 값이 그대로 여기다 */
+[data-mode="clean"] {
+  --ff-canvas: #FAF7F1;
+  --ff-surface: #FFFFFF;
+  --ff-primary: #4F7A4A;
+  --ff-primary-d: #3E6B3A;
+  --ff-primary-l: #8FB07F;
+  --ff-primary-bg: #E8F0E4;
+  --ff-ink: #2A2724;
+  --ff-ink-soft: #57524B;
+  --ff-ink-mute: #8B837A;
+  --ff-line: #E5DFD5;
+  --ff-line-2: #D6CEC1;
+  /* 🔴 넘김·정체는 테라코타다. 두 모드 모두 경고색을 쓰지 않는다 (P-03 · 스킬 401) */
+  --ff-miss: #B36B3A;
+  --ff-miss-bg: #F7EEE6;
+  --ff-miss-line: #E5CDB8;
+  --ff-sand: #F0E6D2;
+  --ff-star: #E8B978;
+  --ff-star-d: #B8862F;
+  --ff-star-bg: #FDF6E8;
+  --ff-star-bg-2: #F7EAD2;
+  --ff-star-glow: transparent;
+  --ff-radius: 13px;
+  --ff-text-body: 15px;
+  --ff-text-title: 20px;
+  --ff-space: 14px;
+  --ff-motion: 150ms ease;
+  /* Clean 은 페이드만. 스케일·바운스 금지 — 컴포넌트를 고치지 않고 토큰으로 가른다 */
+  --ff-star-anim: ff-fade-in;
+}
+
+/* Fun — 아동. 재미 · 즉각 보상 · 큰 글씨 */
+[data-mode="fun"] {
+  --ff-canvas: #FFF9F0;
+  --ff-surface: #FFFFFF;
+  --ff-primary: #5C9152;
+  --ff-primary-d: #477540;
+  --ff-primary-l: #A6C795;
+  --ff-primary-bg: #EDF5E8;
+  --ff-ink: #2B2118;
+  --ff-ink-soft: #6B5C4D;
+  --ff-ink-mute: #9C8E80;
+  --ff-line: #EFE4D4;
+  --ff-line-2: #E0D2BC;
+  --ff-miss: #B36B3A;
+  --ff-miss-bg: #FDF0E5;
+  --ff-miss-line: #EED6BE;
+  --ff-sand: #FBEFDA;
+  --ff-star: #FFC53D;
+  --ff-star-d: #C88A12;
+  --ff-star-bg: #FFF7E2;
+  --ff-star-bg-2: #FFEDC2;
+  --ff-star-glow: #FFE9A8;
+  --ff-radius: 20px;
+  --ff-text-body: 18px;
+  --ff-text-title: 26px;
+  --ff-space: 20px;
+  --ff-motion: 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ff-star-anim: ff-star-pop;
+}
+
+/* 토큰 → Tailwind 유틸리티. inline 이라 [data-mode] 가 바뀌면 유틸리티도 따라 바뀐다 */
+@theme inline {
+  --color-canvas: var(--ff-canvas);
+  --color-surface: var(--ff-surface);
+  --color-primary: var(--ff-primary);
+  --color-primary-d: var(--ff-primary-d);
+  --color-primary-l: var(--ff-primary-l);
+  --color-primary-bg: var(--ff-primary-bg);
+  --color-ink: var(--ff-ink);
+  --color-ink-soft: var(--ff-ink-soft);
+  --color-ink-mute: var(--ff-ink-mute);
+  --color-line: var(--ff-line);
+  --color-line-2: var(--ff-line-2);
+  --color-miss: var(--ff-miss);
+  --color-miss-bg: var(--ff-miss-bg);
+  --color-miss-line: var(--ff-miss-line);
+  --color-sand: var(--ff-sand);
+  --color-star: var(--ff-star);
+  --color-star-d: var(--ff-star-d);
+  --color-star-bg: var(--ff-star-bg);
+  --color-star-bg-2: var(--ff-star-bg-2);
+
+  --radius-card: var(--ff-radius);
+  --text-body: var(--ff-text-body);
+  --text-title: var(--ff-text-title);
+
+  --spacing-gap: var(--ff-space);
+  --spacing-frame: var(--ff-frame);
+  --spacing-touch: var(--ff-touch);
+}
+
+@custom-variant fun (&:where([data-mode="fun"], [data-mode="fun"] *));
+@custom-variant clean (&:where([data-mode="clean"], [data-mode="clean"] *));
+
+html, body { height: 100%; }
+
+body {
+  /* 모드 밖 영역. 각 세그먼트 래퍼가 canvas 로 덮는다 */
+  background: #ECE8E1;
+  font-family: var(--ff-sans);
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ff-serif { font-family: var(--ff-serif); }
+
+/* ────────────────────────────────────────────────────────────────
+   모션 — CSS 전용. Lottie·GSAP 을 설치하지 않는다.
+   로컬 최소안 §2 「L5에서 Lottie는 정적 이미지로 대체」
+   ──────────────────────────────────────────────────────────────── */
+
+@keyframes ff-star-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ff-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 어느 모드인지 컴포넌트는 알지 못한다. 토큰이 어떤 키프레임을 쓸지 정한다 */
+.ff-star-earn { animation: var(--ff-star-anim) var(--ff-motion); }
+.ff-fade      { animation: ff-fade-in var(--ff-motion); }
+
+/* 아바타 회전 — 렌더러 없이 CSS 3D 로만 (원장 T15 · ADR-T05 재검토용) */
+.ff-avatar-spin { transition: transform var(--ff-motion); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ff-star-earn, .ff-fade { animation: none; }
+  .ff-avatar-spin { transition: none; }
+}
