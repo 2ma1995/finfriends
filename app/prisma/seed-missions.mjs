@@ -69,6 +69,10 @@ await prisma.mission.createMany({
 if (!demo) {
   await prisma.starLedgerEntry.deleteMany({ where: { childId: c.id } });
   await prisma.childOnboarding.deleteMany({ where: { childId: c.id } });
+  // 🔴 산 물건도 같이 비운다. 별만 0으로 돌리면 **별 없이 고양이를 가진 아이**가 된다 —
+  //    원장과 보유가 서로 안 맞는 상태를 시드가 만들어 내면 안 된다
+  await prisma.childItem.deleteMany({ where: { childId: c.id } });
+  await prisma.childRoom.deleteMany({ where: { childId: c.id } });
 }
 
 // 이 아이로 들어갈 기기 토큰을 새로 발급한다 (기존 것은 그대로 둔다)
@@ -85,7 +89,7 @@ console.log("  아이      ", c.displayName, c.id);
 console.log("  모드      ", demo ? "--demo · 네 가지 상태 전부" : "첫날 · 지난 기록 없음");
 console.log("  미션      ", await prisma.mission.count({ where: { childId: c.id } }), "건",
             demo ? "(안 함 3 · 대기 1 · 승인 1 · 소급 1 · 거절 1)" : "(전부 안 함)");
-if (!demo) console.log("  별        0개 · 온보딩 처음부터");
+if (!demo) console.log("  별        0개 · 가진 아이템 없음 · 온보딩 처음부터");
 if (!g?.consentCompleted) console.log("  ⚠ 보호자 동의가 아직 없다 — 아이 화면이 「동의가 필요해요」로 막힌다");
 console.log("");
 console.log("  아이 화면 열기 (브라우저 콘솔에 붙여넣고 새로고침):");

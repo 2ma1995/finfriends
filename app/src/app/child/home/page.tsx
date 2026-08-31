@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Screen, Empty } from "@/components/shared/Screen";
 import { LiveStars } from "@/components/child/LiveStars";
 import { RoomStage } from "@/components/child/RoomStage";
-import { me, placed, CATEGORIES, byCategory, todo } from "./room.fixture";
+import { CATEGORIES, byCategory } from "@/contracts/items";
+import { emptyRoom, itemsLabel, shopLink, todo, todoTitle } from "./room.fixture";
+import { getRoom, placedItems } from "@/modules/items";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
 import { getTourState } from "@/modules/onboarding";
@@ -23,7 +25,6 @@ export default async function ChildHomePage({
   const turn = Number(sp.turn ?? 0) || 0;
   const startEdit = sp.edit === "1";
   const justFinished = sp.welcome === "1";
-  const ownedCount = placed.length;
 
   // 🔴 미션만 실제 값을 읽는다. 「할 게 있는지」를 홈에서 알 수 없으면 아이는 미션 화면에 안 들어간다
   const access = await currentChild();
@@ -44,7 +45,11 @@ export default async function ChildHomePage({
   const tour = await getTourState(access.childId);
   if (!tour.finished && !tour.skipped) redirect("/child/welcome");
 
-  const board = await getMissionBoard(access.childId);
+  const [board, room] = await Promise.all([
+    getMissionBoard(access.childId),
+    getRoom(access.childId),
+  ]);
+  const placed = placedItems(room);
   const badge = (href: string) =>
     href !== "/child/missions" ? null
     : board.todo.length > 0 ? { text: `${board.todo.length}개 남음`, tone: "text-primary-d" }
@@ -52,32 +57,35 @@ export default async function ChildHomePage({
     : null;
 
   return (
-    <Screen role="아이 화면" title={`${me.name}의 방`} back={{ href: "/screens", label: "화면 목록" }}>
+    <Screen role="아이 화면" title="내 방" back={{ href: "/screens", label: "화면 목록" }}>
       {justFinished ? (
         <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
           {finishBonus}
         </p>
       ) : null}
 
-      <LiveStars />
+      <LiveStars balance={room.stars} />
 
       <div className="mt-3 rounded-card border border-line bg-surface py-3">
-        <RoomStage items={placed} turn={turn} startEdit={startEdit} />
-        <p className="mt-1 text-center text-[0.72em] text-ink-mute">
-          아바타 · 펫 · 아이템 모습은 예시입니다 · 미확정 사양(D4)
-        </p>
+        <RoomStage items={placed} layout={room.layout} characterId={room.characterId}
+                   wear={room.wear} turn={turn} startEdit={startEdit} />
+        {placed.length === 0 ? (
+          <p className="mt-1 text-center text-[0.74em] text-ink-mute">
+            <b>{emptyRoom.title}</b> · {emptyRoom.body}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <h2 className="text-[0.82em] font-bold">내 아이템 {ownedCount}개</h2>
+        <h2 className="text-[0.82em] font-bold">{itemsLabel(placed.length)}</h2>
         <Link href="/child/shop" className="text-[0.78em] font-bold text-primary-d">
-          별로 바꾸기 →
+          {shopLink}
         </Link>
       </div>
 
       <ul className="mt-1.5 grid grid-cols-6 gap-1.5">
         {CATEGORIES.map((c) => {
-          const mine = byCategory(c.key).filter((i) => i.owned).length;
+          const mine = byCategory(c.key).filter((i) => room.owned.includes(i.id)).length;
           const all = byCategory(c.key).length;
           return (
             <li key={c.key}>
@@ -91,7 +99,7 @@ export default async function ChildHomePage({
         })}
       </ul>
 
-      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">오늘 할 일</h2>
+      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{todoTitle}</h2>
       <ul className="grid gap-1.5">
         {todo.map((t) => (
           <li key={t.href}>

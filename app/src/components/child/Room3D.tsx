@@ -5,7 +5,7 @@ import * as THREE from "three";
 import {
   makeRenderer, makeScene, loadCharacter, loadProp, attachToSocket, attachToFace, attachToBack,
 } from "./avatar-scene";
-import type { Item } from "@/app/child/home/room.fixture";
+import type { Item } from "@/contracts/items";
 
 /**
  * 🔴 실험 — 아이 방 3D.

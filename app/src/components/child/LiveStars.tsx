@@ -1,10 +1,6 @@
-"use client";
-
 import { StarHUD } from "./StarHUD";
-import { useWallet } from "@/app/child/home/proto-store";
 
-/** 🔴 프로토타입 전용 — 별 잔액을 저장소에서 읽어 실시간으로 보여준다 */
-export function LiveStars() {
-  const w = useWallet();
-  return <StarHUD balance={w?.stars ?? 0} />;
+/** 별 잔액 — 🔴 원장의 합이다. 화면이 따로 세지 않는다 (REQ-NF-006) */
+export function LiveStars({ balance }: { balance: number }) {
+  return <StarHUD balance={balance} />;
 }
