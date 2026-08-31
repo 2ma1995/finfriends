@@ -57,9 +57,10 @@ export type NextStep = {
 
 export const nextSteps: readonly NextStep[] = [
   { n: 2, title: "법정대리인 동의", body: "동의를 마쳐야 아이 화면이 열립니다" },
-  { n: 3, title: "아이 프로필", body: "이름과 생년을 적습니다 — 생년월일 전체는 받지 않습니다" },
-  { n: 4, title: "첫 계획 카드", body: "어디서 얼마를 쓸지 한 장만 적어 봅니다" },
-  { n: 5, title: "카드 연결", body: "본인 확인은 카드 발급과 함께 진행합니다", undecided: true },
+  { n: 3, title: "아이 프로필", body: "이름과 태어난 해를 적습니다 — 생년월일 전체는 받지 않습니다" },
+  { n: 4, title: "자녀 초대", body: "아이 기기를 등록합니다" },
+  { n: 5, title: "첫 계획 카드", body: "어디서 얼마를 쓸지 한 장만 적어 봅니다" },
+  { n: 6, title: "카드 연결", body: "본인 확인은 카드 발급과 함께 진행합니다", undecided: true },
 ];
 
 export const nextLabel = "다음 — 동의 확인하기";

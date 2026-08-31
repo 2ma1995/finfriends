@@ -1,16 +1,28 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Screen, Card } from "@/components/shared/Screen";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signInAction } from "@/app/actions/auth";
+import { currentGuardian } from "@/lib/session/guardian-session";
 import { fields, submitLabel, resetNotice, sessionNotice, signupPrompt } from "./login.fixture";
 
 // CON-001 — 보호자 로그인. 아동용 입력은 이 화면에 두지 않는다
 export const metadata = { title: "로그인 · 핀프렌즈" };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; email?: string }>;
+}) {
+  // 이미 들어와 있는 사람을 로그인 화면에 붙잡아 두지 않는다
+  if (await currentGuardian()) redirect("/parent/onboarding");
+
+  const { error, email } = await searchParams;
+
   return (
     <Screen role="부모 화면" title="로그인" back={{ href: "/", label: "화면 목록" }}>
-      <div className="grid gap-2.5">
+      <form action={signInAction} className="grid gap-2.5">
         {fields.map((f) => (
           <div key={f.key} className="grid gap-1">
             <Label htmlFor={f.key} className="text-[0.8em] font-normal text-ink-soft">
@@ -20,17 +32,28 @@ export default function LoginPage() {
               id={f.key}
               name={f.key}
               type={f.type}
+              required
+              defaultValue={f.key === "email" ? email : undefined}
               placeholder={f.placeholder}
               autoComplete={f.autoComplete}
               className="min-h-touch rounded-card border-line bg-surface px-3 text-[0.9em] text-ink placeholder:text-ink-mute"
             />
           </div>
         ))}
-      </div>
 
-      <button className="mt-3 min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white">
-        {submitLabel}
-      </button>
+        {error ? (
+          <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+            {error}
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          className="mt-0.5 min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white"
+        >
+          {submitLabel}
+        </button>
+      </form>
 
       <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-mute">{resetNotice}</p>
 

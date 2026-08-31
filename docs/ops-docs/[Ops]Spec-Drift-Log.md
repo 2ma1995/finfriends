@@ -166,12 +166,41 @@
 > ① 계약 타입을 `contracts/` 에 ② 도메인 로직을 `modules/` 에 ③ 화면은 계약만 본다
 > ④ `*.fixture.ts` 는 문구만 남기고 데이터는 지운다
 
+## D10 🔴 보호자 인증 — Supabase Auth 자리를 로컬 Postgres 가 대신한다
+
+| | |
+| --- | --- |
+| 문서 | `CON-001` — **Supabase Auth** 보호자 가입·로그인. `guardian_accounts.auth_ref` 는 Supabase 사용자 참조 |
+| | `SRS-Tech §6.1` — 서버 진입점 19개. **인증 액션이 목록에 없다** — Supabase 가 자기 엔드포인트로 처리하기 때문 |
+| 구현 | `dev_auth` 스키마(`users` · `sessions`)와 Server Action 3종(`signUpAction` · `signInAction` · `signOutAction`) |
+| 근거 | **2026-08-31 사용자 결정** — 로컬 Postgres(Docker)로 끝까지 만들고 **완성 후 Supabase 로 이관**한다. `tools/dev_db.sh` 가 DB 에 대해 이미 같은 결정을 따르고 있다 |
+| 지킨 것 | `auth_ref` 의 **의미가 바뀌지 않는다** — 「인증 시스템의 사용자 id」. 비밀번호는 `identity` 에 복제되지 않고 `dev_auth` 에만 있다. 아동 행은 `dev_auth.users` 에 **생기지 않는다**(S5) |
+| 격리 | 이관 시 바뀌는 앱 코드는 `src/lib/session/guardian-session.ts` **한 파일**이다. `createGuardian`·`signIn`·`currentGuardian` 셋이 Supabase 호출로 교체된다 |
+| 할 일 | 이관 시 `DROP SCHEMA dev_auth CASCADE` · `schema.prisma` 의 `schemas` 배열에서 제거 · `src/app/actions/auth.ts` 삭제(§6.1 표가 다시 맞는다) · `dev_auth.users.id` → Supabase user id 이행 |
+
+**왜 `auth` 가 아니라 `dev_auth` 인가** — Supabase 는 `auth` 스키마를 **자기가 관리**한다.
+같은 이름을 쓰면 이관 때 충돌한다. 버릴 것과 남을 것을 이름으로 갈라 둔다.
+
+**검증** — `app/tools/verify_auth.mjs` 12건 전건 통과 (실제 DB 대상).
+
+```
+가입 · 원문 비밀번호 미저장 · 해시 왕복 · 대소문자 무시 중복 차단
+세션 원문 토큰 미저장 · 토큰→보호자 해석 · 만료 거부
+🔴 아동 계정에 인증 사용자 없음 · 인증 사용자 수 ≤ 보호자 수
+기기 세션은 보호자가 발급하고 아이 프로필에 고정
+```
+
+🔴 **아직 안 한 것**
+- 비밀번호 재설정 흐름 (화면·토큰 모두 없음)
+- 아동 모드 PIN 설정·해제 UI — `child_mode_pin_hash` 는 있고 화면이 없다
+- `signIn` 실패 횟수 제한 · 잠금
+
 ---
 
 ## 다음 문서 갱신 때 할 일 (요약)
 
 ```
-tools/tasks_data.py 를 고치고 재생성해야 하는 것 — D2 · D3 · D5 · D6 · D8
-SRS 본문을 직접 고쳐야 하는 것       — D1(ADR-T04) · D2(X2 · ADR-T05 · REQ-TEC-007) · D5(REQ-NF-011)
-사람 승인이 필요한 것                 — D2(three.js) · D4(현금 분리선) · D5(아동 모드)
+tools/tasks_data.py 를 고치고 재생성해야 하는 것 — D2 · D3 · D5 · D6 · D8 · D10
+SRS 본문을 직접 고쳐야 하는 것       — D1(ADR-T04) · D2(X2 · ADR-T05 · REQ-TEC-007) · D5(REQ-NF-011) · D10(§6.1 진입점)
+사람 승인이 필요한 것                 — D2(three.js) · D4(현금 분리선) · D5(아동 모드) · D10(로컬 인증)
 ```

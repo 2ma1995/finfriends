@@ -1,14 +1,61 @@
 import Link from "next/link";
-import { Screen, Card } from "@/components/shared/Screen";
-import {
-  child, consentCompleted, whatHappens, notCollected,
-  confirmLabel, blockedLabel, parentExitNotice, nextHref,
-} from "./join.fixture";
+import { Screen, Card, Empty } from "@/components/shared/Screen";
+import { prisma } from "@/db";
+import { currentGuardian } from "@/lib/session/guardian-session";
+import { registerChildDeviceAction } from "@/app/actions/device";
+import { whatHappens, notCollected, parentExitNotice } from "./join.fixture";
 
-// CON-003 · CON-004 — 아이 기기에서 초대 링크를 열었을 때. 기기 등록이지 로그인이 아니다
+// CON-001 · D5-b — 아이 기기 등록. 로그인이 아니라 **기기 등록**이다
 export const metadata = { title: "기기 등록 · 핀프렌즈" };
 
-export default function JoinPage() {
+export default async function JoinPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  const guardian = await currentGuardian();
+
+  // 🔴 등록은 보호자 행위다. 아이 기기에서 부모가 직접 로그인해 누른다
+  if (!guardian) {
+    return (
+      <Screen role="부모 확인" title="기기 등록" back={{ href: "/login", label: "로그인" }}>
+        <Empty
+          emoji="🔑"
+          title="부모가 먼저 로그인해 주세요"
+          body="이 기기를 아이 화면으로 등록하는 것은 부모만 할 수 있어요."
+          hint="아이는 아이디도 비밀번호도 만들지 않습니다"
+        />
+        <Link
+          href="/login"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+        >
+          로그인하기
+        </Link>
+      </Screen>
+    );
+  }
+
+  // identity 안에서만 읽는다. activity 와 조인하지 않는다 (REQ-NF-009)
+  const child = await prisma.childAccount.findFirst({
+    where: { guardianId: guardian.guardianId },
+    select: { id: true, displayName: true, birthYear: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (!child) {
+    return (
+      <Screen role="부모 확인" title="기기 등록" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+        <Empty
+          emoji="🐣"
+          title="등록할 아이가 아직 없어요"
+          body="아이 프로필을 먼저 만들면 이 기기를 그 아이의 화면으로 등록할 수 있어요."
+          hint="온보딩 3단계 · 아이 프로필"
+        />
+      </Screen>
+    );
+  }
+
   return (
     <Screen
       role="부모 확인"
@@ -21,7 +68,7 @@ export default function JoinPage() {
         <ul className="mt-1.5 grid gap-1">
           {whatHappens.map((line) => (
             <li key={line} className="rounded-card border border-line bg-surface px-3 py-2 text-[0.84em] leading-relaxed text-ink-soft">
-              {line}
+              {line.replace("정하율", child.displayName)}
             </li>
           ))}
         </ul>
@@ -34,20 +81,29 @@ export default function JoinPage() {
         </Card>
       </div>
 
-      {consentCompleted ? (
-        <Link
-          href={nextHref}
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary px-3 text-center text-[0.88em] font-bold text-white"
-        >
-          {confirmLabel}
-        </Link>
+      {error ? (
+        <p className="mt-2.5 rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+          {error}
+        </p>
+      ) : null}
+
+      {guardian.consentCompleted ? (
+        <form action={registerChildDeviceAction}>
+          <input type="hidden" name="childId" value={child.id} />
+          <button
+            type="submit"
+            className="mt-3 min-h-touch w-full rounded-card bg-primary px-3 text-[0.88em] font-bold text-white"
+          >
+            이 기기를 {child.displayName}의 화면으로 등록하기
+          </button>
+        </form>
       ) : (
-        <button
-          disabled
-          className="mt-3 min-h-touch w-full cursor-not-allowed rounded-card bg-line-2 text-[0.88em] font-bold text-white"
+        <Link
+          href="/consent"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-miss-line bg-miss-bg px-3 text-center text-[0.88em] font-bold text-miss"
         >
-          {blockedLabel}
-        </button>
+          동의를 먼저 마쳐야 등록할 수 있어요
+        </Link>
       )}
 
       <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">{parentExitNotice}</p>

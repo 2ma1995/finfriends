@@ -1,16 +1,27 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Screen, Card } from "@/components/shared/Screen";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signUpAction } from "@/app/actions/auth";
+import { currentGuardian } from "@/lib/session/guardian-session";
 import { fields, resumeNotice, childAccountNotice, nextSteps, nextLabel, loginPrompt } from "./signup.fixture";
 
 // CON-001 — 보호자 계정 만들기. 온보딩 5단계 중 1단계
 export const metadata = { title: "계정 만들기 · 핀프렌즈" };
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; email?: string }>;
+}) {
+  if (await currentGuardian()) redirect("/parent/onboarding");
+
+  const { error, email } = await searchParams;
+
   return (
-    <Screen role="부모 화면" title="계정 만들기" sub="1 / 5단계" back={{ href: "/", label: "화면 목록" }}>
-      <div className="grid gap-2.5">
+    <Screen role="부모 화면" title="계정 만들기" sub="1 / 6단계" back={{ href: "/", label: "화면 목록" }}>
+      <form action={signUpAction} className="grid gap-2.5">
         {fields.map((f) => (
           <div key={f.key} className="grid gap-1">
             <Label htmlFor={f.key} className="text-[0.8em] font-normal text-ink-soft">
@@ -20,6 +31,8 @@ export default function SignupPage() {
               id={f.key}
               name={f.key}
               type={f.type}
+              required
+              defaultValue={f.key === "email" ? email : undefined}
               placeholder={f.placeholder}
               autoComplete={f.type === "email" ? "email" : "new-password"}
               className="min-h-touch rounded-card border-line bg-surface px-3 text-[0.9em] text-ink placeholder:text-ink-mute"
@@ -27,21 +40,28 @@ export default function SignupPage() {
             {f.hint ? <small className="text-[0.74em] leading-relaxed text-ink-mute">{f.hint}</small> : null}
           </div>
         ))}
-      </div>
 
-      <div className="mt-3">
-        <Card tone="grow">
-          <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{childAccountNotice.title}</h2>
-          <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{childAccountNotice.body}</p>
-        </Card>
-      </div>
+        {error ? (
+          <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+            {error}
+          </p>
+        ) : null}
 
-      <Link
-        href="/consent"
-        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
-      >
-        {nextLabel}
-      </Link>
+        <div className="mt-0.5">
+          <Card tone="grow">
+            <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{childAccountNotice.title}</h2>
+            <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{childAccountNotice.body}</p>
+          </Card>
+        </div>
+
+        <button
+          type="submit"
+          className="min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white"
+        >
+          {nextLabel}
+        </button>
+      </form>
+
       <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">{resumeNotice}</p>
 
       <section className="mt-4">
