@@ -12,6 +12,7 @@ const url = process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:5543
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 const h = (t) => createHash("sha256").update(t).digest("hex");
 
+await prisma.mission.deleteMany({});
 await prisma.deviceSession.deleteMany({});
 await prisma.starLedgerEntry.deleteMany({});
 await prisma.treeState.deleteMany({});
@@ -65,6 +66,30 @@ await prisma.wishlist.createMany({ data: [
   { childId: c.id, name: "물감 세트", targetAmount: 24000, savedAmount: 18000, rank: 1, reachedSteps: [30, 70] },
   { childId: c.id, name: "만화책",   targetAmount: 12000, savedAmount: 4000,  rank: 2, reachedSteps: [30] },
   { childId: c.id, name: "축구공",   targetAmount: 30000, savedAmount: 3000,  rank: 3, reachedSteps: [] },
+] });
+
+// 미션 — PRC-001. 🔴 네 가지 상태를 모두 넣는다.
+//    「승인 대기」와 「미실천」이 화면에서 구별되는지 시드만으로 확인할 수 있어야 한다 (AC-6.2).
+await prisma.mission.deleteMany({});
+const cyc = new Date().getFullYear() * 100 + (new Date().getMonth() + 1);
+await prisma.mission.createMany({ data: [
+  // 아직 안 함 — 「했어요」 버튼이 보인다
+  { childId: c.id, guardianId: g.id, title: "장 볼 때 가격표 두 개 비교하기", topic: "SPEND", reward: 2 },
+  { childId: c.id, guardianId: g.id, title: "용돈 기입장 오늘 치 적기",       topic: "SAVE",  reward: 1 },
+  { childId: c.id, guardianId: g.id, title: "안 쓰는 물건 하나 정리해 팔기",   topic: "EARN",  reward: 3 },
+  // 했고 기다리는 중 — 부모 화면의 「승인 대기」와 같은 줄
+  { childId: c.id, guardianId: g.id, title: "간식 사기 전에 잠깐 참아 보기",   topic: "SPEND", reward: 2,
+    doneAt: day(1), cycleId: cyc },
+  // 승인됨 — 별이 붙었다
+  { childId: c.id, guardianId: g.id, title: "저금통에 1000원 넣기",          topic: "SAVE",  reward: 1,
+    state: "APPROVED", doneAt: day(4), decidedAt: day(3), cycleId: cyc },
+  // 소급 승인 — 늦게 봤지만 한 날짜로 (ACE-6.2)
+  { childId: c.id, guardianId: g.id, title: "심부름 하고 받은 돈 기록하기",   topic: "EARN",  reward: 2,
+    state: "BACKFILLED", doneAt: day(9), decidedAt: day(2), cycleId: cyc },
+  // 거절됨 — 사유를 그대로 보여준다
+  { childId: c.id, guardianId: g.id, title: "일주일 동안 군것질 안 하기",      topic: "SPEND", reward: 3,
+    state: "REJECTED", doneAt: day(6), decidedAt: day(5), cycleId: cyc,
+    rejectReason: "이틀은 사 먹었어요. 다음 주에 다시 해봐요" },
 ] });
 
 const token = randomBytes(32).toString("base64url");

@@ -3,6 +3,8 @@ import { Screen } from "@/components/shared/Screen";
 import { LiveStars } from "@/components/child/LiveStars";
 import { RoomStage } from "@/components/child/RoomStage";
 import { me, placed, CATEGORIES, byCategory, todo } from "./room.fixture";
+import { currentChild } from "@/lib/session/current-child";
+import { getMissionBoard } from "@/modules/mission";
 
 // UX-003 · STR-003 · STR-005 — 아이가 여는 첫 화면
 export const metadata = { title: "내 방 · 핀프렌즈" };
@@ -17,6 +19,15 @@ export default async function ChildHomePage({
   const turn = Number(sp.turn ?? 0) || 0;
   const startEdit = sp.edit === "1";
   const ownedCount = placed.length;
+
+  // 🔴 미션만 실제 값을 읽는다. 「할 게 있는지」를 홈에서 알 수 없으면 아이는 미션 화면에 안 들어간다
+  const access = await currentChild();
+  const board = access.ok ? await getMissionBoard(access.childId) : null;
+  const badge = (href: string) =>
+    href !== "/child/missions" || !board ? null
+    : board.todo.length > 0 ? { text: `${board.todo.length}개 남음`, tone: "text-primary-d" }
+    : board.waiting.length > 0 ? { text: "확인 기다리는 중", tone: "text-star-d" }
+    : null;
 
   return (
     <Screen role="아이 화면" title={`${me.name}의 방`} back={{ href: "/screens", label: "화면 목록" }}>
@@ -58,6 +69,9 @@ export default async function ChildHomePage({
           <li key={t.href}>
             <Link href={t.href} className="flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3 text-[0.9em]">
               <span className="text-[1.2em]">{t.emoji}</span>{t.label}
+              {(() => { const b = badge(t.href); return b ? (
+                <span className={`ml-auto text-[0.72em] font-bold ${b.tone}`}>{b.text}</span>
+              ) : null; })()}
             </Link>
           </li>
         ))}

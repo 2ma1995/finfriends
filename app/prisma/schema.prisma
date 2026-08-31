@@ -225,6 +225,38 @@ model LearningProgress {
   @@schema("activity")
 }
 
+/// 미션 — PRC-001.
+///
+/// 🔴 **아이가 하고 보호자가 승인한다.** 이 표가 없으면 부모 화면의 「승인 대기 N건」이
+///    영원히 0이고, 별을 받는 주된 길(MISSION_APPROVED)이 막힌다.
+///
+/// 🔴 `cycleId` 는 **완료 시점 주기**다. 지연 승인이 다음 주기 나무를 부풀리지 않게(ACE-6.2).
+model Mission {
+  id          String        @id @default(uuid()) @db.Uuid
+  childId     String        @map("child_id") @db.Uuid
+  /// 만든 사람 — 보호자가 조건·보상을 미리 정한다 (PRC-001)
+  guardianId  String        @map("guardian_id") @db.Uuid
+  title       String
+  topic       LearningTopic
+  /// 지급할 별. 보호자가 미리 정한다
+  reward      Int           @default(1)
+  state       ApprovalState @default(PENDING)
+  /// 아이가 「했어요」를 누른 시각. null 이면 아직 안 함
+  doneAt      DateTime?     @map("done_at") @db.Timestamptz(6)
+  /// 보호자가 승인·거절한 시각
+  decidedAt   DateTime?     @map("decided_at") @db.Timestamptz(6)
+  /// 거절 사유 — 「미실천」과 구별해 보여준다
+  rejectReason String?      @map("reject_reason")
+  /// 완료 시점 주기. 승인이 늦어도 이 주기에 귀속된다
+  cycleId     Int?          @map("cycle_id")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([childId, state])
+  @@index([guardianId, state])
+  @@map("missions")
+  @@schema("activity")
+}
+
 /// 실천 인정. 나무 승급의 **유일한** 근거다 — 학습·퀴즈로는 대체되지 않는다 (ADR-006)
 model PracticeCredit {
   id           String      @id @default(uuid()) @db.Uuid

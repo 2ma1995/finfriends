@@ -143,6 +143,7 @@ export const me = { name: "서연", starBalance: 40 };
 
 /** 오늘 할 일 — 아이는 여기서 출발한다 */
 export const todo = [
+  { href: "/child/missions", emoji: "🎯", label: "미션" },
   { href: "/child/learn",    emoji: "📚", label: "오늘의 학습" },
   { href: "/child/plan/new", emoji: "📝", label: "계획 카드 적기" },
   { href: "/child/wishlist", emoji: "🎯", label: "갖고 싶은 것" },
