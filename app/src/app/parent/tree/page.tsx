@@ -49,7 +49,7 @@ export default async function ParentTreePage() {
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title="성장 나무" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+      <Screen role="부모 화면" title="성장 나무">
         <Empty
           emoji="🐣"
           title="아직 등록한 아이가 없어요"
@@ -69,7 +69,7 @@ export default async function ParentTreePage() {
   const view = await getTreeView(child.id, child.displayName);
 
   return (
-    <Screen role="부모 화면" title="성장 나무" sub={`${view.childName} · ${view.cycleLabel}`} back={{ href: "/parent/onboarding", label: "시작하기" }}>
+    <Screen role="부모 화면" title="성장 나무" sub={`${view.childName} · ${view.cycleLabel}`}>
       {/*
         🔴 US-1 AC-E1 — 실천 0건이면 0으로 그리지 않는다.
            0% 로 그리면 보호자는 「변화가 없다」가 아니라 「고장났다」로 읽는다.
@@ -96,20 +96,12 @@ export default async function ParentTreePage() {
         US-3 AC3 이 「정체 원인을 본 뒤 다음 주 재방문」을 요구하는데,
         볼 것만 주고 할 것을 주지 않으면 재방문할 이유가 없다.
       */}
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <Link
-          href="/parent/missions/new"
-          className="flex min-h-touch items-center justify-center rounded-card bg-primary text-[0.86em] font-bold text-white"
-        >
-          미션 만들기
-        </Link>
-        <Link
-          href="/parent/missions"
-          className="flex min-h-touch items-center justify-center rounded-card border border-line-2 text-[0.86em] text-ink-soft"
-        >
-          미션 보기
-        </Link>
-      </div>
+      <Link
+        href="/parent/missions/new"
+        className="mt-2 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.88em] font-bold text-white"
+      >
+        미션 만들기
+      </Link>
 
       {/*
         ⑤ 실천 근거 — 접지 않는다 (AC-1.2).

@@ -6,7 +6,7 @@ export const metadata = { title: "월간 숲 · 핀프렌즈" };
 
 export default function ParentForestPage() {
   return (
-    <Screen role="부모 화면 · 월말 기록" title={forest.title} sub={forest.childName} back={{ href: "/screens", label: "화면 목록" }}>
+    <Screen role="부모 화면 · 월말 기록" title={forest.title} sub={forest.childName}>
       {/* ① 한 줄 요약 */}
       <div className="rounded-card border border-line-2 bg-sand p-3 text-center">
         <span className="block text-[0.72em] tracking-[0.1em] text-ink-mute">이번 달 한 줄</span>

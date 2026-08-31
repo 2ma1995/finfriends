@@ -10,7 +10,7 @@ export default function ParentSpendingPage() {
   const down = diff < 0;
 
   return (
-    <Screen role="부모 화면" title="소비 내역" sub={`${spending.monthLabel} · 서연`} back={{ href: "/parent/tree", label: "성장 나무" }}>
+    <Screen role="부모 화면" title="소비 내역" sub={`${spending.monthLabel} · 서연`}>
       <div className="rounded-card border border-line-2 bg-sand p-3 text-center">
         <span className="block text-[0.72em] text-ink-mute">지난달보다</span>
         <b className={`text-[1.5em] tabular-nums ${down ? "text-primary-d" : "text-miss"}`}>

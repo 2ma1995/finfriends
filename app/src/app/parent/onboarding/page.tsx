@@ -20,7 +20,7 @@ export default async function ParentOnboardingPage() {
   const ready = readyForChild(steps);
 
   return (
-    <Screen role="부모 화면" title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/screens", label: "화면 목록" }}>
+    <Screen role="부모 화면" title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/parent/tree", label: "성장 나무" }}>
       <ol className="grid gap-1.5">
         {steps.map((s) => (
           <li key={s.n}

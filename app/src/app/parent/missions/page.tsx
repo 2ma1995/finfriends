@@ -14,7 +14,7 @@ export default async function ParentMissionsPage() {
   const g = await currentGuardian();
   if (!g) {
     return (
-      <Screen role="부모 화면" title="승인 대기" back={{ href: "/parent/tree", label: "성장 나무" }}>
+      <Screen role="부모 화면" title="승인 대기">
         <Empty emoji="🔒" {...needLogin} />
       </Screen>
     );
@@ -23,7 +23,7 @@ export default async function ParentMissionsPage() {
   const pendings = await listPendingForGuardian(g.guardianId);
 
   return (
-    <Screen role="부모 화면" title="승인 대기" sub={`${pendings.length}건`} back={{ href: "/parent/tree", label: "성장 나무" }}>
+    <Screen role="부모 화면" title="승인 대기" sub={`${pendings.length}건`}>
       {pendings.length === 0 ? (
         <Empty emoji="✅" {...empty} />
       ) : (

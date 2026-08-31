@@ -14,17 +14,16 @@ export async function SignOutBar() {
   const guardian = await currentGuardian();
   if (!guardian) return null;
 
+  // 하단 탭이 들어온 뒤로는 여기서 자리를 많이 차지하면 안 된다 —
+  // 자주 누르는 것이 아니고, 탭과 경쟁하면 안 된다 (D14)
   return (
-    <div className="mt-2 border-t border-line px-gap pb-8 pt-4">
+    <div className="mt-4 px-gap pb-4 text-center">
       <form action={signOutAction}>
-        <button
-          type="submit"
-          className="min-h-touch w-full rounded-card border border-line-2 text-[0.84em] text-ink-soft"
-        >
+        <button type="submit" className="text-[0.78em] text-ink-mute underline underline-offset-2">
           로그아웃
         </button>
       </form>
-      <p className="mt-1.5 text-center text-[0.74em] leading-relaxed text-ink-mute">
+      <p className="mt-1 text-[0.72em] leading-relaxed text-ink-mute">
         등록한 아이 기기는 로그아웃해도 그대로 열립니다.
       </p>
     </div>
