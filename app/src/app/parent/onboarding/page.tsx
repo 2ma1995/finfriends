@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Screen } from "@/components/shared/Screen";
 import { readOnboardingProgress } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { buildSteps, reassurance } from "./onboarding.fixture";
+import { buildSteps, readyForChild, reassurance, readyNotice } from "./onboarding.fixture";
 
 // CON-003 — 보호자 온보딩 6단계 (4단계 자녀 초대는 SRS 다이어그램 A의 P4 · 원장 T17)
 export const metadata = { title: "시작하기 · 핀프렌즈" };
@@ -17,6 +17,7 @@ export default async function ParentOnboardingPage() {
   const steps = buildSteps(progress);
   const done = steps.filter((s) => s.state === "done").length;
   const current = steps.find((s) => s.state === "current");
+  const ready = readyForChild(steps);
 
   return (
     <Screen role="부모 화면" title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/screens", label: "화면 목록" }}>
@@ -32,7 +33,10 @@ export default async function ParentOnboardingPage() {
                 {s.state === "done" ? "✓" : s.n}
               </span>
               <b className={`text-[0.9em] ${s.state === "todo" ? "text-ink-mute" : ""}`}>{s.title}</b>
-              {s.state === "done" && s.href ? (
+              {/* 화면이 없는 단계는 그렇다고 적는다. 눌러도 안 되는 것을 눌러 보게 하지 않는다 */}
+              {!s.href ? (
+                <span className="text-[0.72em] text-ink-mute">준비 중</span>
+              ) : s.state === "done" ? (
                 <Link href={s.href} className="ml-auto text-[0.72em] text-ink-mute underline underline-offset-2">
                   보기
                 </Link>
@@ -43,6 +47,11 @@ export default async function ParentOnboardingPage() {
         ))}
       </ol>
 
+      {/*
+        🔴 갈 곳이 없으면 버튼을 그리지 않는다.
+           5·6단계는 부모 화면이 아직 없어서, 예전 코드는 아무 일도 하지 않는 버튼을 그렸다.
+           필수 4단계가 끝났다면 부모가 갈 곳은 성장 나무다.
+      */}
       {current?.href ? (
         <Link
           href={current.href}
@@ -50,20 +59,18 @@ export default async function ParentOnboardingPage() {
         >
           {current.n}단계 이어서 하기
         </Link>
-      ) : current ? (
-        <button className="mt-3 min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white">
-          {current.n}단계 이어서 하기
-        </button>
-      ) : (
+      ) : ready ? (
         <Link
           href="/parent/tree"
           className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
         >
           성장 나무 보기
         </Link>
-      )}
+      ) : null}
 
-      <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">{reassurance}</p>
+      <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">
+        {ready ? readyNotice : reassurance}
+      </p>
     </Screen>
   );
 }
