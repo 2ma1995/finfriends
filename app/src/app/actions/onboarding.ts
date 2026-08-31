@@ -1,43 +1,49 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { CHILD_PROFILE_MESSAGES, type DeviceTypeValue } from "@/contracts/child";
-import { createChildProfile } from "@/modules/consent";
-import { requireGuardian } from "@/lib/session/guardian-session";
+import { currentChild } from "@/lib/session/current-child";
+import { advanceTour, finishTour, restartTour, skipTour } from "@/modules/onboarding";
 
 /**
- * 온보딩 단계 저장 — §6.1 진입점 2번 `saveOnboardingStep` (consent 모듈).
- * 표에 있는 진입점이므로 어긋남이 아니다.
- *
- * 🔴 첫 줄에서 인가를 확인한다. 남의 계정에 아이를 붙이는 호출이 들어올 수 있다
- *    (SRS-Tech §6.6 규약 ②).
+ * 아이 온보딩 — 어긋남 대장 D13.
+ * 🔴 첫 줄에서 인가를 확인한다 (§6.6).
+ * 🔴 넘어갈 단계를 요청이 정하지만 **모듈이 한 칸으로 깎는다** — 마지막 장으로
+ *    뛰어 별만 받아 가는 길을 막는다.
  */
-export async function saveChildProfileAction(formData: FormData) {
-  const guardian = await requireGuardian();
+export async function advanceTourAction(formData: FormData) {
+  const access = await currentChild();
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fwelcome");
 
-  const displayName = String(formData.get("displayName") ?? "");
-  const birthYearRaw = String(formData.get("birthYear") ?? "");
-  const deviceRaw = String(formData.get("deviceType") ?? "");
+  const to = Number(formData.get("to") ?? 0) || 0;
+  const at = await advanceTour(access.childId, to);
+  redirect(`/child/welcome?step=${at}`);
+}
 
-  const result = await createChildProfile(guardian.guardianId, {
-    displayName,
-    birthYear: Number.parseInt(birthYearRaw, 10),
-    // 빈 값을 null 로 바꾸지 않는다 — 모듈이 「고르지 않음」으로 거부해야 한다
-    deviceType: (deviceRaw || null) as DeviceTypeValue | null,
-  });
+export async function finishTourAction() {
+  const access = await currentChild();
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fwelcome");
 
-  if (!result.ok) {
-    // 동의가 빠진 것이면 고칠 곳은 이 화면이 아니다
-    if (result.reason === "CONSENT_REQUIRED") redirect("/consent");
+  const r = await finishTour(access.childId);
+  revalidatePath("/child/home");
+  // 아직 마지막 장이 아니면 그대로 둔다 — 조용히 되돌린다
+  redirect(r.ok && r.firstTime ? "/child/home?welcome=1" : "/child/home");
+}
 
-    const q = new URLSearchParams({
-      error: CHILD_PROFILE_MESSAGES[result.reason],
-      name: displayName,
-      year: birthYearRaw,
-    });
-    redirect(`/parent/child/new?${q}`);
-  }
+export async function skipTourAction() {
+  const access = await currentChild();
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fwelcome");
 
-  // 아이가 생겼으니 다음은 그 아이의 기기를 등록하는 일이다 (4단계)
-  redirect("/parent/invite");
+  await skipTour(access.childId);
+  revalidatePath("/child/home");
+  redirect("/child/home");
+}
+
+/** 홈에서 다시 보기 */
+export async function restartTourAction() {
+  const access = await currentChild();
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fhome");
+
+  await restartTour(access.childId);
+  redirect("/child/welcome?step=0");
 }

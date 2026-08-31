@@ -17,10 +17,14 @@ export async function savePlanCard(formData: FormData) {
 
   const where = String(formData.get("where") ?? "").trim();
   const category = String(formData.get("category") ?? "") as CategoryCode;
-  const limitAmount = Number(formData.get("limitAmount") ?? 0);
+  // 🔴 화면 규칙을 서버가 다시 본다. Server Action 은 공개 엔드포인트와 같다 (§6.6)
+  const limitAmount = Math.floor(Number(formData.get("limitAmount") ?? 0));
 
   if (!where || !category || !Number.isFinite(limitAmount) || limitAmount <= 0) {
     redirect("/child/plan/new?error=1");
+  }
+  if (limitAmount > 1_000_000) {
+    redirect("/child/plan/new?error=too_big");
   }
 
   await createPlanCard(access.childId, {

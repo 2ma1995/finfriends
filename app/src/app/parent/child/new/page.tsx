@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AGE_LIMIT, DEVICE_TYPES, NAME_MAX } from "@/contracts/child";
 import { findChild } from "@/modules/consent";
-import { saveChildProfileAction } from "@/app/actions/onboarding";
+import { saveChildProfileAction } from "@/app/actions/parent-onboarding";
 import { currentGuardian } from "@/lib/session/guardian-session";
 
 // CON-003 — 온보딩 3단계 아이 프로필. §6.1 진입점 2번 `saveOnboardingStep`
