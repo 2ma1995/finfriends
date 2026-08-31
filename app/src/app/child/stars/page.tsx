@@ -14,7 +14,7 @@ export default async function ChildStarsPage() {
     // 아이 탓으로 읽히지 않게 — 「막혔다」가 아니라 「아직 준비가 안 됐다」 (AC-3.2 규율)
     const msg = access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice;
     return (
-      <Screen role="아이 화면" title="내 별" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen role="아이 화면" title="내 별">
         <Empty emoji="⭐" {...msg} />
       </Screen>
     );

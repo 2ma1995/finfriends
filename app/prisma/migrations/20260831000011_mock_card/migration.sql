@@ -1,4 +1,4 @@
--- 🔴 가짜 카드 발급 상태 — 시연 전용. 어긋남 대장 D15
+-- 🔴 가짜 카드 발급 상태 — 시연 전용. 어긋남 대장 D20
 --
 -- 🔴 **이것은 카드가 아니다.** 실제 발급은 제휴사가 한다(`PTN-001` · §6.1 진입점 9번
 --    `requestCard`)이고 착수 조건인 **D1(수수료율·SLA·업종 코드)** 과
@@ -17,4 +17,4 @@ ALTER TABLE "identity"."guardian_accounts"
   ADD COLUMN "mock_card_issued_at" TIMESTAMPTZ(6);
 
 COMMENT ON COLUMN "identity"."guardian_accounts"."mock_card_issued_at" IS
-  '🔴 시연 전용 가짜 카드 발급 시각. PTN-001 착수 시 삭제한다 (어긋남 대장 D15)';
+  '🔴 시연 전용 가짜 카드 발급 시각. PTN-001 착수 시 삭제한다 (어긋남 대장 D20)';

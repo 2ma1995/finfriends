@@ -18,7 +18,7 @@ export default async function ChildPlanNewPage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="계획 카드 적기" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen role="아이 화면" title="계획 카드 적기" back={{ href: "/child/plan", label: "계획 카드" }}>
         <Empty emoji="📝" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -27,7 +27,7 @@ export default async function ChildPlanNewPage({
   const sp = await searchParams;
 
   return (
-    <Screen role="아이 화면" title="계획 카드 적기" back={{ href: "/child/home", label: "내 방" }}>
+    <Screen role="아이 화면" title="계획 카드 적기" back={{ href: "/child/plan", label: "계획 카드" }}>
       {sp.saved ? (
         <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{savedNotice}</p></Card></div>
       ) : null}

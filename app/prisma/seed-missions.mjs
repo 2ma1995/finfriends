@@ -73,6 +73,8 @@ if (!demo) {
   //    원장과 보유가 서로 안 맞는 상태를 시드가 만들어 내면 안 된다
   await prisma.childItem.deleteMany({ where: { childId: c.id } });
   await prisma.childRoom.deleteMany({ where: { childId: c.id } });
+  // 🔴 학습 진도도 비운다. 안 그러면 오늘 시작한 아이가 「3 / 3편 다 봤어요」로 시작한다
+  await prisma.learningProgress.deleteMany({ where: { childId: c.id } });
 }
 
 // 이 아이로 들어갈 기기 토큰을 새로 발급한다 (기존 것은 그대로 둔다)

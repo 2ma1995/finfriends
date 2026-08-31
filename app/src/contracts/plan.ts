@@ -45,6 +45,29 @@ export type RetroView = {
   readonly starLabel: string;
   /** 다른 갈래를 보여줄 때 쓸 id — 인터뷰용 */
   readonly otherBranchId: string | null;
+  /**
+   * 🔴 카드 내역과의 대조 — 적은 금액과 실제가 다를 때 보여준다 (D19).
+   *    자동으로 고쳐 주지 않는다. 차이를 마주하는 것이 학습이다.
+   */
+  readonly card: { merchant: string; amount: number; gap: number; isMock: boolean } | null;
+};
+
+/** 적어둔 계획 한 줄 — 목록이 보는 것 */
+export type PlanCardView = {
+  readonly id: string;
+  readonly where: string;
+  readonly icon: string;
+  readonly categoryLabel: string;
+  readonly limitAmount: number;
+  readonly items: string | null;
+  readonly whenLabel: string;
+  readonly byGuardian: boolean;
+  /**
+   * 🔴 **아직 맞춰보지 않은 계획.** 이게 목록의 존재 이유다 —
+   *    적어만 두고 맞춰보지 않으면 계획 카드는 그냥 메모다.
+   */
+  readonly recordId: string | null;
+  readonly match: "MET" | "EXCEEDED" | null;
 };
 
 // ─────────────────────────────────────────────────────────────

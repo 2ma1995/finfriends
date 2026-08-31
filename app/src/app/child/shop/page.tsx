@@ -39,8 +39,7 @@ export default async function ChildShopPage({
   const short = sp.failed === "NOT_ENOUGH" && cheapest !== undefined ? cheapest - room.stars : null;
 
   return (
-    <Screen role="아이 화면" title="별로 바꾸기" sub={`내 별 ⭐ ${room.stars}`}
-            back={{ href: "/child/home", label: "내 방" }}>
+    <Screen role="아이 화면" title="별로 바꾸기" sub={`내 별 ⭐ ${room.stars}`}>
       {bought ? (
         <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{boughtNotice(bought.name)}</p></Card></div>
       ) : null}

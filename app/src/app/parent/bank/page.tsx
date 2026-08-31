@@ -8,7 +8,7 @@ import { setInterestAction, topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { mockBanner, interestNotice, missionNotice, cardNeeded } from "./bank.fixture";
 
-// 아이 통장(보호자용) — SRS §3 · 충전 · 미션 관리 · 이자율 설정. 어긋남 대장 D16
+// 아이 통장(보호자용) — SRS §3 · 충전 · 미션 관리 · 이자율 설정. 어긋남 대장 D21
 export const metadata = { title: "아이 통장 · 핀프렌즈" };
 
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";

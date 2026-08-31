@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
+import { findLesson } from "@/contracts/lessons";
+import { isPracticeOpen } from "@/contracts/learning";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
   OPEN_LIMIT, REWARD_MAX, REWARD_MIN, TITLE_MAX,
@@ -35,6 +37,7 @@ function whenLabel(at: Date | null, now = new Date()) {
 function toView(r: {
   id: string; title: string; topic: string; reward: number;
   state: string; doneAt: Date | null; decidedAt: Date | null; rejectReason: string | null;
+  sourceId?: string | null;
 }): MissionView {
   const topic = r.topic as Topic;
   const bucket = bucketOf(r.state, r.doneAt);
@@ -45,6 +48,7 @@ function toView(r: {
     whenLabel: whenLabel(bucket === "TODO" ? null : (r.decidedAt ?? r.doneAt)),
     rejectReason: r.rejectReason,
     backfilled: r.state === "BACKFILLED",
+    fromLesson: r.sourceId != null,
   };
 }
 
@@ -55,7 +59,7 @@ export async function getMissionBoard(childId: string): Promise<MissionBoardView
     take: 40,
     select: {
       id: true, title: true, topic: true, reward: true,
-      state: true, doneAt: true, decidedAt: true, rejectReason: true,
+      state: true, doneAt: true, decidedAt: true, rejectReason: true, sourceId: true,
     },
   });
 
@@ -109,7 +113,7 @@ export async function listPendingForGuardian(guardianId: string) {
     orderBy: { doneAt: "asc" },
     select: {
       id: true, title: true, topic: true, reward: true,
-      state: true, doneAt: true, decidedAt: true, rejectReason: true,
+      state: true, doneAt: true, decidedAt: true, rejectReason: true, sourceId: true,
     },
   });
   return rows.map(toView);
@@ -253,4 +257,65 @@ export async function listOpenForGuardian(guardianId: string) {
     },
   });
   return rows.map(toView);
+}
+
+/** 이 편의 실천을 지금 어디까지 왔나 — 학습 화면이 읽는다 */
+export type PracticeState = "NONE" | "WAITING" | "DONE" | "REJECTED";
+
+export async function getPracticeState(childId: string, lessonId: string): Promise<PracticeState> {
+  const m = await prisma.mission.findFirst({
+    where: { childId, sourceId: lessonId },
+    select: { state: true, doneAt: true },
+  });
+  if (!m) return "NONE";
+  if (m.state === "APPROVED" || m.state === "BACKFILLED") return "DONE";
+  if (m.state === "REJECTED") return "REJECTED";
+  return m.doneAt ? "WAITING" : "NONE";
+}
+
+/**
+ * 「해봤어요」 — 배운 걸 실제로 한 것을 올린다. 어긋남 대장 D16.
+ *
+ * 🔴 **여기서 별을 주지 않는다.** 보호자가 승인해야 별이다. 아이가 자기 실천을
+ *    스스로 인정하면 실천 인정이라는 개념 자체가 무의미해진다.
+ * 🔴 **한 편당 한 장이다.** 두 번 눌러도 승인 대기가 두 줄로 늘지 않는다 (DB 유니크).
+ * 🔴 거절된 것은 **되살려 다시 신청한다.** 한 번 거절로 그 편이 영영 막히면
+ *    아이는 다시 해볼 이유가 없어진다.
+ */
+export async function claimPractice(childId: string, guardianId: string, lessonId: string) {
+  const lesson = findLesson(lessonId);
+  if (!lesson) return false;
+  // 🔴 실천이 닫힌 영역은 서버에서 막는다. 화면만 감추면 요청은 그대로 통한다 (§6.6)
+  if (!isPracticeOpen(lesson.topic)) return false;
+
+  const exist = await prisma.mission.findFirst({
+    where: { childId, sourceId: lessonId },
+    select: { id: true, state: true, doneAt: true },
+  });
+
+  if (exist) {
+    // 이미 승인됐거나 기다리는 중 — 아무것도 하지 않는다. 오류가 아니다
+    if (exist.state !== "REJECTED" && exist.doneAt) return true;
+    await prisma.mission.update({
+      where: { id: exist.id },
+      data: {
+        state: "PENDING", doneAt: new Date(), cycleId: cycleIdOf(),
+        decidedAt: null, rejectReason: null,
+      },
+    });
+    return true;
+  }
+
+  await prisma.mission.create({
+    data: {
+      childId, guardianId, sourceId: lessonId,
+      title: lesson.tryIt,
+      topic: lesson.topic,
+      reward: 1,
+      state: "PENDING",
+      doneAt: new Date(),
+      cycleId: cycleIdOf(),
+    },
+  });
+  return true;
 }

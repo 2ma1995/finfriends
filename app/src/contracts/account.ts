@@ -17,7 +17,7 @@ export type DeviceRow = {
 };
 
 /**
- * 🔴 **카드가 아니다.** 시연용 상태 표시다 (어긋남 대장 D15).
+ * 🔴 **카드가 아니다.** 시연용 상태 표시다 (어긋남 대장 D20).
  *    실제 발급은 제휴사(PTN-001)가 하고 D1·D-03 이 미확정이다.
  */
 export type MockCardStatus = "REQUESTED" | "VERIFIED" | "SHIPPING" | "ACTIVE";

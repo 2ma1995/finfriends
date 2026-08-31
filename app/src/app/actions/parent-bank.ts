@@ -5,7 +5,7 @@ import { requireGuardian } from "@/lib/session/guardian-session";
 import { resetBankMock, setInterestPct, topUpMock } from "@/modules/bank";
 
 /**
- * 아이 통장 동작 — 🔴 시연용 충전 · 이자율 설정. 어긋남 대장 D16.
+ * 아이 통장 동작 — 🔴 시연용 충전 · 이자율 설정. 어긋남 대장 D21.
  * 첫 줄에서 인가를 확인한다 (§6.6).
  */
 

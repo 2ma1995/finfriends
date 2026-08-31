@@ -1,4 +1,4 @@
--- 아이 통장(보호자용) — SRS §3 보호자 화면. 어긋남 대장 D16
+-- 아이 통장(보호자용) — SRS §3 보호자 화면. 어긋남 대장 D21
 --
 -- SRS §3 은 보호자 화면을 일곱 개로 적었다:
 --   온보딩 · 동의 · 성장 나무 · 월간 숲 · **아이 통장(충전 · 미션 관리 · 이자율 설정)** · 소비 내역 · 마이페이지
@@ -19,9 +19,9 @@ ALTER TABLE "identity"."guardian_accounts"
   ADD COLUMN "savings_interest_pct" INTEGER;
 
 COMMENT ON COLUMN "identity"."guardian_accounts"."mock_balance_won" IS
-  '🔴 시연용 잔액. 실제 선불충전금은 제휴사가 별도관리한다 (어긋남 대장 D16)';
+  '🔴 시연용 잔액. 실제 선불충전금은 제휴사가 별도관리한다 (어긋남 대장 D21)';
 COMMENT ON COLUMN "identity"."guardian_accounts"."savings_interest_pct" IS
-  '부모가 주는 이자율(%). 지급 주기는 D6 미결 (어긋남 대장 D16)';
+  '부모가 주는 이자율(%). 지급 주기는 D6 미결 (어긋남 대장 D21)';
 
 -- 음수 잔액은 만들 수 없다. 시연이라도 말이 되는 상태만 둔다
 ALTER TABLE "identity"."guardian_accounts"

@@ -8,7 +8,7 @@ import { advanceMockCardAction, resetMockCardAction } from "@/app/actions/parent
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { mockBanner, whileWaiting } from "./card.fixture";
 
-// 🔴 시연용 카드 신청 과정 — 어긋남 대장 D15. 실제 발급은 PTN-001(제휴사)
+// 🔴 시연용 카드 신청 과정 — 어긋남 대장 D20. 실제 발급은 PTN-001(제휴사)
 export const metadata = { title: "카드 신청 · 핀프렌즈" };
 
 export default async function ParentCardPage() {

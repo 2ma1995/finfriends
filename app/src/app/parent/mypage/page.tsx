@@ -9,7 +9,7 @@ import { revokeDeviceAction } from "@/app/actions/parent-account";
 import { CARD_STEPS } from "@/contracts/account";
 import { cardNotice, deviceNotice, pinNotice, notCollected } from "./mypage.fixture";
 
-// 마이페이지 — 보호자 계정 · 아이 · 기기 · 카드. 어긋남 대장 D15
+// 마이페이지 — 보호자 계정 · 아이 · 기기 · 카드. 어긋남 대장 D20
 export const metadata = { title: "내 정보 · 핀프렌즈" };
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -107,7 +107,7 @@ export default async function ParentMyPage() {
         <p className="mt-1.5 text-[0.74em] leading-relaxed text-ink-mute">{deviceNotice.hint}</p>
       </section>
 
-      {/* ── 카드 · 🔴 시연용 가짜다 (D15). 과정은 /parent/card 가 갖는다 ── */}
+      {/* ── 카드 · 🔴 시연용 가짜다 (D20). 과정은 /parent/card 가 갖는다 ── */}
       <section className="mt-4">
         <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">아이 카드</h2>
         <div className="mt-1.5">

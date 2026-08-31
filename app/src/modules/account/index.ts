@@ -45,7 +45,7 @@ function mockCard(guardianId: string, status: MockCardStatus | null, at: Date | 
 }
 
 /**
- * 🔴 **카드를 발급하지 않는다.** 다음 단계로만 옮긴다 (D15).
+ * 🔴 **카드를 발급하지 않는다.** 다음 단계로만 옮긴다 (D20).
  *    되돌아갈 수 없게 순서를 강제한다 — 시연에서 단계가 뒤엉키면 흐름을 못 보여준다.
  */
 export async function advanceMockCard(guardianId: string) {

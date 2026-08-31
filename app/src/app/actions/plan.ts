@@ -1,8 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentChild } from "@/lib/session/current-child";
-import { createPlanCard } from "@/modules/plan";
+import { createPlanCard, recordActual } from "@/modules/plan";
 import type { CategoryCode } from "@/contracts/plan";
 
 /**
@@ -34,5 +35,28 @@ export async function savePlanCard(formData: FormData) {
     author: "아이",
   });
 
-  redirect("/child/plan/new?saved=1");
+  redirect("/child/plan?saved=1");
+}
+
+/**
+ * 「얼마 썼는지 적기」 → 회고로 — PLN-002 · PLN-003.
+ * 🔴 첫 줄에서 인가를 확인한다 (§6.6).
+ */
+export async function recordActualAction(formData: FormData) {
+  const access = await currentChild();
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fplan");
+
+  const planCardId = String(formData.get("planCardId") ?? "");
+  const r = await recordActual(
+    access.childId,
+    planCardId,
+    Number(formData.get("actualAmount") ?? 0),
+    String(formData.get("actualCategory") ?? ""),
+    String(formData.get("cardTxnId") ?? "") || undefined,
+  );
+
+  revalidatePath("/child/plan");
+  if (!r.ok) redirect(`/child/plan?error=${r.reason}`);
+  // 적자마자 회고를 보여준다 — 적고 끝나면 「계획 ↔ 실제」가 아니라 그냥 기록이다
+  redirect(`/child/retro/${r.recordId}${r.starred ? "?star=1" : ""}`);
 }

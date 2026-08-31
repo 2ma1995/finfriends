@@ -27,6 +27,11 @@ export type MissionView = {
   readonly rejectReason: string | null;
   /** 승인이 늦어 소급된 것 — 「기다린 만큼 그대로 반영됐어요」 */
   readonly backfilled: boolean;
+  /**
+   * 🔴 **아이가 배우고 스스로 올린 것인가.** 보호자가 만든 미션과 갈라 보여준다 —
+   *    같아 보이면 보호자는 자기가 시킨 줄 알고, 아이가 스스로 한 것을 못 알아본다.
+   */
+  readonly fromLesson: boolean;
 };
 
 export type MissionBoardView = {

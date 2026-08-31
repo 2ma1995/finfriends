@@ -4,7 +4,7 @@ import { countWaiting } from "@/modules/mission";
 import { INTEREST_CHOICES, TOPUP_AMOUNTS, type BankView } from "@/contracts/bank";
 
 /**
- * 아이 통장(보호자용) — SRS §3 · 어긋남 대장 D16.
+ * 아이 통장(보호자용) — SRS §3 · 어긋남 대장 D21.
  *
  * 🔴 **돈을 옮기지 않는다.** 잔액은 시연용 표시고 실제 충전은 제휴사 API 가 한다
  *    (`requestTopUp` · §6.1 진입점 9번 · 착수 조건 D1 미확정).
@@ -49,7 +49,7 @@ export async function getBank(
 }
 
 /**
- * 🔴 **돈이 움직이지 않는다.** 시연용 잔액 숫자만 올린다 (D16).
+ * 🔴 **돈이 움직이지 않는다.** 시연용 잔액 숫자만 올린다 (D21).
  *    허용된 금액만 받는다 — 임의 금액을 받으면 실제 이체 흐름처럼 읽힌다.
  */
 export async function topUpMock(guardianId: string, amount: number) {

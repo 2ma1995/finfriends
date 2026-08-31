@@ -243,6 +243,8 @@ model LearningProgress {
   childId        String        @map("child_id") @db.Uuid
   topic          LearningTopic
   completedCount Int           @default(0) @map("completed_count")
+  /// 🔴 읽은 편의 id. 개수만 세면 같은 편을 다시 읽어도 진도가 오른다
+  completedLessons String[]    @default([]) @map("completed_lessons")
   quizCorrect    Int           @default(0) @map("quiz_correct")
   updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -275,6 +277,9 @@ model Mission {
   rejectReason String?      @map("reject_reason")
   /// 완료 시점 주기. 승인이 늦어도 이 주기에 귀속된다
   cycleId     Int?          @map("cycle_id")
+  /// 학습 편 id. 🔴 null 이면 보호자가 만든 미션, 값이 있으면 **아이가 배우고 스스로 한 것**.
+  ///    한 편당 한 장이다 — 부분 유니크 인덱스가 DB 에서 막는다
+  sourceId    String?       @map("source_id")
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([childId, state])
@@ -536,5 +541,74 @@ model ChildRoom {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("child_room")
+  @@schema("activity")
+}
+
+/// 용돈 장부의 한 줄 — 어긋남 대장 D18.
+enum AllowanceCode {
+  /// 보호자가 용돈을 줬다고 적는다 (+)
+  TOPUP
+  /// 아이가 목표에 떼어 두었다 (−)
+  WISH_SET_ASIDE
+  /// 목표를 지워 되돌렸다 (+)
+  WISH_RELEASE
+  /// 계획대로 쓴 것을 적었다 (−)
+  PLAN_SPEND
+  /// 보호자가 잘못 적은 것을 고쳤다 (±)
+  ADJUST
+
+  @@schema("activity")
+}
+
+/// 용돈 장부 — 어긋남 대장 D18.
+/// 🔴 **앱은 돈을 보관하지 않는다.** 실제 돈은 앱 밖에 있고 여기는 장부다 —
+///    가치를 보관하면 선불전자지급수단이 되어 전자금융업 등록 대상이 된다.
+/// 🔴 **별과 섞이지 않는다** (P-21 · S4). 두 원장 사이에 전환 함수를 두지 않는다.
+/// 🔴 잔액을 따로 저장하지 않는다. 합이 잔액이다.
+model AllowanceEntry {
+  id             String        @id @default(uuid()) @db.Uuid
+  childId        String        @map("child_id") @db.Uuid
+  delta          Int
+  code           AllowanceCode
+  /// 아이가 화면에서 읽을 한 줄
+  memo           String?
+  /// 🔴 같은 조작이 두 번 들어와도 한 번만 적힌다 (REQ-NF-003)
+  idempotencyKey String        @unique @map("idempotency_key")
+  balanceAfter   Int           @map("balance_after")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([childId, createdAt(sort: Desc)])
+  @@map("allowance_ledger")
+  @@schema("activity")
+}
+
+/// 카드 거래가 어디서 왔나 — 어긋남 대장 D19.
+enum TxnSource {
+  /// 🔴 연동 전 **예시 데이터**. 화면이 그 사실을 밝힌다
+  MOCK
+  /// 제휴 카드사에서 실제로 받은 것 (DAT-004)
+  LINKED
+
+  @@schema("activity")
+}
+
+/// 카드 거래 내역 — 어긋남 대장 D19.
+/// 🔴 **손입력을 대체하지 않는다.** 아이가 스스로 적는 것이 학습이고 여기는 **대조용**이다.
+/// 🔴 자금은 카드사가 보관한다. 앱은 내역만 받는다 — D18 의 선이 그대로 유지된다.
+model CardTransaction {
+  id         String    @id @default(uuid()) @db.Uuid
+  childId    String    @map("child_id") @db.Uuid
+  amount     Int
+  merchant   String
+  /// 업종 — 계획 카드와 같은 사전
+  category   String
+  occurredAt DateTime  @map("occurred_at") @db.Timestamptz(6)
+  source     TxnSource @default(MOCK)
+  /// 🔴 한 거래는 한 번만 쓰인다. 같은 거래로 별을 두 번 받을 수 없다
+  recordId   String?   @unique @map("record_id") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([childId, occurredAt(sort: Desc)])
+  @@map("card_transactions")
   @@schema("activity")
 }
