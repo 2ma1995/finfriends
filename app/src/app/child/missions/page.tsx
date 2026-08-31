@@ -65,7 +65,7 @@ export default async function ChildMissionsPage() {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="미션" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen role="아이 화면" title="미션">
         <Empty emoji="🎯" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -75,7 +75,7 @@ export default async function ChildMissionsPage() {
   const nothing = board.todo.length + board.waiting.length + board.settled.length === 0;
 
   return (
-    <Screen role="아이 화면" title="미션" back={{ href: "/child/home", label: "내 방" }}>
+    <Screen role="아이 화면" title="미션">
       {nothing ? <Empty emoji="🎯" {...empty} /> : null}
 
       {board.todo.length > 0 ? (

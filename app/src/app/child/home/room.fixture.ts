@@ -1,12 +1,13 @@
 // 🔴 데이터는 DB(`@/modules/items`)가, 카탈로그는 `@/contracts/items` 가 준다.
 // 여기 남은 것은 문구뿐이다.
 
-/** 오늘 할 일 — 아이는 여기서 출발한다 */
+/**
+ * 오늘 할 일 — 🔴 **하단 탭에 있는 것은 넣지 않는다.** 같은 길을 두 번 두면
+ * 아이는 둘이 다른 곳인 줄 안다. 미션·배우기·내 별·상점은 탭에 있다.
+ */
 export const todo = [
-  { href: "/child/missions", emoji: "🎯", label: "미션" },
-  { href: "/child/learn",    emoji: "📚", label: "오늘의 학습" },
   { href: "/child/plan/new", emoji: "📝", label: "계획 카드 적기" },
-  { href: "/child/wishlist", emoji: "🎯", label: "갖고 싶은 것" },
+  { href: "/child/wishlist", emoji: "🎁", label: "갖고 싶은 것" },
 ];
 
 /** 아직 아무것도 없는 방 — 오늘 가입한 아이가 보는 화면 */

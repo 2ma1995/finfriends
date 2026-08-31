@@ -11,7 +11,7 @@ export default async function ChildLearnPage() {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="배우기" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen role="아이 화면" title="배우기">
         <Empty emoji="📚" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
