@@ -217,6 +217,8 @@ model LearningProgress {
   childId        String        @map("child_id") @db.Uuid
   topic          LearningTopic
   completedCount Int           @default(0) @map("completed_count")
+  /// 🔴 읽은 편의 id. 개수만 세면 같은 편을 다시 읽어도 진도가 오른다
+  completedLessons String[]    @default([]) @map("completed_lessons")
   quizCorrect    Int           @default(0) @map("quiz_correct")
   updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
