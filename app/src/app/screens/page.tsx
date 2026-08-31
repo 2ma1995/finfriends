@@ -27,6 +27,7 @@ const ROUTES = {
     label: "아이 · Fun",
     desc: "재미 · 즉각 보상. 큰 글씨 · 둥근 모서리 · 별이 튄다",
     items: [
+      { href: "/child/welcome",        name: "처음이지?",     task: "D13" },
       { href: "/child/home",           name: "내 방",        task: "UX-003" },
       { href: "/child/missions",       name: "미션",         task: "PRC-001" },
       { href: "/child/learn",          name: "배우기",       task: "LRN-001" },

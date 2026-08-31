@@ -463,3 +463,22 @@ model DevAuthSession {
   @@map("sessions")
   @@schema("dev_auth")
 }
+
+/// 아이 온보딩 진행 — 어긋남 대장 D13.
+/// 🔴 **아이는 설명을 들은 적이 없다.** 기기 토큰으로 열면 바로 방이 나온다.
+///    「했어요」를 눌러도 별이 바로 안 붙는다는 걸 모르면 고장 난 걸로 느낀다 (AC-6.2).
+/// 🔴 단계를 서버에 둔다. 아이 기기는 초기화될 수 있다 — localStorage 는 남지 않는다.
+model ChildOnboarding {
+  childId    String    @id @map("child_id") @db.Uuid
+  /// 마지막으로 **본** 단계. 0 부터 센다
+  step       Int       @default(0)
+  /// 끝까지 봤다. 별 1개(ONBOARDING_LEARN)는 이때 한 번만 붙는다
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+  /// 건너뛰었다. 별은 없지만 다시 막지 않는다
+  skippedAt  DateTime? @map("skipped_at") @db.Timestamptz(6)
+  startedAt  DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("child_onboarding")
+  @@schema("activity")
+}
