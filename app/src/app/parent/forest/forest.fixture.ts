@@ -1,21 +1,34 @@
-// PROTO-DATA: GRW-005 — 백엔드 완료 시 이 파일을 지우고 GRW-004(숲 스냅샷) 호출로 대체한다
-export type Delta = { readonly label: string; readonly from: string; readonly to: string; readonly improved: boolean };
+/**
+ * 월간 숲 화면 문구 — GRW-005.
+ *
+ * 🔴 **데이터는 여기 없다.** `modules/growth.getForestView` 가 DB 에서 읽는다.
+ *    예전에는 이 파일이 아이 이름(서연)·획득 별 46개·델타 5줄을 값째로 갖고 있어서
+ *    **새로 가입한 계정도 남의 기록을 봤다.**
+ */
 
-export const forest = {
-  title: "2026년 3월 숲",
-  childName: "서연",
-  /** 이번 달 한 줄 */
-  oneLine: "쓰기와 모으기가 함께 자랐습니다",
-  /** 스크롤 없이 보여야 한다 (AC-1.4) — 별을 즉시 소진하는 아이에게 유일한 누적 증거다 */
-  starsEarned: 46,
-  /** 첫 달이면 0으로 그리지 않는다 (ACE-1.2) */
-  noPrevMonth: false,
-  noPrevNotice: { title: "다음 달부터 비교할 수 있어요", body: "이번 달이 첫 기준이 됩니다" },
-  deltas: [
-    { label: "사려다 멈춤", from: "2회", to: "5회", improved: true },
-    { label: "가격 비교", from: "0회", to: "4회", improved: true },
-    { label: "저축률", from: "12%", to: "32%", improved: true },
-    { label: "벌기", from: "새싹", to: "나무", improved: true },
-    { label: "잘 쓰기", from: "씨앗", to: "새싹", improved: true },
-  ] as readonly Delta[],
+/** 이번 달 별 증감이 아무것도 없을 때. 「0」으로 그리지 않는다 */
+export const emptyState = {
+  emoji: "🌲",
+  title: "이번 달 기록이 아직 없어요",
+  body: "아이가 배우거나 미션을 해내면 이번 달 숲에 쌓입니다.",
+  hint: "달이 바뀌어도 지워지지 않아요 — 숲은 계속 쌓입니다",
+};
+
+/**
+ * 🔴 US-1 AC-E2 — 가입 첫 달에는 전월 데이터가 없다.
+ *    **델타를 0으로 렌더하지 않고** 대체 문구를 낸다.
+ */
+export const noPrevNotice = {
+  title: "다음 달부터 비교할 수 있어요",
+  body: "이번 달이 첫 기준이 됩니다.",
+  hint: "지난달 기록이 있어야 「무엇이 달라졌나」를 보여줄 수 있어요",
+};
+
+/**
+ * 🔴 월말 스냅샷 배치(GRW-004)가 아직 없다.
+ *    비교 항목 7종은 그 배치가 만든다 — 없는 것을 지어내지 않고 사실을 적는다.
+ */
+export const snapshotNotice = {
+  title: "월말 기록",
+  body: "달이 끝나면 네 영역의 마지막 단계와 지난달 대비 변화가 여기 저장됩니다. 월말 집계를 준비하고 있습니다.",
 };

@@ -46,3 +46,24 @@ export type RetroView = {
   /** 다른 갈래를 보여줄 때 쓸 id — 인터뷰용 */
   readonly otherBranchId: string | null;
 };
+
+// ─────────────────────────────────────────────────────────────
+// 소비 내역 — PLN-005 · REQ-FUNC-013 (F13)
+//
+// 🔴 **전월 대비 증감액이 상단이다.** 이 화면의 목적은 「얼마 썼나」가 아니라
+//    「지난달과 무엇이 달라졌나」다. 합계만 크게 보여주면 가계부가 된다.
+// ─────────────────────────────────────────────────────────────
+
+export type SpendSummaryView = {
+  readonly monthLabel: string;
+  readonly total: number;
+  readonly prevTotal: number;
+  /** 이번 달 − 지난달. 음수면 줄었다 */
+  readonly delta: number;
+  /** 🔴 지난달 기록이 없으면 증감을 0으로 그리지 않는다 (ACE-1.2 와 같은 규율) */
+  readonly hasPrevMonth: boolean;
+  readonly byCategory: readonly SpendLineView[];
+  /** 계획 카드 없이 발생한 소비 건수 — C5 사각지대의 크기다 */
+  readonly noPlanCount: number;
+  readonly recordCount: number;
+};

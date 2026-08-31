@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
-import { CATEGORIES, categoryOf, type NewPlanCard, type RetroView, type SpendLineView } from "@/contracts/plan";
+import { CATEGORIES, categoryOf, type NewPlanCard, type RetroView, type SpendLineView, type SpendSummaryView } from "@/contracts/plan";
 
 /**
  * 계획 카드 · 계획↔실제 대조 — PLN-001 · PLN-002 · PLN-003 슬라이스.
@@ -111,4 +111,63 @@ export async function createPlanCard(childId: string, input: NewPlanCard) {
     },
     select: { id: true },
   });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 소비 내역 — PLN-005 · §6.1 진입점 11번 (RSC 읽기)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 🔴 **결제 웹훅(PTN-002)이 아직 없다.** `spending_records` 는 시드로만 들어온다.
+ *    그래도 집계 자체는 실제 표에서 센다 — 웹훅이 붙으면 이 함수는 바뀌지 않는다.
+ *
+ * 🔴 「계획에 없던 업종」은 **강조 표시일 뿐 잘못이 아니다.** ⭐ 판정은 금액 단독이다
+ *    (ADR-008). 화면 문구도 그렇게 적는다.
+ */
+export async function getSpendSummary(childId: string): Promise<SpendSummaryView> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const [thisMonth, prevMonth] = await Promise.all([
+    prisma.spendingRecord.findMany({
+      where: { childId, occurredAt: { gte: monthStart } },
+      select: { actualAmount: true, merchantCategory: true, planCardId: true, categoryMatch: true },
+    }),
+    prisma.spendingRecord.findMany({
+      where: { childId, occurredAt: { gte: prevStart, lt: monthStart } },
+      select: { actualAmount: true },
+    }),
+  ]);
+
+  const total = thisMonth.reduce((s, r) => s + r.actualAmount, 0);
+  const prevTotal = prevMonth.reduce((s, r) => s + r.actualAmount, 0);
+
+  // 업종별 집계. 계획에 없던 업종은 강조 대상으로 표시한다
+  const bucket = new Map<string, { amount: number; unplanned: boolean }>();
+  for (const r of thisMonth) {
+    const cur = bucket.get(r.merchantCategory) ?? { amount: 0, unplanned: false };
+    cur.amount += r.actualAmount;
+    // 계획이 없었거나 업종이 어긋났으면 강조한다
+    if (r.planCardId === null || r.categoryMatch === "MISMATCHED") cur.unplanned = true;
+    bucket.set(r.merchantCategory, cur);
+  }
+
+  const byCategory = [...bucket.entries()]
+    .map(([code, v]) => {
+      const c = categoryOf(code);
+      return { icon: c.icon, label: c.label, amount: v.amount, unplanned: v.unplanned };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
+  return {
+    monthLabel: `${now.getMonth() + 1}월`,
+    total,
+    prevTotal,
+    delta: total - prevTotal,
+    hasPrevMonth: prevMonth.length > 0,
+    byCategory,
+    noPlanCount: thisMonth.filter((r) => r.planCardId === null).length,
+    recordCount: thisMonth.length,
+  };
 }

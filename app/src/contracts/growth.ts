@@ -46,3 +46,36 @@ export type TreeView = {
   /** 승인 대기 미션 수. 조건부 슬롯이므로 0이면 화면에 자리도 없다 */
   readonly pendingApprovals: number;
 };
+
+// ─────────────────────────────────────────────────────────────
+// 월간 숲 — GRW-005 · REQ-FUNC-009
+//
+// 🔴 초기화되지 않고 **누적**된다. 나무는 주기마다 비워지지만 숲은 쌓인다 —
+//    전월 대비 델타가 「성장 증거」이고, 별을 즉시 소진하는 아이에게
+//    **총 획득 별이 유일한 누적 증거**다 (AC-1.4).
+// ─────────────────────────────────────────────────────────────
+
+export type ForestDelta = {
+  readonly label: string;
+  readonly from: string;
+  readonly to: string;
+  readonly improved: boolean;
+};
+
+export type ForestView = {
+  readonly childName: string;
+  readonly monthLabel: string;
+  /** 🔴 스크롤 없이 보여야 한다 (AC-1.4). 잔액이 아니라 **이번 달 번 별**이다 */
+  readonly starsEarned: number;
+  /** 이번 달 쓴 별 — 잔액이 0인 이유를 설명한다. 없으면 0 */
+  readonly starsSpent: number;
+  readonly slotStages: readonly { readonly label: string; readonly stage: string }[];
+  /**
+   * 🔴 전월 스냅샷이 없으면 **델타를 0으로 그리지 않는다** (AC-E2).
+   *    0으로 그리면 보호자는 「변화 없음」이 아니라 「고장」으로 읽는다.
+   */
+  readonly hasPrevMonth: boolean;
+  readonly deltas: readonly ForestDelta[];
+  /** 이번 달 기록이 아무것도 없다 — 빈 상태로 간다 */
+  readonly noActivity: boolean;
+};

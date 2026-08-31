@@ -1,17 +1,32 @@
-// PROTO-DATA: PLN-005 — 백엔드 완료 시 이 파일을 지우고 소비 내역 집계 조회로 대체한다
-export type Line = { readonly icon: string; readonly label: string; readonly amount: number; readonly planned: boolean };
+/**
+ * 소비 내역 화면 문구 — PLN-005.
+ *
+ * 🔴 **데이터는 여기 없다.** `modules/plan.getSpendSummary` 가 DB 에서 읽는다.
+ *    예전에는 이 파일이 4만 7천원·업종 4줄을 값째로 갖고 있어서
+ *    **새로 가입한 계정도 남의 소비를 봤다.**
+ */
 
+/**
+ * 🔴 **잘못을 표시하는 화면이 아니다.** ⭐ 판정은 금액 단독이고(ADR-008),
+ *    업종이 어긋난 것은 회고 문장을 갈라놓을 뿐 별을 막지 않는다.
+ *    문구가 이 구분을 흐리면 부모가 아이를 다그치는 화면이 된다.
+ */
 export const notice = "계획에 없던 업종을 표시하는 것이지, 잘못을 표시하는 것이 아닙니다.";
 
-export const spending = {
-  monthLabel: "3월",
-  /** 전월 대비 증감액이 상단이다 (PLN-005) */
-  total: 47500,
-  prevTotal: 61000,
-  byTopic: [
-    { icon: "🖊", label: "문구",      amount: 18000, planned: true },
-    { icon: "🍬", label: "간식·음료", amount: 15500, planned: false },
-    { icon: "📚", label: "도서",      amount: 9000,  planned: true },
-    { icon: "🎁", label: "선물",      amount: 5000,  planned: true },
-  ] as readonly Line[],
+/** 결제 웹훅(PTN-002)이 아직 없어 카드 내역이 들어오지 않는다 */
+export const emptyState = {
+  emoji: "💳",
+  title: "이번 달 소비 내역이 없어요",
+  body: "카드를 연결하면 아이가 쓴 내역이 여기에 모입니다.",
+  hint: "계획 카드를 먼저 적어두면 쓴 뒤에 겹쳐 볼 수 있어요",
 };
+
+/** 지난달 기록이 없을 때 — 증감을 0으로 그리지 않는다 */
+export const noPrevNotice = "이번 달 합계 · 지난달 기록이 없어 비교는 다음 달부터";
+
+/**
+ * 계획 없이 나간 소비 = C5 사각지대. 🔴 **크기를 숨기지 않는다.**
+ * 계획 카드 작성률이 F8 의 생존 조건이라(O7 ≥50%) 이 수가 곧 경고다.
+ */
+export const noPlanNotice = (n: number) =>
+  `${n}건은 계획 카드 없이 쓴 소비예요. 가기 전에 적어두면 쓰고 나서 겹쳐 볼 수 있어요.`;

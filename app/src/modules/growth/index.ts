@@ -4,7 +4,8 @@ import { getTopicProgress } from "@/modules/learning";
 import { countWaiting } from "@/modules/mission";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
-  STAGE_RULE_EXAMPLE, type Stage, type TreeSlotView, type TreeView,
+  STAGE_LABEL, STAGE_RULE_EXAMPLE,
+  type ForestView, type Stage, type TreeSlotView, type TreeView,
 } from "@/contracts/growth";
 
 /**
@@ -101,5 +102,62 @@ export async function getTreeView(childId: string, childName: string): Promise<T
      *    한동안 그렇게 세어 「승인 대기 1건」이 거짓으로 떴다.
      */
     pendingApprovals,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 월간 숲 — GRW-005 · REQ-FUNC-009
+// ─────────────────────────────────────────────────────────────
+
+const YM = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+/**
+ * 🔴 **월말 스냅샷 배치(GRW-004)가 아직 없다.** 그래서 `forest_snapshots` 는 비어 있고
+ *    전월 비교는 「다음 달부터」로 나간다. 없는 비교를 0으로 그리지 않는다 (AC-E2).
+ *
+ * 「이번 달 획득 별」은 스냅샷이 없어도 **원장에서 직접 셀 수 있다.** 그것이
+ *    AC-1.4 가 요구하는 유일한 누적 증거이므로 배치를 기다리지 않고 지금 보여준다.
+ */
+export async function getForestView(childId: string, childName: string): Promise<ForestView> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevYm = YM(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  const [earned, spent, states, prev] = await Promise.all([
+    prisma.starLedgerEntry.aggregate({
+      where: { childId, createdAt: { gte: monthStart }, delta: { gt: 0 } },
+      _sum: { delta: true },
+    }),
+    prisma.starLedgerEntry.aggregate({
+      where: { childId, createdAt: { gte: monthStart }, delta: { lt: 0 } },
+      _sum: { delta: true },
+    }),
+    prisma.treeState.findMany({
+      where: { childId },
+      select: { slot: true, stage: true },
+    }),
+    prisma.forestSnapshot.findUnique({
+      where: { childId_yearMonth: { childId, yearMonth: prevYm } },
+      select: { deltaItems: true },
+    }),
+  ]);
+
+  const stageBy = new Map(states.map((s) => [s.slot as Topic, s.stage]));
+  const starsEarned = earned._sum.delta ?? 0;
+  const starsSpent = Math.abs(spent._sum.delta ?? 0);
+
+  return {
+    childName,
+    monthLabel: `${now.getMonth() + 1}월`,
+    starsEarned,
+    starsSpent,
+    slotStages: ORDER.map((topic) => ({
+      label: TOPIC_LABEL[topic],
+      stage: STAGE_LABEL[((stageBy.get(topic) ?? 0) as Stage)],
+    })),
+    hasPrevMonth: prev !== null,
+    // 스냅샷의 델타는 배치가 만든다. 없으면 빈 배열이고 화면은 비교 자리를 대체 문구로 채운다
+    deltas: [],
+    noActivity: starsEarned === 0 && starsSpent === 0,
   };
 }
