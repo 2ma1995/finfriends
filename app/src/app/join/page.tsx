@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
-import { prisma } from "@/db";
 import { currentGuardian } from "@/lib/session/guardian-session";
+import { findChild } from "@/modules/consent";
 import { registerChildDeviceAction } from "@/app/actions/device";
 import { whatHappens, notCollected, parentExitNotice } from "./join.fixture";
 
@@ -36,12 +36,7 @@ export default async function JoinPage({
     );
   }
 
-  // identity 안에서만 읽는다. activity 와 조인하지 않는다 (REQ-NF-009)
-  const child = await prisma.childAccount.findFirst({
-    where: { guardianId: guardian.guardianId },
-    select: { id: true, displayName: true, birthYear: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const child = await findChild(guardian.guardianId);
 
   if (!child) {
     return (
@@ -66,9 +61,9 @@ export default async function JoinPage({
       <section>
         <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">등록하면 이렇게 됩니다</h2>
         <ul className="mt-1.5 grid gap-1">
-          {whatHappens.map((line) => (
+          {whatHappens(child.displayName).map((line) => (
             <li key={line} className="rounded-card border border-line bg-surface px-3 py-2 text-[0.84em] leading-relaxed text-ink-soft">
-              {line.replace("정하율", child.displayName)}
+              {line}
             </li>
           ))}
         </ul>

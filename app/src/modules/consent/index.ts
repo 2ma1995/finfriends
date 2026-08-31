@@ -3,6 +3,11 @@ import { prisma } from "@/db";
 import {
   REQUIRED_KEYS, type CompleteConsentResult, type ConsentItemKey, type ConsentState,
 } from "@/contracts/consent";
+import {
+  AGE_LIMIT, DEVICE_TYPES, NAME_MAX, ageFromBirthYear,
+  type ChildProfileInput, type ChildProfileView, type OnboardingProgress,
+  type SaveChildProfileResult,
+} from "@/contracts/child";
 
 /**
  * 동의 게이트 — CON-002.
@@ -57,4 +62,106 @@ export async function withdrawConsent(guardianId: string): Promise<void> {
     where: { id: guardianId },
     data: { consentCompleted: false, consentAt: null },
   });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 온보딩 단계 저장 — §6.1 진입점 2번 `saveOnboardingStep` 의 실체
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 아이 프로필 생성 — 온보딩 3단계.
+ *
+ * 🔴 **동의 없이는 만들지 않는다.** 아동 개인정보 처리의 시작점이므로
+ *    순서 자체가 규제 요건이다 (P-05 · P-22 · 다이어그램 A).
+ *
+ * 🔴 만 14세 미만만 받는다 (F-01). 나이를 넘으면 이 제품의 법적 골격이 성립하지 않는다.
+ *
+ * MVP 는 아이 한 명이다. 여러 명은 나무·숲·별이 전부 아이 단위라 화면부터 달라진다 —
+ * 요구사항에 없으므로 여기서 막고, 필요해지면 요구사항을 먼저 고친다.
+ */
+export async function createChildProfile(
+  guardianId: string,
+  input: ChildProfileInput,
+): Promise<SaveChildProfileResult> {
+  const name = input.displayName.trim();
+  if (name.length === 0) return { ok: false, reason: "NAME_REQUIRED" };
+  if (name.length > NAME_MAX) return { ok: false, reason: "NAME_TOO_LONG" };
+
+  const thisYear = new Date().getFullYear();
+  if (!Number.isInteger(input.birthYear) || input.birthYear > thisYear || input.birthYear < thisYear - 30) {
+    return { ok: false, reason: "BIRTH_YEAR_INVALID" };
+  }
+  if (ageFromBirthYear(input.birthYear) >= AGE_LIMIT) return { ok: false, reason: "TOO_OLD" };
+
+  // 🔴 고르지 않은 것을 통과시키지 않는다. 화면의 `required` 는 클라이언트 검사일 뿐이다.
+  //    「아직 없어요」(NONE)가 선택지에 있으므로 빈 값을 허용할 이유가 없다 —
+  //    허용하면 「답하지 않음」과 「기기 없음」이 DB 에서 구별되지 않는다.
+  if (!DEVICE_TYPES.some((d) => d.value === input.deviceType)) {
+    return { ok: false, reason: "DEVICE_TYPE_INVALID" };
+  }
+
+  const guardian = await prisma.guardianAccount.findUnique({
+    where: { id: guardianId },
+    select: { consentCompleted: true },
+  });
+  if (!guardian?.consentCompleted) return { ok: false, reason: "CONSENT_REQUIRED" };
+
+  const existing = await prisma.childAccount.count({ where: { guardianId } });
+  if (existing > 0) return { ok: false, reason: "ALREADY_EXISTS" };
+
+  const child = await prisma.childAccount.create({
+    data: {
+      guardianId,
+      displayName: name,
+      birthYear: input.birthYear,
+      deviceType: input.deviceType,
+      // 동의가 끝난 뒤에만 여기 오므로 바로 활성이다
+      state: "ACTIVE",
+    },
+  });
+
+  return { ok: true, childId: child.id };
+}
+
+const DEVICE_LABEL = new Map(DEVICE_TYPES.map((d) => [d.value, d.label]));
+
+/** 아이 조회. identity 안에서만 읽는다 — activity 와 조인하지 않는다 (REQ-NF-009) */
+export async function findChild(guardianId: string): Promise<ChildProfileView | null> {
+  const child = await prisma.childAccount.findFirst({
+    where: { guardianId },
+    select: { id: true, displayName: true, birthYear: true, deviceType: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!child) return null;
+  return {
+    id: child.id,
+    displayName: child.displayName,
+    birthYear: child.birthYear,
+    deviceLabel: DEVICE_LABEL.get(child.deviceType as never) ?? "기기 미정",
+  };
+}
+
+/**
+ * 온보딩 진행 상태 — 화면이 단계 상태를 하드코딩하지 않도록 실제 데이터에서 센다.
+ * 하드코딩하면 화면은 「3단계 완료」라고 하는데 DB 에는 아이가 없는 상태가 된다.
+ */
+export async function readOnboardingProgress(guardianId: string): Promise<OnboardingProgress> {
+  const [guardian, childCount, deviceCount] = await Promise.all([
+    prisma.guardianAccount.findUnique({
+      where: { id: guardianId },
+      select: { consentCompleted: true },
+    }),
+    prisma.childAccount.count({ where: { guardianId } }),
+    prisma.deviceSession.count({
+      where: { guardianId, mode: "CHILD", revokedAt: null },
+    }),
+  ]);
+
+  return {
+    // 이 함수를 부를 수 있다는 것 자체가 로그인했다는 뜻이다
+    accountDone: true,
+    consentDone: guardian?.consentCompleted ?? false,
+    childDone: childCount > 0,
+    deviceDone: deviceCount > 0,
+  };
 }
