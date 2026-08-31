@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CreditCard, ListChecks, TreePine, Trees } from "lucide-react";
+import { CreditCard, ListChecks, TreePine, Trees, UserRound } from "lucide-react";
 
 /**
  * 부모 화면 하단 네비게이션 — 어긋남 대장 D14.
@@ -25,6 +25,8 @@ const TABS = [
   { href: "/parent/forest", label: "숲", Icon: Trees },
   { href: "/parent/missions", label: "미션", Icon: ListChecks },
   { href: "/parent/spending", label: "소비", Icon: CreditCard },
+  // 계정·기기·카드·로그아웃이 갈 자리. 전에는 로그아웃이 모든 화면 하단에 떠 있었다
+  { href: "/parent/mypage", label: "내 정보", Icon: UserRound },
 ] as const;
 
 /** 하위 화면에서도 그 줄기의 탭이 켜져 있어야 지금 어디인지 알 수 있다 */
@@ -40,7 +42,7 @@ export function ParentTabs() {
       aria-label="부모 화면"
       className="sticky bottom-0 mt-auto border-t border-line bg-surface"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {TABS.map(({ href, label, Icon }) => {
           const active = isActive(pathname, href);
           return (

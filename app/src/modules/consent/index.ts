@@ -154,7 +154,7 @@ export async function readOnboardingProgress(guardianId: string): Promise<Onboar
   const [guardian, childCount, deviceCount] = await Promise.all([
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
-      select: { consentCompleted: true },
+      select: { consentCompleted: true, mockCardIssuedAt: true },
     }),
     prisma.childAccount.count({ where: { guardianId } }),
     prisma.deviceSession.count({
@@ -168,5 +168,6 @@ export async function readOnboardingProgress(guardianId: string): Promise<Onboar
     consentDone: guardian?.consentCompleted ?? false,
     childDone: childCount > 0,
     deviceDone: deviceCount > 0,
+    cardDone: guardian?.mockCardIssuedAt !== null && guardian?.mockCardIssuedAt !== undefined,
   };
 }

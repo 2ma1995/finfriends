@@ -30,12 +30,13 @@ const SPEC: readonly Omit<Step, "state">[] = [
   { n: 3, title: "아이 프로필", body: "이름과 태어난 해를 적습니다", href: "/parent/child/new", essential: true },
   { n: 4, title: "자녀 초대", body: "아이가 쓸 기기를 등록합니다", href: "/parent/invite", essential: true },
   { n: 5, title: "첫 계획 카드", body: "어디서 · 얼마를 쓸지 한 장만 적어 봅니다", essential: false },
-  { n: 6, title: "카드 연결", body: "나중에 해도 됩니다 — 카드 없이도 시작합니다", essential: false },
+  { n: 6, title: "카드 연결", body: "나중에 해도 됩니다 — 카드 없이도 시작합니다", href: "/parent/mypage", essential: false },
 ];
 
 export function buildSteps(p: OnboardingProgress): readonly Step[] {
   // 앞 단계가 끝나야 다음이 current 가 된다 — 순서가 규제 요건인 구간이 있다(동의 → 아이)
-  const doneFlags = [p.accountDone, p.consentDone, p.childDone, p.deviceDone, false, false];
+  // 5단계(첫 계획 카드)는 부모 화면이 없어 아직 false 로 둔다
+  const doneFlags = [p.accountDone, p.consentDone, p.childDone, p.deviceDone, false, p.cardDone];
   const firstTodo = doneFlags.indexOf(false);
 
   return SPEC.map((s, i) => ({

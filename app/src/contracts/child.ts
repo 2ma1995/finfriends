@@ -77,4 +77,6 @@ export type OnboardingProgress = {
   readonly consentDone: boolean;
   readonly childDone: boolean;
   readonly deviceDone: boolean;
+  /** 🔴 시연용 가짜 카드 상태다 (어긋남 대장 D15). 실제 발급은 PTN-001 */
+  readonly cardDone: boolean;
 };

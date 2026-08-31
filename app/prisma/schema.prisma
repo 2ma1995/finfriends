@@ -140,6 +140,11 @@ model GuardianAccount {
   ///    재로그인이 아니라 PIN 인 이유 — 아이 폰에서 보호자 비밀번호를 매번 치게 하면
   ///    아이가 그 비밀번호를 알게 된다
   childModePinHash String?   @map("child_mode_pin_hash")
+  /// 🔴 **카드가 아니다.** 시연용 가짜 발급 상태다 (어긋남 대장 D15).
+  ///    실제 발급은 제휴사(PTN-001)가 하고 D1·D-03 이 미확정이라 만들 수 없다.
+  ///    카드번호·유효기간·CVC·실명·계좌는 **어디에도 저장하지 않는다.**
+  ///    PTN-001 착수 시 이 컬럼을 버린다.
+  mockCardIssuedAt DateTime? @map("mock_card_issued_at") @db.Timestamptz(6)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   children ChildAccount[]
