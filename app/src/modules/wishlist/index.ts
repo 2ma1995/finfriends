@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
+import { record as recordAllowance } from "@/modules/allowance";
 import { MILESTONES, type Milestone, type WishlistView, type WishView } from "@/contracts/wishlist";
 
 /**
@@ -53,9 +54,10 @@ export async function getWishlist(childId: string): Promise<WishlistView> {
  * 🔴 **여기까지가 없어서 화면이 읽기 전용이었다.** 「갖고 싶은 것에 적어 두세요」라고
  *    학습에서 안내하는데 적을 방법이 없었다.
  *
- * 🔴 **모은 돈은 아이가 스스로 적는다** — 용돈기입장과 같다. 그래서 한계를 둔다:
- *    목표 개수·목표 금액 하한·1회 입력 상한. 없으면 100원짜리 목표를 계속 만들어
- *    별을 무한히 받을 수 있고, 그러면 **실천 지표(WPA)가 통째로 거짓이 된다.**
+ * 🔴 **모은 돈은 아무 숫자나 적는 게 아니다.** 보호자가 준 **용돈 잔액에서 떼어 온다**
+ *    (어긋남 대장 D18). 예전엔 아이가 아무 금액이나 적을 수 있어서, 100원짜리 목표를
+ *    만들어 별을 무한히 받을 수 있었다 — 그러면 실천 지표(WPA)가 통째로 거짓이 된다.
+ *    이제 **없는 돈은 못 넣는다.** 그게 이 앱이 가르치려는 것이기도 하다.
  */
 
 /** 동시에 가질 수 있는 목표 수 — 많으면 목표가 목표가 아니게 된다 */
@@ -67,7 +69,7 @@ export const MAX_DEPOSIT = 100_000;
 
 export type WishWriteResult =
   | { ok: true }
-  | { ok: false; reason: "TOO_MANY" | "BAD_NAME" | "BAD_TARGET" | "BAD_AMOUNT" | "NOT_FOUND" | "RANK_USED" };
+  | { ok: false; reason: "TOO_MANY" | "BAD_NAME" | "BAD_TARGET" | "BAD_AMOUNT" | "NOT_FOUND" | "RANK_USED" | "NOT_ENOUGH" };
 
 export async function addWish(childId: string, name: string, targetAmount: number): Promise<WishWriteResult> {
   const clean = name.trim();
@@ -102,9 +104,18 @@ export async function deposit(childId: string, wishId: string, amount: number): 
   }
   const w = await prisma.wishlist.findFirst({
     where: { id: wishId, childId },
-    select: { id: true, targetAmount: true, savedAmount: true, reachedSteps: true },
+    select: { id: true, name: true, targetAmount: true, savedAmount: true, reachedSteps: true },
   });
   if (!w) return { ok: false, reason: "NOT_FOUND" };
+
+  // 🔴 **용돈 잔액에서 떼어 온다.** 없는 돈은 못 넣는다 — 장부가 현실과 어긋나면
+  //    이 화면은 아무 의미가 없다. 멱등키에 지금 모인 금액을 넣어 연타를 막는다
+  const moved = await recordAllowance(
+    childId, -Math.floor(amount), "WISH_SET_ASIDE", `${w.name}에 넣었어요`,
+    `wish-save:${w.id}:${w.savedAmount}:${Math.floor(amount)}`,
+  );
+  if (!moved.ok) return { ok: false, reason: "NOT_ENOUGH" };
+  if (moved.duplicated) return { ok: true };
 
   const saved = w.savedAmount + Math.floor(amount);
   const reached = (Array.isArray(w.reachedSteps) ? w.reachedSteps : []) as Milestone[];
@@ -133,9 +144,25 @@ export async function deposit(childId: string, wishId: string, amount: number): 
   return { ok: true };
 }
 
+/**
+ * 목표를 지운다 — 🔴 **떼어 둔 돈은 용돈으로 되돌린다.**
+ *    안 되돌리면 아이 돈이 앱 안에서 사라진다. 이미 받은 별은 되돌리지 않는다 —
+ *    그때 실제로 모았던 것은 사실이기 때문이다.
+ */
 export async function removeWish(childId: string, wishId: string): Promise<WishWriteResult> {
-  const r = await prisma.wishlist.deleteMany({ where: { id: wishId, childId } });
-  return r.count === 1 ? { ok: true } : { ok: false, reason: "NOT_FOUND" };
+  const w = await prisma.wishlist.findFirst({
+    where: { id: wishId, childId }, select: { id: true, name: true, savedAmount: true },
+  });
+  if (!w) return { ok: false, reason: "NOT_FOUND" };
+
+  await prisma.wishlist.delete({ where: { id: w.id } });
+  if (w.savedAmount > 0) {
+    await recordAllowance(
+      childId, w.savedAmount, "WISH_RELEASE", `${w.name}에서 되돌렸어요`,
+      `wish-release:${w.id}`,
+    );
+  }
+  return { ok: true };
 }
 
 /**

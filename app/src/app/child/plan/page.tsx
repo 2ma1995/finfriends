@@ -3,6 +3,7 @@ import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { CATEGORIES } from "@/contracts/plan";
 import { currentChild } from "@/lib/session/current-child";
 import { getPlanCards, MAX_ACTUAL } from "@/modules/plan";
+import { getBalance } from "@/modules/allowance";
 import { recordActualAction } from "@/app/actions/plan";
 import {
   amountLabel, byGuardianBadge, categoryLabel, consentRequired, empty, errors, hint,
@@ -28,7 +29,10 @@ export default async function ChildPlanListPage({
   }
 
   const sp = await searchParams;
-  const cards = await getPlanCards(access.childId);
+  const [cards, allowance] = await Promise.all([
+    getPlanCards(access.childId),
+    getBalance(access.childId),
+  ]);
   const todo = cards.filter((c) => c.recordId === null);
   const done = cards.filter((c) => c.recordId !== null);
 
@@ -43,6 +47,10 @@ export default async function ChildPlanListPage({
           <p className="text-[0.88em]">{errors[sp.error] ?? errors.NOT_FOUND}</p>
         </Card></div>
       ) : null}
+
+      <div className="mb-2 rounded-card border border-line bg-sand px-3 py-2 text-center">
+        <b className="text-[0.86em]">쓸 수 있는 용돈 {won(allowance)}</b>
+      </div>
 
       <Link href="/child/plan/new"
             className="flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white">

@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
+import { record as recordAllowance } from "@/modules/allowance";
 import {
   CATEGORIES, categoryOf,
   type NewPlanCard, type PlanCardView, type RetroView, type SpendLineView,
@@ -154,7 +155,7 @@ export async function getPlanCards(childId: string): Promise<PlanCardView[]> {
 
 export type RecordResult =
   | { ok: true; recordId: string; met: boolean; starred: boolean }
-  | { ok: false; reason: "NOT_FOUND" | "ALREADY" | "BAD_AMOUNT" };
+  | { ok: false; reason: "NOT_FOUND" | "ALREADY" | "BAD_AMOUNT" | "NOT_ENOUGH" };
 
 /** 한 번에 적을 수 있는 금액 — 손이 미끄러진 0 하나를 막는다 */
 export const MAX_ACTUAL = 1_000_000;
@@ -176,7 +177,10 @@ export async function recordActual(
   }
   const plan = await prisma.planCard.findFirst({
     where: { id: planCardId, childId },
-    select: { id: true, category: true, limitAmount: true, spendings: { select: { id: true }, take: 1 } },
+    select: {
+      id: true, whereText: true, category: true, limitAmount: true,
+      spendings: { select: { id: true }, take: 1 },
+    },
   });
   if (!plan) return { ok: false, reason: "NOT_FOUND" };
   if (plan.spendings.length > 0) return { ok: false, reason: "ALREADY" };
@@ -186,6 +190,14 @@ export async function recordActual(
   const known = CATEGORIES.some((c) => c.code === actualCategory);
   const category = known ? actualCategory : plan.category;
   const now = new Date();
+
+  // 🔴 **쓴 돈은 용돈에서 빠진다** (D18). 0원은 「안 썼다」이므로 장부를 건드리지 않는다
+  if (amount > 0) {
+    const paid = await recordAllowance(
+      childId, -amount, "PLAN_SPEND", `${plan.whereText}에서 썼어요`, `plan-spend:${plan.id}`,
+    );
+    if (!paid.ok) return { ok: false, reason: "NOT_ENOUGH" };
+  }
 
   const rec = await prisma.spendingRecord.create({
     data: {

@@ -12,7 +12,10 @@ export const targetLabel = "얼마짜리";
 export const targetPlaceholder = "24000";
 export const addLabel = "적어두기";
 
-export const depositLabel = "모은 돈 넣기";
+export const depositLabel = "넣기";
+/** 🔴 별이 아니라 **용돈**이다. 둘은 절대 섞이지 않는다 (P-21) */
+export const walletLabel = (n: number) => `쓸 수 있는 용돈 ${n.toLocaleString("ko-KR")}원`;
+export const walletEmpty = "아직 받은 용돈이 없어요. 부모님이 넣어 주시면 모을 수 있어요.";
 export const depositPlaceholder = "1000";
 export const removeLabel = "지우기";
 export const rankUpLabel = "↑ 순위 올리기";
@@ -28,6 +31,7 @@ export const errors: Record<string, string> = {
   BAD_TARGET: "1,000원부터 1,000,000원까지 적을 수 있어요.",
   BAD_AMOUNT: "한 번에 100,000원까지 넣을 수 있어요.",
   RANK_USED: "순위는 한 달에 한 번만 바꿀 수 있어요. 다음 달에 또 바꿀 수 있어요.",
+  NOT_ENOUGH: "용돈이 모자라요. 지금 있는 만큼만 넣을 수 있어요.",
   NOT_FOUND: "찾을 수 없어요.",
 };
 

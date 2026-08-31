@@ -1,11 +1,13 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getWishlist, MAX_DEPOSIT, MAX_TARGET, MAX_WISHES, MIN_TARGET } from "@/modules/wishlist";
+import { getBalance } from "@/modules/allowance";
 import { addWishAction, depositAction, raiseRankAction, removeWishAction } from "@/app/actions/wishlist";
 import {
   addLabel, addTitle, addedNotice, consentRequired, depositLabel, depositPlaceholder,
   empty, errors, milestoneHint, nameLabel, namePlaceholder, noDevice, rankNotice,
   rankUpLabel, rankedNotice, removeLabel, savedNotice, targetLabel, targetPlaceholder,
+  walletEmpty, walletLabel,
 } from "./wishlist.fixture";
 
 // PRC-004 — 위시리스트. 🔴 목이 아니라 DB 를 본다
@@ -27,12 +29,21 @@ export default async function ChildWishlistPage({
   }
 
   const sp = await searchParams;
-  const { wishes, rankChangesLeft } = await getWishlist(access.childId);
+  const [{ wishes, rankChangesLeft }, allowance] = await Promise.all([
+    getWishlist(access.childId),
+    getBalance(access.childId),
+  ]);
   const full = wishes.length >= MAX_WISHES;
 
   return (
     <Screen role="아이 화면" title="갖고 싶은 것" sub={`${wishes.length} / ${MAX_WISHES}개`}
             back={{ href: "/child/home", label: "내 방" }}>
+      {/* 🔴 별이 아니라 용돈이다. 여기서 떼어 목표에 넣는다 (D18) */}
+      <div className="mb-2 rounded-card border border-line bg-sand px-3 py-2 text-center">
+        <b className="text-[0.86em]">{walletLabel(allowance)}</b>
+        {allowance === 0 ? <p className="mt-0.5 text-[0.74em] text-ink-mute">{walletEmpty}</p> : null}
+      </div>
+
       {sp.error ? (
         <div className="mb-2"><Card tone="miss">
           <p className="text-[0.88em]">{errors[sp.error] ?? errors.NOT_FOUND}</p>
@@ -72,10 +83,12 @@ export default async function ChildWishlistPage({
               {/* 🔴 모은 돈은 아이가 스스로 적는다 — 용돈기입장과 같다. 한 번 상한은 모듈이 건다 */}
               <form action={depositAction} className="mt-2 flex gap-1.5">
                 <input type="hidden" name="wishId" value={w.id} />
-                <input name="amount" type="number" inputMode="numeric" min={1} max={MAX_DEPOSIT} step={1}
-                       required placeholder={depositPlaceholder}
+                <input name="amount" type="number" inputMode="numeric"
+                       min={1} max={Math.min(MAX_DEPOSIT, allowance || 1)} step={1}
+                       disabled={allowance <= 0} required placeholder={depositPlaceholder}
                        className="min-h-touch w-full flex-1 rounded-card border border-line bg-surface px-3 text-right text-[0.9em] tabular-nums" />
-                <button className="min-h-touch shrink-0 rounded-card bg-primary px-3 text-[0.8em] font-bold text-white">
+                <button disabled={allowance <= 0}
+                        className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-[0.8em] font-bold text-white disabled:opacity-40">
                   {depositLabel}
                 </button>
               </form>

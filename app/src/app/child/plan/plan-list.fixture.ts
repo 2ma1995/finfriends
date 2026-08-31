@@ -22,6 +22,7 @@ export const byGuardianBadge = "부모님이 적음";
 export const errors: Record<string, string> = {
   ALREADY: "이 계획은 이미 맞춰봤어요.",
   BAD_AMOUNT: "0원부터 1,000,000원까지 적을 수 있어요.",
+  NOT_ENOUGH: "용돈보다 많이 쓴 걸로 적었어요. 부모님께 말해 주세요.",
   NOT_FOUND: "찾을 수 없어요.",
 };
 
