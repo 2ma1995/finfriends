@@ -88,7 +88,7 @@ export default async function ParentTreePage() {
 
       {/* ④ 승인 대기 — 조건부. 없으면 자리도 없다 */}
       {view.pendingApprovals > 0 ? (
-        <Link href="/parent/missions" className="mt-2 flex items-center justify-between rounded-card border border-line-2 bg-sand px-3 py-2 text-[0.82em] text-ink-soft">
+        <Link href="/parent/bank/missions" className="mt-2 flex items-center justify-between rounded-card border border-line-2 bg-sand px-3 py-2 text-[0.82em] text-ink-soft">
           <span>승인을 기다리는 미션</span>
           <b className="text-miss">{view.pendingApprovals}건 →</b>
         </Link>
@@ -100,7 +100,7 @@ export default async function ParentTreePage() {
         볼 것만 주고 할 것을 주지 않으면 재방문할 이유가 없다.
       */}
       <Link
-        href="/parent/missions/new"
+        href="/parent/bank/missions/new"
         className="mt-2 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.88em] font-bold text-white"
       >
         미션 만들기

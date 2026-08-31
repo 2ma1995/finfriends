@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CreditCard, ListChecks, TreePine, Trees, UserRound } from "lucide-react";
+import { CreditCard, PiggyBank, TreePine, Trees, UserRound } from "lucide-react";
 
 /**
  * 부모 화면 하단 네비게이션 — 어긋남 대장 D14.
@@ -23,7 +23,9 @@ import { CreditCard, ListChecks, TreePine, Trees, UserRound } from "lucide-react
 const TABS = [
   { href: "/parent/tree", label: "나무", Icon: TreePine },
   { href: "/parent/forest", label: "숲", Icon: Trees },
-  { href: "/parent/missions", label: "미션", Icon: ListChecks },
+  // SRS §3 — 「아이 통장(보호자용)」이 충전 · 미션 관리 · 이자율 설정을 갖는다.
+  // 미션은 이 안의 하위 화면이므로 `/parent/bank/missions` 에서도 이 탭이 켜진다
+  { href: "/parent/bank", label: "통장", Icon: PiggyBank },
   { href: "/parent/spending", label: "소비", Icon: CreditCard },
   // 계정·기기·카드·로그아웃이 갈 자리. 전에는 로그아웃이 모든 화면 하단에 떠 있었다
   { href: "/parent/mypage", label: "내 정보", Icon: UserRound },

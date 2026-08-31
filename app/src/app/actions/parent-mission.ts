@@ -16,7 +16,7 @@ export async function approveMissionAction(formData: FormData) {
   const g = await requireGuardian();
   const id = String(formData.get("missionId") ?? "");
   if (id) await approveMission(g.guardianId, id);
-  revalidatePath("/parent/missions");
+  revalidatePath("/parent/bank/missions");
   revalidatePath("/child/missions");
 }
 
@@ -25,7 +25,7 @@ export async function rejectMissionAction(formData: FormData) {
   const id = String(formData.get("missionId") ?? "");
   const reason = String(formData.get("reason") ?? "");
   if (id) await rejectMission(g.guardianId, id, reason);
-  revalidatePath("/parent/missions");
+  revalidatePath("/parent/bank/missions");
   revalidatePath("/child/missions");
 }
 
@@ -34,7 +34,7 @@ export async function approveAllAction(formData: FormData) {
   const g = await requireGuardian();
   const ids = String(formData.get("missionIds") ?? "").split(",").filter(Boolean);
   for (const id of ids) await approveMission(g.guardianId, id);
-  revalidatePath("/parent/missions");
+  revalidatePath("/parent/bank/missions");
   revalidatePath("/child/missions");
 }
 
@@ -67,11 +67,11 @@ export async function createMissionAction(formData: FormData) {
       topic: topic ?? "",
       reward: Number.isNaN(reward) ? "" : String(reward),
     });
-    redirect(`/parent/missions/new?${q}`);
+    redirect(`/parent/bank/missions/new?${q}`);
   }
 
-  revalidatePath("/parent/missions");
+  revalidatePath("/parent/bank/missions");
   revalidatePath("/parent/tree");
   revalidatePath("/child/missions");
-  redirect("/parent/missions?created=1");
+  redirect("/parent/bank/missions?created=1");
 }

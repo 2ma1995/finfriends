@@ -19,7 +19,7 @@ const ROUTES = {
       { href: "/join",              name: "기기 등록",     task: "CON-004" },
       { href: "/parent/tree",       name: "성장 나무",     task: "GRW-003" },
       { href: "/parent/forest",     name: "월간 숲",       task: "GRW-005" },
-      { href: "/parent/missions",   name: "승인 대기",     task: "PRC-001" },
+      { href: "/parent/bank/missions",   name: "승인 대기",     task: "PRC-001" },
       { href: "/parent/spending",   name: "소비 내역",     task: "PLN-005" },
     ],
   },

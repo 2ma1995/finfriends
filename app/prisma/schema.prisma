@@ -162,6 +162,10 @@ model GuardianAccount {
   mockCardIssuedAt DateTime? @map("mock_card_issued_at") @db.Timestamptz(6)
   /// 🔴 가짜 신청 단계. null 이면 아직 신청하지 않았다
   mockCardStatus MockCardStatus? @map("mock_card_status")
+  /// 🔴 **시연용 잔액.** 실제 선불충전금은 제휴사가 100% 별도관리한다 (ADR-004 · D16)
+  mockBalanceWon Int             @default(0) @map("mock_balance_won")
+  /// 부모가 주는 이자율(%). §9 A3. 🔴 지급 주기는 D6 미결이라 계산하지 않는다
+  savingsInterestPct Int?        @map("savings_interest_pct")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   children ChildAccount[]

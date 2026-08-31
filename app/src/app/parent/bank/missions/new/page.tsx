@@ -29,7 +29,7 @@ export default async function NewMissionPage({
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title="미션 만들기" back={{ href: "/parent/missions", label: "미션" }}>
+      <Screen role="부모 화면" title="미션 만들기" back={{ href: "/parent/bank/missions", label: "승인 대기" }}>
         <Empty
           emoji="🐣"
           title="등록한 아이가 없어요"
@@ -54,7 +54,7 @@ export default async function NewMissionPage({
       role="부모 화면"
       title="미션 만들기"
       sub={`${child.displayName}에게 줄 미션`}
-      back={{ href: "/parent/missions", label: "미션" }}
+      back={{ href: "/parent/bank/missions", label: "승인 대기" }}
     >
       <form action={createMissionAction} className="grid gap-2.5">
         <div className="grid gap-1">
