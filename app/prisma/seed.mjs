@@ -1,28 +1,58 @@
 /**
  * 개발용 시드 — 🔴 로컬 전용. 운영에 돌리지 않는다.
  *
- * 보호자 1 · 아이 1 · 아이 기기 1 · 별 원장 몇 줄을 만든다.
- * 인증(CON-001)이 아직 없어서 **기기 토큰이 유일한 진입 열쇠**다 — 마지막에 출력한다.
+ * 시드 보호자(`dev-guardian`) 1 · 아이 1 · 아이 기기 1 · 별 원장 몇 줄을 만든다.
+ *
+ * 🔴 **사람이 가입한 계정은 건드리지 않는다.** 범위는 `dev-guardian` 과 그 아이들뿐이다.
+ *    이 시드 보호자는 인증 사용자를 갖지 않으므로 기기 토큰으로만 아이 화면에 들어간다 —
+ *    부모 화면을 보려면 화면에서 직접 가입해 로그인한다(CON-001).
  */
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
 const url = process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:55432/finfriends";
+
+// 🔴 로컬만. 운영 접속 문자열로 이 스크립트가 도는 사고를 구조로 막는다
+if (!/@(localhost|127\.0\.0\.1)[:/]/.test(url)) {
+  console.error("로컬 DB 가 아니다. 시드를 돌리지 않는다:", url.replace(/:[^:@]*@/, ":***@"));
+  process.exit(1);
+}
+
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 const h = (t) => createHash("sha256").update(t).digest("hex");
 
-await prisma.deviceSession.deleteMany({});
-await prisma.starLedgerEntry.deleteMany({});
-await prisma.treeState.deleteMany({});
-await prisma.childAccount.deleteMany({});
-await prisma.guardianAccount.deleteMany({});
+const SEED_AUTH_REF = "dev-guardian";
 
-// 🔴 인증까지 함께 비운다. 여기를 빼면 `dev_auth.users` 는 남고 보호자 행만 사라져
-//    **비밀번호는 맞는데 로그인만 실패하는 계정**이 된다 (실제로 한 번 그렇게 됐다).
-//    가입해 둔 계정은 시드를 돌리면 사라진다 — 다시 가입해야 한다.
-await prisma.devAuthSession.deleteMany({});
-await prisma.devAuthUser.deleteMany({});
+/**
+ * 🔴 **자기가 만든 것만 지운다.**
+ *
+ * 처음에는 `deleteMany({})` 로 전부 비웠다. 그러면 사람이 화면에서 가입해 둔 계정이
+ * 시드를 돌릴 때마다 사라진다 — 실제로 두 번 그렇게 됐다.
+ * 한 번은 `guardian_accounts` 만 지워서 **비밀번호는 맞는데 로그인만 실패**하는 상태가 됐고,
+ * 인증까지 함께 지우도록 고쳤더니 이번에는 계정이 통째로 없어졌다.
+ *
+ * 시드 데이터와 사람이 만든 데이터가 **같은 DB 에 공존**하는 것이 전제다.
+ * 그러니 범위를 `dev-guardian` 과 그 아이들로 좁힌다. `dev_auth` 는 건드리지 않는다 —
+ * 시드 보호자는 애초에 인증 사용자를 갖지 않는다(기기 토큰으로만 들어간다).
+ */
+const prev = await prisma.guardianAccount.findUnique({
+  where: { authRef: SEED_AUTH_REF },
+  select: { id: true, children: { select: { id: true } } },
+});
+
+if (prev) {
+  const childIds = prev.children.map((c) => c.id);
+  const byChild = { childId: { in: childIds } };
+  await prisma.deviceSession.deleteMany({ where: { guardianId: prev.id } });
+  await prisma.starLedgerEntry.deleteMany({ where: byChild });
+  await prisma.treeState.deleteMany({ where: byChild });
+  await prisma.learningProgress.deleteMany({ where: byChild });
+  await prisma.wishlist.deleteMany({ where: byChild });
+  await prisma.childAccount.deleteMany({ where: { guardianId: prev.id } });
+  await prisma.guardianAccount.delete({ where: { id: prev.id } });
+  console.log("  이전 시드 데이터 정리 · 아이", childIds.length, "명");
+}
 
 const g = await prisma.guardianAccount.create({
   data: { authRef: "dev-guardian", consentCompleted: true, consentAt: new Date(), childModePinHash: h("1234") },
@@ -52,7 +82,6 @@ for (const [code, delta, ago] of rows.slice().reverse()) {
 }
 
 // 학습 진도 — LRN-001
-await prisma.learningProgress.deleteMany({});
 await prisma.learningProgress.createMany({ data: [
   { childId: c.id, topic: "EARN",  completedCount: 3, quizCorrect: 5 },
   { childId: c.id, topic: "SPEND", completedCount: 2, quizCorrect: 4 },
@@ -60,7 +89,6 @@ await prisma.learningProgress.createMany({ data: [
 ] });
 
 // 위시리스트 — PRC-004. reachedSteps 는 이미 별을 받은 단계다
-await prisma.wishlist.deleteMany({});
 await prisma.wishlist.createMany({ data: [
   { childId: c.id, name: "물감 세트", targetAmount: 24000, savedAmount: 18000, rank: 1, reachedSteps: [30, 70] },
   { childId: c.id, name: "만화책",   targetAmount: 12000, savedAmount: 4000,  rank: 2, reachedSteps: [30] },
