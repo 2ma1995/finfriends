@@ -17,6 +17,15 @@ export type Stage = 0 | 1 | 2;
 export const STAGE_LABEL: Record<Stage, string> = { 0: "씨앗", 1: "새싹", 2: "나무" };
 
 /**
+ * 🔴 이모지는 **단계**를 따른다. 영역을 따르면 씨앗인데 🌳 가 나온다 — 그랬다.
+ *    라벨과 그림이 어긋나면 보호자는 그림을 믿고 「자랐구나」로 읽는다.
+ *
+ * 변경 대장 #14 의 4단계(새싹·나무·꽃 나무·열매 나무)가 확정되면
+ * 여기에 🌸 · 🍎 를 이어 붙인다. 라벨과 같은 자리에서 함께 고친다.
+ */
+export const STAGE_EMOJI: Record<Stage, string> = { 0: "🌰", 1: "🌱", 2: "🌳" };
+
+/**
  * 승급 사다리 — SRS 다이어그램 B.
  *
  *   씨앗 → 새싹 : 학습 완주 + 퀴즈 정답 + 실천 1회
@@ -65,6 +74,7 @@ export type Condition = {
 export type TreeSlotView = {
   readonly topic: Topic;
   readonly label: string;
+  /** 🔴 단계 이모지다. 영역 이모지가 아니다 */
   readonly icon: string;
   readonly stage: Stage;
   /** 「나무가 되기까지」처럼 다음 목표를 알려준다. 최고 단계면 null */

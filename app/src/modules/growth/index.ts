@@ -2,9 +2,9 @@ import "server-only";
 import { prisma } from "@/db";
 import { getTopicProgress } from "@/modules/learning";
 import { countWaiting } from "@/modules/mission";
-import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
+import { TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
-  STAGE_LABEL, STAGE_LADDER, nextRule, stageFor, subjectParticle,
+  STAGE_EMOJI, STAGE_LABEL, STAGE_LADDER, nextRule, stageFor, subjectParticle,
   type ForestView, type Stage, type TreeSlotView, type TreeView,
 } from "@/contracts/growth";
 
@@ -89,7 +89,8 @@ export async function getTreeView(childId: string, childName: string): Promise<T
     return {
       topic,
       label: TOPIC_LABEL[topic],
-      icon: TOPIC_ICON[topic],
+      // 🔴 단계 이모지. 영역 이모지를 쓰면 씨앗인데 🌳 가 나온다
+      icon: STAGE_EMOJI[stage],
       stage,
       nextStageLabel: next
         ? `${STAGE_LABEL[next.stage]}${subjectParticle(STAGE_LABEL[next.stage])} 되기까지`
@@ -173,10 +174,10 @@ export async function getForestView(childId: string, childName: string): Promise
     monthLabel: `${now.getMonth() + 1}월`,
     starsEarned,
     starsSpent,
-    slotStages: ORDER.map((topic) => ({
-      label: TOPIC_LABEL[topic],
-      stage: STAGE_LABEL[((stageBy.get(topic) ?? 0) as Stage)],
-    })),
+    slotStages: ORDER.map((topic) => {
+      const st = ((stageBy.get(topic) ?? 0) as Stage);
+      return { label: TOPIC_LABEL[topic], stage: `${STAGE_EMOJI[st]} ${STAGE_LABEL[st]}` };
+    }),
     hasPrevMonth: prev !== null,
     // 스냅샷의 델타는 배치가 만든다. 없으면 빈 배열이고 화면은 비교 자리를 대체 문구로 채운다
     deltas: [],
