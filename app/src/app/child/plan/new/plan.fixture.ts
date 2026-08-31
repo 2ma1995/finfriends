@@ -5,6 +5,8 @@
 export const notice = "가기 전에 적으면, 쓴 뒤에 맞춰볼 수 있어요.";
 export const savedNotice = "적어뒀어요. 쓴 뒤에 맞춰볼게요.";
 export const errorNotice = "어디서 · 무엇을 · 얼마를 다 적어야 해요.";
+/** 🔴 「안 돼요」로 끝내지 않는다. 아이가 다음에 뭘 할지 알아야 한다 (ACE-1.1) */
+export const tooBigNotice = "금액이 너무 커요. 백만 원까지 적을 수 있어요.";
 export const submitLabel = "적어두기";
 
 export const labels = { where: "어디서", what: "무엇을", amount: "얼마를" };

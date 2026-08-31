@@ -3,7 +3,8 @@ import { currentChild } from "@/lib/session/current-child";
 import { CATEGORIES } from "@/contracts/plan";
 import { savePlanCard } from "@/app/actions/plan";
 import {
-  consentRequired, errorNotice, labels, noDevice, notice, placeholders, savedNotice, submitLabel,
+  consentRequired, errorNotice, labels, noDevice, notice, placeholders,
+  savedNotice, submitLabel, tooBigNotice,
 } from "./plan.fixture";
 
 // PLN-001 — 계획 카드 적기. 🔴 아이 화면의 첫 **쓰기** 기능
@@ -31,7 +32,9 @@ export default async function ChildPlanNewPage({
         <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{savedNotice}</p></Card></div>
       ) : null}
       {sp.error ? (
-        <div className="mb-2"><Card tone="miss"><p className="text-[0.88em]">{errorNotice}</p></Card></div>
+        <div className="mb-2"><Card tone="miss"><p className="text-[0.88em]">
+          {sp.error === "too_big" ? tooBigNotice : errorNotice}
+        </p></Card></div>
       ) : null}
 
       <Card tone="grow"><p className="text-[0.88em] leading-relaxed">{notice}</p></Card>
@@ -62,7 +65,11 @@ export default async function ChildPlanNewPage({
 
         <label className="grid gap-1">
           <span className="text-[0.76em] text-ink-mute">{labels.amount}</span>
-          <input name="limitAmount" type="number" inputMode="numeric" min={1} step={100} required
+          {/* 🔴 `step` 을 100 으로 두면 브라우저가 1·101·201… 만 유효로 본다 —
+              아이가 1500 을 적어도 **제출이 조용히 막힌다.** 실제로 그렇게 막혔다.
+              step 은 값을 검사하는 도구가 아니다. 범위는 min·max 로만 건다. */}
+          <input name="limitAmount" type="number" inputMode="numeric"
+                 min={1} max={1000000} step={1} required
                  placeholder={placeholders.amount}
                  className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-title font-bold tabular-nums" />
         </label>
