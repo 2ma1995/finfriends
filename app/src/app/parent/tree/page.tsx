@@ -35,6 +35,9 @@ function TreeCard({ t }: { t: TreeSlotView }) {
       <div className="text-[0.7em] text-ink-mute">
         {t.locked ? "곧 열려요" : t.stalledDays ? `${t.stalledDays}일째 그대로` : STAGE_LABEL[t.stage]}
       </div>
+      {!t.locked && t.nextStageLabel ? (
+        <div className="text-[0.66em] text-ink-mute">{t.nextStageLabel}</div>
+      ) : null}
       <ul className="mt-2 grid gap-1 text-left">{t.conditions.map((c) => <Gauge key={c.label} c={c} />)}</ul>
     </div>
   );

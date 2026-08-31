@@ -112,6 +112,21 @@ enum DeviceMode {
   @@schema("identity")
 }
 
+/// 🔴 시연용 가짜 카드 단계 (어긋남 대장 D15). PTN-001 착수 시 이 열거형을 버린다.
+///    실제 발급은 제휴사가 하고 D1 · D-03 이 미확정이다.
+enum MockCardStatus {
+  /// 신청 접수
+  REQUESTED
+  /// 본인 확인 — 실제로는 제휴사가 한다 (D-03 · ADR-T09)
+  VERIFIED
+  /// 배송 중. 이 동안에도 학습·퀴즈는 열린다 (US-8 AC2 · F16)
+  SHIPPING
+  /// 사용 중
+  ACTIVE
+
+  @@schema("identity")
+}
+
 /// 동의·계정 상태 (SM-01). 아동 화면은 ACTIVE 에서만 열린다
 enum AccountState {
   CREATED
@@ -145,6 +160,8 @@ model GuardianAccount {
   ///    카드번호·유효기간·CVC·실명·계좌는 **어디에도 저장하지 않는다.**
   ///    PTN-001 착수 시 이 컬럼을 버린다.
   mockCardIssuedAt DateTime? @map("mock_card_issued_at") @db.Timestamptz(6)
+  /// 🔴 가짜 신청 단계. null 이면 아직 신청하지 않았다
+  mockCardStatus MockCardStatus? @map("mock_card_status")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   children ChildAccount[]

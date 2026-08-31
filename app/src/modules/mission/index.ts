@@ -125,18 +125,48 @@ export async function listPendingForGuardian(guardianId: string) {
 export async function approveMission(guardianId: string, missionId: string) {
   const m = await prisma.mission.findFirst({
     where: { id: missionId, guardianId, state: "PENDING", doneAt: { not: null } },
-    select: { id: true, childId: true, reward: true, doneAt: true },
+    select: { id: true, childId: true, reward: true, doneAt: true, topic: true, cycleId: true },
   });
   if (!m) return false;
 
   // 승인이 하루보다 늦었으면 소급으로 표시한다 — 아이 화면이 「늦게 확인됐지만」이라고 말한다
   const late = Date.now() - m.doneAt!.getTime() > 864e5;
 
+  /**
+   * 🔴 **실천 기록을 함께 남긴다.** 별만 주면 나무가 자라지 않는다 —
+   *    성장 나무의 실천 칸은 `practice_credits` 를 세기 때문이다.
+   *    `PRC-001` 분해가 「승인 시 ⭐1 지급 **+ 실천 카운트 가산**」이라고 적었는데
+   *    가산이 빠져 있었다. 별은 붙고 나무는 그대로인 상태가 됐다.
+   *
+   * 🔴 `earnedAt` 은 **아이가 한 시각**, `awardedAt` 은 확정 시각이다. 소급 승인이면 둘이 다르다.
+   *    `cycleId` 는 완료 시점 주기에 귀속시킨다 — 지급 시각으로 계산하면
+   *    늦게 본 승인이 **다음 달 나무를 부풀린다** (ACE-6.2).
+   *
+   * 재승인이 들어와도 별은 멱등키가 막고, 실천은 `practiceId` unique 가 막는다.
+   */
+  const credit = await prisma.practiceCredit.upsert({
+    where: { id: m.id },
+    create: {
+      id: m.id,
+      childId: m.childId,
+      triggerCode: "MISSION_APPROVED",
+      triggerPath: "PRACTICE",
+      topic: m.topic,
+      approvalMode: "parent",
+      earnedAt: m.doneAt!,
+      awardedAt: new Date(),
+      cycleId: m.cycleId ?? cycleIdOf(m.doneAt!),
+    },
+    update: {},
+    select: { id: true },
+  });
+
   const granted = await grantStar({
     childId: m.childId,
     triggerCode: "MISSION_APPROVED",
     delta: m.reward,
     idempotencyKey: `mission:${m.id}`,
+    practiceId: credit.id,
   });
   if (!granted.ok) return false;
 

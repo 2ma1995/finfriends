@@ -5,7 +5,8 @@ import { getGuardianEmail, getMyPage } from "@/modules/account";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { signOutAction } from "@/app/actions/auth";
 import { withdrawConsentAction } from "@/app/actions/consent";
-import { cancelMockCardAction, issueMockCardAction, revokeDeviceAction } from "@/app/actions/parent-account";
+import { revokeDeviceAction } from "@/app/actions/parent-account";
+import { CARD_STEPS } from "@/contracts/account";
 import { cardNotice, deviceNotice, pinNotice, notCollected } from "./mypage.fixture";
 
 // 마이페이지 — 보호자 계정 · 아이 · 기기 · 카드. 어긋남 대장 D15
@@ -106,46 +107,42 @@ export default async function ParentMyPage() {
         <p className="mt-1.5 text-[0.74em] leading-relaxed text-ink-mute">{deviceNotice.hint}</p>
       </section>
 
-      {/* ── 카드 · 🔴 시연용 가짜다 (D15) ── */}
+      {/* ── 카드 · 🔴 시연용 가짜다 (D15). 과정은 /parent/card 가 갖는다 ── */}
       <section className="mt-4">
         <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">아이 카드</h2>
         <div className="mt-1.5">
-          <Card tone={view.card.issued ? "grow" : "surface"}>
+          <Card tone={view.card.active ? "grow" : "surface"}>
             <div
               className="rounded-card px-4 py-5"
-              style={{ background: "linear-gradient(135deg, var(--ff-primary-d), var(--ff-primary))" }}
+              style={{
+                background: view.card.active
+                  ? "linear-gradient(135deg, var(--ff-primary-d), var(--ff-primary))"
+                  : "linear-gradient(135deg, var(--ff-line-2), var(--ff-line))",
+              }}
             >
-              <span className="block text-[0.7em] tracking-[0.14em] text-white/70">FINFRIENDS</span>
-              <b className="mt-3 block text-[0.98em] tabular-nums tracking-[0.06em] text-white">
+              <span className={`block text-[0.7em] tracking-[0.14em] ${view.card.active ? "text-white/70" : "text-ink-mute"}`}>
+                FINFRIENDS
+              </span>
+              <b className={`mt-3 block text-[0.98em] tabular-nums tracking-[0.06em] ${view.card.active ? "text-white" : "text-ink-soft"}`}>
                 {view.card.maskedNumber}
               </b>
-              <span className="mt-2 block text-[0.74em] text-white/80">
-                {view.card.issued ? `${view.child?.displayName ?? "아이"} · ${view.card.issuedLabel}` : "아직 신청하지 않았어요"}
+              <span className={`mt-2 block text-[0.74em] ${view.card.active ? "text-white/80" : "text-ink-mute"}`}>
+                {view.card.active
+                  ? `${view.child?.displayName ?? "아이"} · ${view.card.issuedLabel ?? ""} 등록`
+                  : view.card.status === null
+                    ? "아직 신청하지 않았어요"
+                    : `${CARD_STEPS[view.card.stepIndex]?.title ?? ""} 단계`}
               </span>
             </div>
 
             <p className="mt-2 text-[0.8em] leading-relaxed text-miss">{cardNotice.mock}</p>
-            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-soft">{cardNotice.body}</p>
 
-            {view.card.issued ? (
-              <form action={cancelMockCardAction} className="mt-2">
-                <button
-                  type="submit"
-                  className="min-h-touch w-full rounded-card border border-line-2 text-[0.82em] text-ink-soft"
-                >
-                  신청 취소
-                </button>
-              </form>
-            ) : (
-              <form action={issueMockCardAction} className="mt-2">
-                <button
-                  type="submit"
-                  className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white"
-                >
-                  카드 신청하기
-                </button>
-              </form>
-            )}
+            <Link
+              href="/parent/card"
+              className="mt-2 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.86em] font-bold text-white"
+            >
+              {view.card.status === null ? "카드 신청하기" : view.card.active ? "카드 보기" : "신청 이어서 하기"}
+            </Link>
           </Card>
         </div>
       </section>

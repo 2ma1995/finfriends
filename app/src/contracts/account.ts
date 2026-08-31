@@ -20,8 +20,45 @@ export type DeviceRow = {
  * 🔴 **카드가 아니다.** 시연용 상태 표시다 (어긋남 대장 D15).
  *    실제 발급은 제휴사(PTN-001)가 하고 D1·D-03 이 미확정이다.
  */
+export type MockCardStatus = "REQUESTED" | "VERIFIED" | "SHIPPING" | "ACTIVE";
+
+/** 신청 과정 4단계. 실제 흐름(다이어그램 A)의 모양만 따른다 */
+export const CARD_STEPS: readonly {
+  readonly status: MockCardStatus;
+  readonly title: string;
+  readonly body: string;
+  readonly action: string;
+}[] = [
+  {
+    status: "REQUESTED",
+    title: "신청 접수",
+    body: "아이 이름과 태어난 해로 신청합니다. 카드번호·계좌·실명은 받지 않습니다.",
+    action: "신청 접수하기",
+  },
+  {
+    status: "VERIFIED",
+    title: "본인 확인",
+    body: "제휴 선불업자가 보호자 본인 확인을 진행합니다. 우리 화면에서 신분 정보를 받지 않습니다.",
+    action: "본인 확인 넘기기",
+  },
+  {
+    status: "SHIPPING",
+    title: "카드 배송",
+    body: "카드가 오는 동안에도 아이는 배우기·퀴즈로 별을 받을 수 있어요. 카드가 필요한 기능만 잠깁니다.",
+    action: "배송 시작하기",
+  },
+  {
+    status: "ACTIVE",
+    title: "카드 등록",
+    body: "카드를 받으면 등록해 사용을 시작합니다. 이때부터 소비 내역이 쌓입니다.",
+    action: "카드 등록하기",
+  },
+];
+
 export type MockCardState = {
-  readonly issued: boolean;
+  readonly status: MockCardStatus | null;
+  readonly stepIndex: number;
+  readonly active: boolean;
   readonly issuedLabel: string | null;
   /** 화면에 보일 가짜 번호. 🔴 저장하지 않고 매번 만든다 */
   readonly maskedNumber: string;

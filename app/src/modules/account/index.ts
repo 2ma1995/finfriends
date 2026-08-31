@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { DEVICE_TYPES } from "@/contracts/child";
-import type { DeviceRow, MockCardState, MyPageView } from "@/contracts/account";
+import { CARD_STEPS, type DeviceRow, type MockCardState, type MockCardStatus, type MyPageView } from "@/contracts/account";
 
 /**
  * 보호자 계정 관리 — 마이페이지.
@@ -31,20 +31,56 @@ function agoLabel(d: Date) {
  *    저장하면 그것이 카드 데이터가 되고, 우리는 카드 데이터를 갖지 않는다 (ADR-003).
  *    앞 네 자리를 `0000` 으로 두어 실제 카드처럼 보이지 않게 한다.
  */
-function mockCard(guardianId: string, issuedAt: Date | null): MockCardState {
+function mockCard(guardianId: string, status: MockCardStatus | null, at: Date | null): MockCardState {
   const tail = guardianId.replace(/[^0-9]/g, "").padStart(4, "0").slice(-4);
+  const stepIndex = status === null ? -1 : CARD_STEPS.findIndex((s) => s.status === status);
   return {
-    issued: issuedAt !== null,
-    issuedLabel: dayLabel(issuedAt),
+    status,
+    stepIndex,
+    active: status === "ACTIVE",
+    issuedLabel: dayLabel(at),
+    // 🔴 실제 카드로 보이지 않게 앞자리를 0000 으로 둔다
     maskedNumber: `0000 · **** · **** · ${tail}`,
   };
+}
+
+/**
+ * 🔴 **카드를 발급하지 않는다.** 다음 단계로만 옮긴다 (D15).
+ *    되돌아갈 수 없게 순서를 강제한다 — 시연에서 단계가 뒤엉키면 흐름을 못 보여준다.
+ */
+export async function advanceMockCard(guardianId: string) {
+  const g = await prisma.guardianAccount.findUnique({
+    where: { id: guardianId },
+    select: { mockCardStatus: true },
+  });
+  const at = g?.mockCardStatus === null || g?.mockCardStatus === undefined
+    ? -1
+    : CARD_STEPS.findIndex((s) => s.status === g.mockCardStatus);
+  const next = CARD_STEPS[at + 1];
+  if (!next) return;
+
+  await prisma.guardianAccount.update({
+    where: { id: guardianId },
+    data: {
+      mockCardStatus: next.status,
+      // 마지막 단계에 닿은 시각만 남긴다 — 온보딩 6단계가 이걸 본다
+      mockCardIssuedAt: next.status === "ACTIVE" ? new Date() : null,
+    },
+  });
+}
+
+export async function resetMockCard(guardianId: string) {
+  await prisma.guardianAccount.update({
+    where: { id: guardianId },
+    data: { mockCardStatus: null, mockCardIssuedAt: null },
+  });
 }
 
 export async function getMyPage(guardianId: string, email: string): Promise<MyPageView> {
   const [guardian, child, devices] = await Promise.all([
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
-      select: { consentCompleted: true, consentAt: true, childModePinHash: true, mockCardIssuedAt: true },
+      select: { consentCompleted: true, consentAt: true, childModePinHash: true, mockCardIssuedAt: true, mockCardStatus: true },
     }),
     prisma.childAccount.findFirst({
       where: { guardianId },
@@ -90,7 +126,7 @@ export async function getMyPage(guardianId: string, email: string): Promise<MyPa
       : null,
     devices: deviceRows,
     pinSet: Boolean(guardian?.childModePinHash),
-    card: mockCard(guardianId, guardian?.mockCardIssuedAt ?? null),
+    card: mockCard(guardianId, guardian?.mockCardStatus ?? null, guardian?.mockCardIssuedAt ?? null),
   };
 }
 
@@ -100,21 +136,3 @@ export async function getGuardianEmail(authRef: string) {
   return user?.email ?? "";
 }
 
-/**
- * 🔴 **카드를 발급하지 않는다.** 시연용으로 상태만 세운다 (D15).
- *    실제 발급은 제휴사가 하고 착수 조건(D1 · D-03)이 미확정이다.
- *    입력을 받지 않으므로 카드번호·실명·계좌가 들어올 경로가 없다.
- */
-export async function issueMockCard(guardianId: string) {
-  await prisma.guardianAccount.update({
-    where: { id: guardianId },
-    data: { mockCardIssuedAt: new Date() },
-  });
-}
-
-export async function cancelMockCard(guardianId: string) {
-  await prisma.guardianAccount.update({
-    where: { id: guardianId },
-    data: { mockCardIssuedAt: null },
-  });
-}

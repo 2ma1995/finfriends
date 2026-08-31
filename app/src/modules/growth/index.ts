@@ -4,7 +4,7 @@ import { getTopicProgress } from "@/modules/learning";
 import { countWaiting } from "@/modules/mission";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
-  STAGE_LABEL, STAGE_RULE_EXAMPLE,
+  STAGE_LABEL, STAGE_LADDER, nextRule, stageFor, subjectParticle,
   type ForestView, type Stage, type TreeSlotView, type TreeView,
 } from "@/contracts/growth";
 
@@ -71,16 +71,38 @@ export async function getTreeView(childId: string, childName: string): Promise<T
     const pr = progressBy.get(topic);
     // 원장에 남은 실천 건수를 쓴다. tree_states.practiceCount 는 GRW-001 이 채울 값이다
     const practiceCount = practiceBy.get(topic) ?? st?.practiceCount ?? 0;
+    const learn = pr?.completed ?? 0;
+    const quiz = pr?.quizCorrect ?? 0;
+
+    /**
+     * 🔴 **단계를 지금 계산한다.** `tree_states.stage` 를 읽던 것을 바꿨다 —
+     *    그 값을 올려 주는 승급 엔진(GRW-001)이 없어서 **모든 칸이 영원히 씨앗**이었다.
+     *    조건을 다 채워도 씨앗이면 화면이 거짓을 말한다.
+     *
+     *    읽는 시점에 계산하면 저장 없이도 맞는다. GRW-001 이 붙으면 그때
+     *    `tree_states.stage` 에 쓰고 `tree_state_changed` 이벤트를 적재한다 —
+     *    그 이벤트가 있어야 정체 판정(GRW-002)과 월말 스냅샷(GRW-004)이 성립한다.
+     */
+    const stage = stageFor(learn, quiz, practiceCount);
+    const next = nextRule(stage);
 
     return {
       topic,
       label: TOPIC_LABEL[topic],
       icon: TOPIC_ICON[topic],
-      stage: ((st?.stage ?? 0) as Stage),
+      stage,
+      nextStageLabel: next
+        ? `${STAGE_LABEL[next.stage]}${subjectParticle(STAGE_LABEL[next.stage])} 되기까지`
+        : null,
+      // 게이지는 **다음 단계 조건**을 향한다. 최고 단계면 마지막 조건을 그대로 둔다
       conditions: [
-        { label: "학습", current: pr?.completed ?? 0, required: STAGE_RULE_EXAMPLE.learn },
-        { label: "퀴즈", current: pr?.quizCorrect ?? 0, required: STAGE_RULE_EXAMPLE.quiz },
-        { label: PRACTICE_LABEL[topic], current: practiceCount, required: STAGE_RULE_EXAMPLE.practice },
+        { label: "학습", current: learn, required: next?.learn ?? STAGE_LADDER[STAGE_LADDER.length - 1].learn },
+        { label: "퀴즈", current: quiz, required: next?.quiz ?? STAGE_LADDER[STAGE_LADDER.length - 1].quiz },
+        {
+          label: PRACTICE_LABEL[topic],
+          current: practiceCount,
+          required: next?.practice ?? STAGE_LADDER[STAGE_LADDER.length - 1].practice,
+        },
       ],
       // 🔴 GRW-002 가 없다. 판정하지 않은 것을 정체로 표시하지 않는다
       stalledDays: null,

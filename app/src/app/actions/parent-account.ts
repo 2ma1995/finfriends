@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireGuardian } from "@/lib/session/guardian-session";
 import { revokeDevice } from "@/lib/session/device-session";
-import { cancelMockCard, issueMockCard } from "@/modules/account";
+import { advanceMockCard, resetMockCard } from "@/modules/account";
 
 /**
  * 마이페이지 동작 — 기기 해제 · 가짜 카드.
@@ -25,20 +25,25 @@ export async function revokeDeviceAction(formData: FormData) {
 }
 
 /**
- * 🔴 **카드를 만들지 않는다.** 시연용 상태만 세운다 (D15).
+ * 🔴 **카드를 만들지 않는다.** 다음 단계로만 옮긴다 (D15).
  *    실제 발급은 제휴사(PTN-001)가 하며 D1 · D-03 이 미확정이다.
- *    이 액션은 **아무 입력도 받지 않는다** — 카드번호·실명·계좌가 들어올 자리가 없다.
+ *
+ * 🔴 이 액션은 **아무 입력도 받지 않는다.** 카드번호·유효기간·CVC·실명·주민번호·계좌가
+ *    들어올 자리가 구조적으로 없다. 본인확인도 제휴사에 위임된다(D-03 · ADR-T09).
  */
-export async function issueMockCardAction() {
+export async function advanceMockCardAction() {
   const g = await requireGuardian();
-  await issueMockCard(g.guardianId);
+  await advanceMockCard(g.guardianId);
+  revalidatePath("/parent/card");
   revalidatePath("/parent/mypage");
   revalidatePath("/parent/onboarding");
 }
 
-export async function cancelMockCardAction() {
+/** 시연을 다시 처음부터 보여줄 때 */
+export async function resetMockCardAction() {
   const g = await requireGuardian();
-  await cancelMockCard(g.guardianId);
+  await resetMockCard(g.guardianId);
+  revalidatePath("/parent/card");
   revalidatePath("/parent/mypage");
   revalidatePath("/parent/onboarding");
 }
