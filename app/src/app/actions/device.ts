@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/db";
-import { requireGuardian } from "@/lib/session/guardian-session";
+import { GUARDIAN_COOKIE, closeSession, requireGuardian } from "@/lib/session/guardian-session";
 import { DEVICE_COOKIE, issueDeviceToken } from "@/lib/session/device-session";
 import { MODE_COOKIE } from "@/lib/session/device-mode";
 
@@ -56,6 +56,12 @@ export async function registerChildDeviceAction(formData: FormData) {
     expires: expiresAt,
     path: "/",
   });
+
+  // 🔴 **이 기기에서 보호자 세션을 끝낸다.** 남겨 두면 아이 손에 살아 있는 보호자 세션이 쥐어진다.
+  //    모드 쿠키는 아이가 지울 수 있으므로 미들웨어만으로는 막지 못한다 — 세션 자체를 없앤다.
+  //    부모는 자기 기기에서 다시 로그인하면 된다.
+  await closeSession(jar.get(GUARDIAN_COOKIE)?.value);
+  jar.delete(GUARDIAN_COOKIE);
 
   redirect("/child/home");
 }

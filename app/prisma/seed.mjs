@@ -45,6 +45,22 @@ for (const [code, delta, ago] of rows.slice().reverse()) {
   });
 }
 
+// 학습 진도 — LRN-001
+await prisma.learningProgress.deleteMany({});
+await prisma.learningProgress.createMany({ data: [
+  { childId: c.id, topic: "EARN",  completedCount: 3, quizCorrect: 5 },
+  { childId: c.id, topic: "SPEND", completedCount: 2, quizCorrect: 4 },
+  { childId: c.id, topic: "SAVE",  completedCount: 1, quizCorrect: 2 },
+] });
+
+// 위시리스트 — PRC-004. reachedSteps 는 이미 별을 받은 단계다
+await prisma.wishlist.deleteMany({});
+await prisma.wishlist.createMany({ data: [
+  { childId: c.id, name: "물감 세트", targetAmount: 24000, savedAmount: 18000, rank: 1, reachedSteps: [30, 70] },
+  { childId: c.id, name: "만화책",   targetAmount: 12000, savedAmount: 4000,  rank: 2, reachedSteps: [30] },
+  { childId: c.id, name: "축구공",   targetAmount: 30000, savedAmount: 3000,  rank: 3, reachedSteps: [] },
+] });
+
 const token = randomBytes(32).toString("base64url");
 await prisma.deviceSession.create({
   data: { guardianId: g.id, childId: c.id, deviceRef: randomBytes(12).toString("hex"),

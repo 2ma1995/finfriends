@@ -1,15 +1,10 @@
-// PROTO-DATA: LRN-001 — 백엔드 완료 시 이 파일을 지우고 커리큘럼 조회로 대체한다
-export type Topic = {
-  readonly key: string; readonly icon: string; readonly label: string;
-  readonly done: number; readonly total: number; readonly locked?: boolean;
-};
-
-// 학습만 채워도 나무는 자라지 않는다. 그 사실을 화면에 적는다 (REQ-FUNC-001).
-export const topics: readonly Topic[] = [
-  { key: "earn",  icon: "🌳", label: "벌기",    done: 3, total: 3 },
-  { key: "spend", icon: "🌿", label: "잘 쓰기", done: 2, total: 3 },
-  { key: "save",  icon: "🌱", label: "모으기",  done: 1, total: 3 },
-  { key: "grow",  icon: "🌱", label: "불리기",  done: 0, total: 3, locked: true },
-];
+// PROTO-DATA: LRN-001 — 🔴 진도는 DB(`@/modules/learning`)가 준다. 여기 남은 것은 문구뿐이다.
+//
+// 학습 **콘텐츠**(영상·문항)는 아직 DB 에 없다 — `DAT-003` 이 채운다.
+// 그때까지 편수는 모듈이 상수로 들고 있다.
 
 export const notice = "퀴즈만으로는 자라지 않습니다. 배운 걸 한 번 해봐야 나무가 자라요.";
+export const lockedLabel = "곧 열려요";
+
+export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
+export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };

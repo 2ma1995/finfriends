@@ -1,16 +1,14 @@
-// PROTO-DATA: PRC-004 — 백엔드 완료 시 이 파일을 지우고 위시리스트 조회·단계 보상 판정으로 대체한다
-export type Wish = {
-  readonly id: string; readonly emoji: string; readonly name: string;
-  readonly price: number; readonly saved: number; readonly rank: 1 | 2 | 3;
+// PROTO-DATA: PRC-004 — 🔴 데이터는 DB(`@/modules/wishlist`)가 준다.
+// 여기 남은 것은 **문구뿐**이다. 이 형식이 나머지 화면을 옮길 때의 본이다.
+
+export const rankNotice = (left: number) =>
+  left > 0 ? `순위 바꾸기는 이번 달 ${left}번 남았어요` : "순위는 다음 달에 다시 바꿀 수 있어요";
+
+export const empty = {
+  title: "아직 갖고 싶은 게 없어요",
+  body: "하나 정하면 모으는 재미가 생겨요",
+  hint: "부모님과 같이 정해 보세요",
 };
 
-/** 30 · 70 · 100% 에서 단계 보상이 붙는다 (PRC-004) */
-export const MILESTONES = [30, 70, 100] as const;
-/** 순위 변경은 월 1회 */
-export const rankChangeLeft = 1;
-
-export const wishes: readonly Wish[] = [
-  { id: "w-1", emoji: "🎨", name: "물감 세트", price: 24000, saved: 18000, rank: 1 },
-  { id: "w-2", emoji: "📕", name: "만화책",   price: 12000, saved: 4000,  rank: 2 },
-  { id: "w-3", emoji: "⚽", name: "축구공",   price: 30000, saved: 3000,  rank: 3 },
-];
+export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
+export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };
