@@ -48,6 +48,13 @@ const BANK: Record<string, { topic: Topic; questions: QuizQuestion[] }> = {
           { key: "c", text: "설날에 받은 세뱃돈", correct: false },
         ],
         explain: "용돈과 세뱃돈은 어른들이 주시는 돈이에요. 무언가를 해서 받은 돈이 내가 번 돈이에요." },
+      { question: "직업을 고를 때 무엇을 볼까요?",
+        choices: [
+          { key: "a", text: "얼마 버는지 · 나한테 맞는지 · 재미있는지", correct: true },
+          { key: "b", text: "돈을 얼마 버는지만 보면 돼요", correct: false },
+          { key: "c", text: "친구가 하는 걸 따라 고르면 돼요", correct: false },
+        ],
+        explain: "돈만 보고 골랐다가 나한테 안 맞으면 하기가 너무 힘들어요. 잘 맞는 일이면 힘들어도 보람이 있어요." },
     ],
   },
   spend: {
@@ -74,6 +81,13 @@ const BANK: Record<string, { topic: Topic; questions: QuizQuestion[] }> = {
           { key: "c", text: "다 쓰고 다음 달에 모은다", correct: false },
         ],
         explain: "쓰고 남은 걸 모으려고 하면 거의 남지 않아요. 순서만 바꿔도 한 달 뒤가 달라져요." },
+      { question: "어른이 신용카드로 물건을 샀어요. 그 물건값은 어떻게 될까요?",
+        choices: [
+          { key: "a", text: "카드 회사가 먼저 내주고 어른이 나중에 갚아요", correct: true },
+          { key: "b", text: "카드가 있으면 안 내도 돼요", correct: false },
+          { key: "c", text: "카드 회사가 대신 내주고 끝이에요", correct: false },
+        ],
+        explain: "카드는 「공짜로 사는 것」이 아니라 「나중에 내가 내는 것」이에요. 늦게 갚으면 더 많이 내야 해요." },
     ],
   },
   save: {
@@ -100,6 +114,13 @@ const BANK: Record<string, { topic: Topic; questions: QuizQuestion[] }> = {
           { key: "c", text: "돈이 적으면 만들 수 없어요", correct: false },
         ],
         explain: "어린이는 보호자와 함께 가야 해요. 돈이 적어도 만들 수 있어요." },
+      { question: "「공짜로 줄게요」라며 이름과 전화번호를 묻는 문자가 왔어요. 어떻게 할까요?",
+        choices: [
+          { key: "a", text: "누르지 말고 어른에게 보여 준다", correct: true },
+          { key: "b", text: "공짜니까 얼른 적어서 보낸다", correct: false },
+          { key: "c", text: "친구에게 물어보고 같이 누른다", correct: false },
+        ],
+        explain: "내 정보를 노리는 가짜 문자예요. 이름·전화번호·계좌번호는 아무한테나 알려 주지 않아요." },
     ],
   },
   grow: {
@@ -126,6 +147,13 @@ const BANK: Record<string, { topic: Topic; questions: QuizQuestion[] }> = {
           { key: "c", text: "내가 좋아하는 회사면 안전해요", correct: false },
         ],
         explain: "늘기만 하는 방법은 없어요. 그래서 어른들은 없어도 되는 돈으로만, 한곳에 몰지 않고 나눠서 해요." },
+      { question: "돈을 빌리면 이자는 어떻게 될까요?",
+        choices: [
+          { key: "a", text: "내가 이자를 내야 해요", correct: true },
+          { key: "b", text: "빌려도 이자는 없어요", correct: false },
+          { key: "c", text: "빌리면 이자를 받아요", correct: false },
+        ],
+        explain: "맡기면 이자를 받고, 빌리면 이자를 내요. 같은 이자인데 방향이 반대예요." },
     ],
   },
 };
