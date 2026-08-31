@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
-import { TOPIC_ICON, TOPIC_LABEL, type Topic, type TopicProgressView } from "@/contracts/learning";
+import { isPracticeOpen, TOPIC_ICON, TOPIC_LABEL, type Topic, type TopicProgressView } from "@/contracts/learning";
 import { LESSONS, findLesson, lessonsOf } from "@/contracts/lessons";
 
 /**
@@ -8,7 +8,9 @@ import { LESSONS, findLesson, lessonsOf } from "@/contracts/lessons";
  *
  * 🔴 **4영역은 고정이다.** DB 에 행이 없어도 4개를 다 돌려준다 —
  *    화면이 「아직 시작 안 한 영역」과 「없는 영역」을 구별해야 한다 (§6.2.1).
- * 🔴 **불리기(GROW)는 실천 경로가 미개통**이라 잠긴 상태로 나간다.
+ * 🔴 **불리기(GROW)는 배우는 건 열리고 실천만 닫힌다** (AC-2.4).
+ *    실천이 닫힌 이유는 그 영역의 실천이 **적금 가입~만기**여서, 실제 금융상품 없이는
+ *    인정할 수 없기 때문이다. 영역 전체를 잠그면 **아이가 배울 기회조차 없어진다.**
  * 🔴 **진도는 읽은 편의 목록에서 센다.** 개수만 세면 같은 편을 다시 읽어도 오른다.
  */
 
@@ -32,7 +34,7 @@ export async function getTopicProgress(childId: string): Promise<TopicProgressVi
       completed: done.length,
       total: all.length,
       quizCorrect: r?.quizCorrect ?? 0,
-      locked: topic === "GROW",
+      practiceOpen: isPracticeOpen(topic),
     };
   });
 }

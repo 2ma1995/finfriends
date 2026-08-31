@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { findLesson } from "@/contracts/lessons";
+import { isPracticeOpen } from "@/contracts/learning";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import type { MissionBoardView, MissionBucket, MissionView } from "@/contracts/mission";
 
@@ -184,6 +185,8 @@ export async function getPracticeState(childId: string, lessonId: string): Promi
 export async function claimPractice(childId: string, guardianId: string, lessonId: string) {
   const lesson = findLesson(lessonId);
   if (!lesson) return false;
+  // 🔴 실천이 닫힌 영역은 서버에서 막는다. 화면만 감추면 요청은 그대로 통한다 (§6.6)
+  if (!isPracticeOpen(lesson.topic)) return false;
 
   const exist = await prisma.mission.findFirst({
     where: { childId, sourceId: lessonId },

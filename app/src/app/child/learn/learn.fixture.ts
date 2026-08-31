@@ -2,7 +2,10 @@
 // 여기 남은 것은 문구뿐이다.
 
 export const notice = "퀴즈만으로는 자라지 않습니다. 배운 걸 한 번 해봐야 나무가 자라요.";
-export const lockedLabel = "곧 열려요";
+/** 🔴 배우는 건 열려 있다. 「곧 열려요」는 **실천**에만 붙는다 (AC-2.4) */
+export const practiceSoonLabel = "실천은 곧 열려요";
+export const practiceSoonBody =
+  "불리기는 배우는 것부터 해요. 「해봤어요」는 저금통이 준비되면 열려요.";
 export const startLabel = "시작하기";
 export const continueLabel = "이어보기";
 export const doneLabel = "다 봤어요";

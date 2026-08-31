@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
-import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
+import { isPracticeOpen, TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import { currentChild } from "@/lib/session/current-child";
 import { getLessonList } from "@/modules/learning";
 import { getPracticeState } from "@/modules/mission";
 import { claimPracticeAction } from "@/app/actions/learn";
 import { quizTotal } from "@/modules/quiz";
-import { consentRequired, noDevice, practice, quizLabel, readLabel, tryTitle } from "../learn.fixture";
+import { consentRequired, noDevice, practice, practiceSoonBody, practiceSoonLabel,
+         quizLabel, readLabel, tryTitle } from "../learn.fixture";
 
 // LRN-001 — 한 영역의 학습 편 목록
-const TOPICS: Record<string, Topic> = { earn: "EARN", spend: "SPEND", save: "SAVE" };
+const TOPICS: Record<string, Topic> = { earn: "EARN", spend: "SPEND", save: "SAVE", grow: "GROW" };
 
 export default async function LearnTopicPage({
   params, searchParams,
@@ -72,7 +73,15 @@ export default async function LearnTopicPage({
 
       {/* 🔴 읽은 편마다 해볼 것이 하나씩 열린다. 별은 지식이 아니라 **행동**에 붙는다 (D16) */}
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{tryTitle}</h2>
-      <p className="mb-1.5 text-[0.74em] text-ink-mute">{practice.hint}</p>
+      {!isPracticeOpen(topic) ? (
+        /* 🔴 배우는 건 열려 있다. 닫힌 것은 실천뿐이라는 걸 분명히 말한다 (AC-2.4) */
+        <Card>
+          <b className="text-[0.84em] text-ink-soft">{practiceSoonLabel}</b>
+          <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{practiceSoonBody}</p>
+        </Card>
+      ) : (
+        <>
+        <p className="mb-1.5 text-[0.74em] text-ink-mute">{practice.hint}</p>
       <ul className="grid gap-1.5">
         {readLessons.map((l) => {
           const st = states[l.id];
@@ -107,6 +116,8 @@ export default async function LearnTopicPage({
           );
         })}
       </ul>
+        </>
+      )}
     </Screen>
   );
 }
