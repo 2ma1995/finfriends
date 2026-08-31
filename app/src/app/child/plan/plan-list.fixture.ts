@@ -10,6 +10,16 @@ export const savedNotice = "적어뒀어요. 쓰고 와서 맞춰볼까요?";
 export const sections = { todo: "아직 안 맞춰봤어요", done: "맞춰본 계획" };
 
 export const recordTitle = "얼마 썼는지 적기";
+/** 🔴 카드가 대신 적어 주지 않는다. 아이가 적는 게 학습이고 이건 참고다 (D19) */
+export const cardTitle = "카드 내역에서 찾기";
+export const cardMockBadge = "예시 · 카드 연동 전";
+export const cardHint = "눌러서 채운 뒤 맞는지 보고 고쳐도 돼요.";
+export const cardSame = "적은 금액과 똑같아요!";
+/** 🔴 「틀렸어요」가 아니다. 차이를 보여주고 다음에 더 잘 적게 한다 */
+export const cardGap = (gap: number) =>
+  gap > 0
+    ? `적은 것보다 ${gap.toLocaleString("ko-KR")}원 더 썼네요. 다음엔 더 맞춰볼까요?`
+    : `적은 것보다 ${Math.abs(gap).toLocaleString("ko-KR")}원 덜 썼네요.`;
 export const amountLabel = "실제로 쓴 돈";
 export const categoryLabel = "무엇을 샀나요";
 export const recordLabel = "맞춰보기";

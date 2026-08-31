@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
+import { attach as attachTxn, findByRecord, getTxn } from "@/modules/card";
 import {
   CATEGORIES, categoryOf,
   type NewPlanCard, type PlanCardView, type RetroView, type SpendLineView,
@@ -78,6 +79,13 @@ export async function getRetro(childId: string, recordId: string): Promise<Retro
     orderBy: { occurredAt: "desc" },
   });
 
+  /**
+   * 🔴 **카드 내역과 대조한다.** 아이가 적은 금액과 실제가 다르면 그 차이를 보여준다 —
+   *    이게 카드 연동의 목적이다. 자동으로 고쳐 주지 않는다. 아이가 마주해야 한다.
+   */
+  const txn = await findByRecord(childId, rec.id);
+  const gap = txn ? txn.amount - rec.actualAmount : 0;
+
   return {
     id: rec.id,
     whenLabel: whenLabel(rec.occurredAt, plan?.whereText ?? null),
@@ -85,6 +93,7 @@ export async function getRetro(childId: string, recordId: string): Promise<Retro
     match: rec.matchResult,
     retroLines, starLabel,
     otherBranchId: other?.id ?? null,
+    card: txn ? { merchant: txn.merchant, amount: txn.amount, gap, isMock: txn.isMock } : null,
   };
 }
 
@@ -171,6 +180,8 @@ export const MAX_ACTUAL = 1_000_000;
  */
 export async function recordActual(
   childId: string, planCardId: string, actualAmount: number, actualCategory: string,
+  /** 카드 내역에서 골랐다면 그 거래 id — 🔴 **금액은 여전히 아이가 적은 값이다.** 대조용이다 */
+  cardTxnId?: string,
 ): Promise<RecordResult> {
   if (!Number.isFinite(actualAmount) || actualAmount < 0 || actualAmount > MAX_ACTUAL) {
     return { ok: false, reason: "BAD_AMOUNT" };
@@ -209,6 +220,9 @@ export async function recordActual(
     },
     select: { id: true },
   });
+
+  // 🔴 거래를 붙여 둔다. 한 거래는 한 번만 쓰인다 — 같은 거래로 별을 두 번 받을 수 없다
+  if (cardTxnId) await attachTxn(childId, cardTxnId, rec.id);
 
   if (!met) return { ok: true, recordId: rec.id, met: false, starred: false };
 

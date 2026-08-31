@@ -45,6 +45,11 @@ export type RetroView = {
   readonly starLabel: string;
   /** 다른 갈래를 보여줄 때 쓸 id — 인터뷰용 */
   readonly otherBranchId: string | null;
+  /**
+   * 🔴 카드 내역과의 대조 — 적은 금액과 실제가 다를 때 보여준다 (D19).
+   *    자동으로 고쳐 주지 않는다. 차이를 마주하는 것이 학습이다.
+   */
+  readonly card: { merchant: string; amount: number; gap: number; isMock: boolean } | null;
 };
 
 /** 적어둔 계획 한 줄 — 목록이 보는 것 */

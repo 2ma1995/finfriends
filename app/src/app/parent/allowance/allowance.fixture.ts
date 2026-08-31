@@ -16,5 +16,21 @@ export const balanceLabel = (n: number) => `지금 남은 용돈 ${n.toLocaleStr
 export const historyTitle = "최근 기록";
 export const savedNotice = "적어뒀어요. 아이 화면에 바로 보입니다.";
 export const errorNotice = "1원부터 500,000원까지 적을 수 있어요.";
+export const fixLabel = "고치기";
+export const fixReasonPlaceholder = "왜 고치나요 (아이가 봅니다)";
+export const fixedNotice = (n: number) => `${n.toLocaleString("ko-KR")}원을 되돌렸어요.`;
+/** 🔴 아이가 이미 쓴 돈은 되돌릴 수 없다. 조용히 넘기지 않고 그대로 말한다 */
+export const shortNotice = (n: number) =>
+  `${n.toLocaleString("ko-KR")}원은 아이가 이미 목표에 넣었거나 써서 되돌리지 못했어요.`;
+export const reversedBadge = "되돌림";
+export const fixErrors: Record<string, string> = {
+  NOT_ALLOWED: "아이가 적은 기록은 부모님이 지울 수 없어요. 아이 화면에서 되돌릴 수 있어요.",
+  ALREADY: "이미 되돌린 기록이에요.",
+  NOTHING: "지금 남은 용돈이 없어서 되돌릴 게 없어요.",
+  NOT_FOUND: "찾을 수 없어요.",
+};
+/** 🔴 줄을 고치는 게 아니라 반대 줄을 적는다는 사실을 보호자에게 말한다 */
+export const fixNotice = "고치면 기록이 지워지지 않고, 되돌리는 줄이 한 줄 더 적힙니다.";
+
 export const needLogin = { title: "로그인이 필요해요", body: "보호자 계정으로 로그인해 주세요" };
 export const noChild = { title: "아이가 없어요", body: "먼저 자녀를 등록해 주세요" };

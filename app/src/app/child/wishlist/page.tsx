@@ -39,10 +39,11 @@ export default async function ChildWishlistPage({
     <Screen role="아이 화면" title="갖고 싶은 것" sub={`${wishes.length} / ${MAX_WISHES}개`}
             back={{ href: "/child/home", label: "내 방" }}>
       {/* 🔴 별이 아니라 용돈이다. 여기서 떼어 목표에 넣는다 (D18) */}
-      <div className="mb-2 rounded-card border border-line bg-sand px-3 py-2 text-center">
+      <a href="/child/allowance"
+         className="mb-2 block rounded-card border border-line bg-sand px-3 py-2 text-center">
         <b className="text-[0.86em]">{walletLabel(allowance)}</b>
         {allowance === 0 ? <p className="mt-0.5 text-[0.74em] text-ink-mute">{walletEmpty}</p> : null}
-      </div>
+      </a>
 
       {sp.error ? (
         <div className="mb-2"><Card tone="miss">

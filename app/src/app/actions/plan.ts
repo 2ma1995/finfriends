@@ -52,6 +52,7 @@ export async function recordActualAction(formData: FormData) {
     planCardId,
     Number(formData.get("actualAmount") ?? 0),
     String(formData.get("actualCategory") ?? ""),
+    String(formData.get("cardTxnId") ?? "") || undefined,
   );
 
   revalidatePath("/child/plan");

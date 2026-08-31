@@ -22,6 +22,10 @@ export type AllowanceEntryView = {
   readonly delta: number;
   readonly memo: string;
   readonly whenLabel: string;
+  readonly code: string;
+  /** 보호자가 적은 줄인가 — 되돌릴 수 있는 것은 이것뿐이다 */
+  readonly byGuardian: boolean;
+  readonly reversed: boolean;
 };
 
 export async function getBalance(childId: string) {
@@ -43,14 +47,20 @@ const LABEL: Record<string, string> = {
 };
 
 export async function getHistory(childId: string, take = 20): Promise<AllowanceEntryView[]> {
-  const rows = await prisma.allowanceEntry.findMany({
-    where: { childId }, orderBy: { createdAt: "desc" }, take,
-    select: { id: true, delta: true, memo: true, code: true, createdAt: true },
-  });
+  const [rows, undone] = await Promise.all([
+    prisma.allowanceEntry.findMany({
+      where: { childId }, orderBy: { createdAt: "desc" }, take,
+      select: { id: true, delta: true, memo: true, code: true, createdAt: true },
+    }),
+    reversedKeys(childId),
+  ]);
   return rows.map((r) => ({
     id: r.id, delta: r.delta,
     memo: r.memo ?? LABEL[r.code] ?? "",
     whenLabel: whenLabel(r.createdAt),
+    code: r.code,
+    byGuardian: r.code === "TOPUP" || r.code === "ADJUST",
+    reversed: undone.has(r.id),
   }));
 }
 
@@ -99,4 +109,55 @@ export async function topUp(childId: string, amount: number, memo: string, key: 
     return { ok: false, reason: "BAD_AMOUNT" } as const;
   }
   return record(childId, amount, "TOPUP", memo || "용돈을 받았어요", key);
+}
+
+/**
+ * 잘못 적은 줄을 되돌린다 — 🔴 **줄을 고치거나 지우지 않는다.**
+ *    고치면 「합이 잔액」이 깨지고, 왜 이렇게 됐는지 아무도 못 본다.
+ *    회계와 같이 **상쇄하는 줄을 새로 적는다.**
+ *
+ * 🔴 **보호자가 적은 줄만 되돌린다** (TOPUP · ADJUST).
+ *    아이가 한 것(목표에 넣기·쓰기)은 아이 쪽 흐름에서 되돌린다 — 보호자가 아이 기록을
+ *    임의로 지우면 아이는 자기 장부를 믿을 수 없게 된다.
+ *
+ * 🔴 **되돌릴 수 있는 만큼만 되돌린다.** 20,000원을 잘못 줬는데 아이가 이미 15,000원을
+ *    목표에 넣었다면 5,000원만 돌아온다. 그대로 상쇄하면 잔액이 마이너스가 되고,
+ *    그때부터 아이 화면은 거짓말을 시작한다. **얼마가 왜 안 돌아왔는지 그대로 말한다.**
+ */
+export type AdjustResult =
+  | { ok: true; reversed: number; short: number }
+  | { ok: false; reason: "NOT_FOUND" | "NOT_ALLOWED" | "ALREADY" | "NOTHING" };
+
+export async function reverseEntry(childId: string, entryId: string, reason: string): Promise<AdjustResult> {
+  const e = await prisma.allowanceEntry.findFirst({
+    where: { id: entryId, childId },
+    select: { id: true, delta: true, code: true, memo: true },
+  });
+  if (!e) return { ok: false, reason: "NOT_FOUND" };
+  if (e.code !== "TOPUP" && e.code !== "ADJUST") return { ok: false, reason: "NOT_ALLOWED" };
+
+  const key = `adjust:${e.id}`;
+  const already = await prisma.allowanceEntry.findUnique({ where: { idempotencyKey: key }, select: { id: true } });
+  if (already) return { ok: false, reason: "ALREADY" };
+
+  const balance = await getBalance(childId);
+  const want = -e.delta;
+  // 되돌리면 잔액이 0 밑으로 갈 때는 있는 만큼만
+  const applied = want < 0 ? -Math.min(balance, -want) : want;
+  if (applied === 0) return { ok: false, reason: "NOTHING" };
+
+  const note = reason.trim() ? `부모님이 고쳤어요 — ${reason.trim()}` : "부모님이 고쳤어요";
+  const r = await record(childId, applied, "ADJUST", note, key);
+  if (!r.ok) return { ok: false, reason: "NOTHING" };
+
+  return { ok: true, reversed: Math.abs(applied), short: Math.abs(want) - Math.abs(applied) };
+}
+
+/** 이 줄을 되돌릴 수 있는가 — 화면이 버튼을 보일지 정한다 */
+export async function reversedKeys(childId: string) {
+  const rows = await prisma.allowanceEntry.findMany({
+    where: { childId, code: "ADJUST", idempotencyKey: { startsWith: "adjust:" } },
+    select: { idempotencyKey: true },
+  });
+  return new Set(rows.map((r) => r.idempotencyKey.slice("adjust:".length)));
 }

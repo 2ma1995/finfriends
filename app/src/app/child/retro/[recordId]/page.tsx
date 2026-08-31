@@ -4,6 +4,7 @@ import { currentChild } from "@/lib/session/current-child";
 import { getRetro } from "@/modules/plan";
 import type { SpendLineView } from "@/contracts/plan";
 import { confirmLabel, consentRequired, noDevice, notFound, otherBranchLabel } from "./retro.fixture";
+import { cardGap, cardMockBadge, cardSame, cardTitle } from "@/app/child/plan/plan-list.fixture";
 
 // PLN-003 — 두 갈래 회고. 🔴 목이 아니라 DB 를 본다
 export const metadata = { title: "계획 ↔ 실제 · 핀프렌즈" };
@@ -62,6 +63,22 @@ export default async function ChildRetroPage({ params }: { params: Promise<{ rec
           {r.retroLines.map((l) => <span key={l} className="block">{l}</span>)}
         </p>
         <div className={`mt-2 text-[0.82em] font-bold ${met ? "text-primary-d" : "text-miss"}`}>{r.starLabel}</div>
+
+        {/* 🔴 카드 내역과 대조 — 자동으로 고쳐 주지 않는다. 차이를 마주하는 것이 학습이다 (D19) */}
+        {r.card ? (
+          <div className="mt-2 rounded-card border border-dashed border-line-2 px-3 py-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[0.74em] text-ink-soft">{cardTitle}</span>
+              {r.card.isMock ? <span className="text-[0.66em] text-ink-mute">{cardMockBadge}</span> : null}
+            </div>
+            <p className="mt-0.5 text-[0.82em]">
+              {r.card.merchant} · {r.card.amount.toLocaleString("ko-KR")}원
+            </p>
+            <p className={`mt-0.5 text-[0.8em] ${r.card.gap === 0 ? "text-primary-d" : "text-star-d"}`}>
+              {r.card.gap === 0 ? cardSame : cardGap(r.card.gap)}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {/* 아이가 하는 유일한 조작 — 이유를 고르게 하지 않는다 */}

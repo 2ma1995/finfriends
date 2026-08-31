@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/db";
 import { requireGuardian } from "@/lib/session/guardian-session";
-import { topUp } from "@/modules/allowance";
+import { reverseEntry, topUp } from "@/modules/allowance";
 
 /**
  * 보호자가 용돈을 적는다 — D18.
@@ -31,4 +31,31 @@ export async function topUpAction(formData: FormData) {
   revalidatePath("/child/wishlist");
   revalidatePath("/child/plan");
   redirect(r.ok ? "/parent/allowance?saved=1" : "/parent/allowance?error=1");
+}
+
+/**
+ * 잘못 적은 줄 되돌리기 — D18.
+ * 🔴 첫 줄에서 인가를 확인한다 (§6.6). 🔴 줄을 고치지 않고 **상쇄하는 줄을 새로 적는다.**
+ */
+export async function reverseEntryAction(formData: FormData) {
+  const g = await requireGuardian();
+  const child = await prisma.childAccount.findFirst({
+    where: { guardianId: g.guardianId }, select: { id: true },
+  });
+  if (!child) redirect("/parent/allowance?error=1");
+
+  const r = await reverseEntry(
+    child.id,
+    String(formData.get("entryId") ?? ""),
+    String(formData.get("reason") ?? ""),
+  );
+
+  revalidatePath("/parent/allowance");
+  revalidatePath("/child/allowance");
+  revalidatePath("/child/wishlist");
+  revalidatePath("/child/plan");
+
+  if (!r.ok) redirect(`/parent/allowance?fix=${r.reason}`);
+  // 🔴 얼마가 왜 안 돌아왔는지 그대로 말한다
+  redirect(`/parent/allowance?fixed=${r.reversed}${r.short > 0 ? `&short=${r.short}` : ""}`);
 }

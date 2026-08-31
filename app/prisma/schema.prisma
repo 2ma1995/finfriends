@@ -555,3 +555,34 @@ model AllowanceEntry {
   @@map("allowance_ledger")
   @@schema("activity")
 }
+
+/// 카드 거래가 어디서 왔나 — 어긋남 대장 D19.
+enum TxnSource {
+  /// 🔴 연동 전 **예시 데이터**. 화면이 그 사실을 밝힌다
+  MOCK
+  /// 제휴 카드사에서 실제로 받은 것 (DAT-004)
+  LINKED
+
+  @@schema("activity")
+}
+
+/// 카드 거래 내역 — 어긋남 대장 D19.
+/// 🔴 **손입력을 대체하지 않는다.** 아이가 스스로 적는 것이 학습이고 여기는 **대조용**이다.
+/// 🔴 자금은 카드사가 보관한다. 앱은 내역만 받는다 — D18 의 선이 그대로 유지된다.
+model CardTransaction {
+  id         String    @id @default(uuid()) @db.Uuid
+  childId    String    @map("child_id") @db.Uuid
+  amount     Int
+  merchant   String
+  /// 업종 — 계획 카드와 같은 사전
+  category   String
+  occurredAt DateTime  @map("occurred_at") @db.Timestamptz(6)
+  source     TxnSource @default(MOCK)
+  /// 🔴 한 거래는 한 번만 쓰인다. 같은 거래로 별을 두 번 받을 수 없다
+  recordId   String?   @unique @map("record_id") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([childId, occurredAt(sort: Desc)])
+  @@map("card_transactions")
+  @@schema("activity")
+}
