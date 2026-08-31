@@ -73,11 +73,22 @@ async function openSession(userId: string) {
 }
 
 /**
- * 가입 — 인증 사용자와 보호자 계정을 **함께** 만든다.
+ * 인증 사용자에 대응하는 보호자 계정을 보장한다.
  *
- * 🔴 둘이 갈라지면 로그인은 되는데 아이를 등록할 곳이 없는 계정이 생긴다.
- *    Supabase 이관 후에는 인증 쪽이 트랜잭션 밖이므로,
- *    `auth_ref` 로 보호자 행을 찾지 못하면 그때 만드는 방식으로 바꾼다.
+ * 🔴 **둘은 갈라질 수 있다.** 실제로 갈라졌다 — 개발 시드가 `guardian_accounts` 를 비우면서
+ *    `dev_auth.users` 는 그대로 두는 바람에, 비밀번호는 맞는데 로그인만 실패하는 계정이 생겼다.
+ *    Supabase 이관 후에는 인증이 아예 다른 시스템이라 이 어긋남이 **정상 상태**가 된다.
+ *    그래서 「없으면 만든다」를 로그인 경로에 둔다.
+ */
+async function ensureGuardian(authRef: string) {
+  const found = await prisma.guardianAccount.findUnique({ where: { authRef } });
+  if (found) return found;
+  return prisma.guardianAccount.create({ data: { authRef } });
+}
+
+/**
+ * 가입 — 인증 사용자와 보호자 계정을 **한 트랜잭션에서** 만든다.
+ * 하나만 남으면 로그인은 되는데 아이를 등록할 곳이 없는 계정이 된다.
  */
 export async function createGuardian(emailRaw: string, password: string): Promise<AuthResult> {
   const email = normalizeEmail(emailRaw);
@@ -87,13 +98,16 @@ export async function createGuardian(emailRaw: string, password: string): Promis
   const existing = await prisma.devAuthUser.findFirst({ where: { email } });
   if (existing) return { ok: false, reason: "EMAIL_TAKEN" };
 
-  const user = await prisma.devAuthUser.create({
-    data: { email, passwordHash: hashPassword(password) },
+  const { guardianId, userId } = await prisma.$transaction(async (tx) => {
+    const user = await tx.devAuthUser.create({
+      data: { email, passwordHash: hashPassword(password) },
+    });
+    const guardian = await tx.guardianAccount.create({ data: { authRef: user.id } });
+    return { guardianId: guardian.id, userId: user.id };
   });
-  const guardian = await prisma.guardianAccount.create({ data: { authRef: user.id } });
 
-  const { token, expiresAt } = await openSession(user.id);
-  return { ok: true, guardianId: guardian.id, token, expiresAt };
+  const { token, expiresAt } = await openSession(userId);
+  return { ok: true, guardianId, token, expiresAt };
 }
 
 /** 로그인. 이메일이 없는 경우와 비밀번호가 틀린 경우를 **구분해 알리지 않는다** */
@@ -104,8 +118,9 @@ export async function signIn(emailRaw: string, password: string): Promise<AuthRe
     return { ok: false, reason: "BAD_CREDENTIALS" };
   }
 
-  const guardian = await prisma.guardianAccount.findUnique({ where: { authRef: user.id } });
-  if (!guardian) return { ok: false, reason: "BAD_CREDENTIALS" };
+  // 🔴 보호자 행이 없다고 「비밀번호가 틀렸다」로 답하지 않는다 — 자격증명은 맞았다.
+  //    데이터 어긋남을 사용자에게 자격증명 오류로 보여주면 원인을 영영 못 찾는다.
+  const guardian = await ensureGuardian(user.id);
 
   const { token, expiresAt } = await openSession(user.id);
   return { ok: true, guardianId: guardian.id, token, expiresAt };

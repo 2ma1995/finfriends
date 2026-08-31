@@ -18,6 +18,12 @@ await prisma.treeState.deleteMany({});
 await prisma.childAccount.deleteMany({});
 await prisma.guardianAccount.deleteMany({});
 
+// 🔴 인증까지 함께 비운다. 여기를 빼면 `dev_auth.users` 는 남고 보호자 행만 사라져
+//    **비밀번호는 맞는데 로그인만 실패하는 계정**이 된다 (실제로 한 번 그렇게 됐다).
+//    가입해 둔 계정은 시드를 돌리면 사라진다 — 다시 가입해야 한다.
+await prisma.devAuthSession.deleteMany({});
+await prisma.devAuthUser.deleteMany({});
+
 const g = await prisma.guardianAccount.create({
   data: { authRef: "dev-guardian", consentCompleted: true, consentAt: new Date(), childModePinHash: h("1234") },
 });

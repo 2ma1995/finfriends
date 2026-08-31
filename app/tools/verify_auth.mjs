@@ -137,6 +137,21 @@ try {
   await prisma.guardianAccount.delete({ where: { id: guardian.id } });
   await prisma.devAuthUser.delete({ where: { id: user.id } });
   check("정리 완료", true);
+
+  // ⑩ 🔴 실제 데이터 불변식 — 고아 인증 사용자 0건.
+  //    한 번 깨졌다: 시드가 `guardian_accounts` 만 비워서 「비밀번호는 맞는데 로그인 실패」가 났다.
+  //    `signIn` 이 이제 없으면 만들지만, 애초에 생기지 않는 것이 맞다.
+  const all = await prisma.devAuthUser.findMany({ select: { id: true, email: true } });
+  const orphans = [];
+  for (const u of all) {
+    const g = await prisma.guardianAccount.findUnique({ where: { authRef: u.id } });
+    if (!g) orphans.push(u.email);
+  }
+  check(
+    "고아 인증 사용자 0건",
+    orphans.length === 0,
+    orphans.length ? `보호자 행 없음: ${orphans.join(", ")}` : `인증 사용자 ${all.length}건 전부 짝이 있다`,
+  );
 } catch (e) {
   console.error("\n검증 중 예외:", e.message);
   failed++;
