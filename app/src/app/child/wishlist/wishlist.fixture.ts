@@ -39,6 +39,10 @@ export const errors: Record<string, string> = {
 export const rankNotice = (left: number) =>
   left > 0 ? "순위는 이번 달에 한 번 바꿀 수 있어요." : "이번 달 순위 변경을 이미 썼어요.";
 
+/** 🔴 퍼센트가 0%여도 넣은 건 넣은 것이다. 남은 금액으로 말한다 */
+export const remainingLabel = (won: number) => `${won.toLocaleString("ko-KR")}원 더 모으면 돼요`;
+export const reachedLabel = "다 모았어요!";
+
 export const milestoneHint = "30% · 70% · 100%에 닿으면 별을 하나씩 받아요.";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };

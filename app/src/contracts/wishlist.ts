@@ -15,6 +15,12 @@ export type WishView = {
   readonly reached: readonly Milestone[];
   /** 다음 단계까지 남은 퍼센트. 다 지났으면 null */
   readonly nextMilestone: Milestone | null;
+  /**
+   * 🔴 목표까지 남은 **금액**. 퍼센트보다 아이에게 구체적이다 —
+   *    300,000원 목표에 1,000원을 넣으면 퍼센트는 **0% 그대로**라
+   *    「넣었는데 아무 일도 안 일어났다」가 된다.
+   */
+  readonly remaining: number;
 };
 
 export type WishlistView = {

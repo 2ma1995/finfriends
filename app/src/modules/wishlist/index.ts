@@ -43,6 +43,8 @@ export async function getWishlist(childId: string): Promise<WishlistView> {
     return {
       id: r.id, name: r.name, targetAmount: r.targetAmount, savedAmount: r.savedAmount,
       percent, rank: r.rank, reached, nextMilestone: next,
+      // 🔴 퍼센트보다 구체적이다 — 300,000원 목표에 1,000원은 0% 로 내려간다
+      remaining: Math.max(0, r.targetAmount - r.savedAmount),
     };
   });
 
