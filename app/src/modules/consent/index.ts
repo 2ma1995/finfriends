@@ -159,7 +159,11 @@ export async function findChild(guardianId: string): Promise<ChildProfileView | 
  * 하드코딩하면 화면은 「3단계 완료」라고 하는데 DB 에는 아이가 없는 상태가 된다.
  */
 export async function readOnboardingProgress(guardianId: string): Promise<OnboardingProgress> {
-  const [guardian, childCount, deviceCount] = await Promise.all([
+  const child = await prisma.childAccount.findFirst({
+    where: { guardianId }, select: { id: true }, orderBy: { createdAt: "asc" },
+  });
+
+  const [guardian, childCount, deviceCount, planCount] = await Promise.all([
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
       select: { consentCompleted: true, mockCardIssuedAt: true },
@@ -168,6 +172,8 @@ export async function readOnboardingProgress(guardianId: string): Promise<Onboar
     prisma.deviceSession.count({
       where: { guardianId, mode: "CHILD", revokedAt: null },
     }),
+    // 🔴 아이가 적는 것이라 부모 화면이 없어도 셀 수 있다. 못박아 두면 영원히 미완이다
+    child ? prisma.planCard.count({ where: { childId: child.id } }) : Promise.resolve(0),
   ]);
 
   return {
@@ -176,6 +182,7 @@ export async function readOnboardingProgress(guardianId: string): Promise<Onboar
     consentDone: guardian?.consentCompleted ?? false,
     childDone: childCount > 0,
     deviceDone: deviceCount > 0,
+    planDone: planCount > 0,
     cardDone: guardian?.mockCardIssuedAt !== null && guardian?.mockCardIssuedAt !== undefined,
   };
 }

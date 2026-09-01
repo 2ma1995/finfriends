@@ -29,14 +29,19 @@ const SPEC: readonly Omit<Step, "state">[] = [
   { n: 2, title: "법정대리인 동의", body: "만 14세 미만 아동의 동의 절차입니다", href: "/consent", essential: true },
   { n: 3, title: "아이 프로필", body: "이름과 태어난 해를 적습니다", href: "/parent/child/new", essential: true },
   { n: 4, title: "자녀 초대", body: "아이가 쓸 기기를 등록합니다", href: "/parent/invite", essential: true },
-  { n: 5, title: "첫 계획 카드", body: "어디서 · 얼마를 쓸지 한 장만 적어 봅니다", essential: false },
-  { n: 6, title: "카드 연결", body: "나중에 해도 됩니다 — 카드 없이도 시작합니다", href: "/parent/mypage", essential: false },
+  { n: 5, title: "첫 계획 카드", body: "아이가 「어디서 · 얼마를 쓸지」 한 장 적으면 끝납니다", essential: false },
+  /**
+   * 🔴 **실물 카드 발급은 이번 범위 밖이다** — 새 SRS 가 `Out` 으로 뒀다.
+   *    화면에 남긴 이유는 시연에서 흐름을 보여주기 위해서다 (`D20`).
+   *    **그 사실을 문구가 말한다** — 안 적으면 곧 나올 기능으로 읽힌다.
+   */
+  { n: 6, title: "카드 연결", body: "이번 범위 밖입니다 — 카드 없이도 모든 기능이 됩니다", href: "/parent/card", essential: false },
 ];
 
 export function buildSteps(p: OnboardingProgress): readonly Step[] {
   // 앞 단계가 끝나야 다음이 current 가 된다 — 순서가 규제 요건인 구간이 있다(동의 → 아이)
-  // 5단계(첫 계획 카드)는 부모 화면이 없어 아직 false 로 둔다
-  const doneFlags = [p.accountDone, p.consentDone, p.childDone, p.deviceDone, false, p.cardDone];
+  // 🔴 5단계를 false 로 못박아 뒀었다 — 그러면 영원히 미완이라 화면이 거짓을 말한다
+  const doneFlags = [p.accountDone, p.consentDone, p.childDone, p.deviceDone, p.planDone, p.cardDone];
   const firstTodo = doneFlags.indexOf(false);
 
   return SPEC.map((s, i) => ({

@@ -67,7 +67,7 @@ export default async function ConsentPage({
   }
 
   return (
-    <Screen role="보호자 확인" title="시작하기 전에" sub="만 14세 미만 아동" back={{ href: "/screens", label: "화면 목록" }}>
+    <Screen role="보호자 확인" title="시작하기 전에" sub="만 14세 미만 아동" back={{ href: "/parent/onboarding", label: "시작하기" }}>
       <form action={completeConsentAction}>
         <ul className="grid gap-1.5">
           {CONSENT_ITEMS.map((i) => (

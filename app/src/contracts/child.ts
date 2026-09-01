@@ -77,6 +77,16 @@ export type OnboardingProgress = {
   readonly consentDone: boolean;
   readonly childDone: boolean;
   readonly deviceDone: boolean;
-  /** 🔴 시연용 가짜 카드 상태다 (어긋남 대장 D20). 실제 발급은 PTN-001 */
+  /**
+   * 첫 계획 카드를 적었는가.
+   * 🔴 한동안 **`false` 로 못박아** 뒀다 — 부모 화면이 없다는 이유였는데,
+   *    그러면 이 단계가 **영원히 미완**으로 남아 화면이 거짓을 말한다.
+   *    아이가 적는 것이므로 부모 화면이 없어도 **셀 수는 있다.**
+   */
+  readonly planDone: boolean;
+  /**
+   * 🔴 시연용 가짜 카드 상태다 (어긋남 대장 D20).
+   *    새 SRS 에서 **실물 카드 발급은 범위 밖(Out)**이다 — 화면이 그 사실을 말한다.
+   */
   readonly cardDone: boolean;
 };

@@ -37,7 +37,7 @@ export default async function ChildHomePage({
   //    화면이 멀쩡히 뜨고 — 남의 방이 자기 방처럼 보였다. 실패는 눈에 보여야 한다.
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="내 방" back={{ href: "/screens", label: "화면 목록" }}>
+      <Screen role="아이 화면" title="내 방">
         <Empty emoji="🔒" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -68,7 +68,7 @@ export default async function ChildHomePage({
     : null;
 
   return (
-    <Screen role="아이 화면" title="내 방" back={{ href: "/screens", label: "화면 목록" }}>
+    <Screen role="아이 화면" title="내 방">
       {/* 🔴 받았을 때만 말한다. 매번 띄우면 아이가 무시하게 된다 */}
       {attended.granted ? (
         <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
