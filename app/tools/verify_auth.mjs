@@ -133,10 +133,6 @@ try {
   );
 
   // 정리 — 검증 흔적을 남기지 않는다
-  await prisma.deviceSession.deleteMany({ where: { guardianId: guardian.id } });
-  await prisma.childAccount.deleteMany({ where: { guardianId: guardian.id } });
-  await prisma.guardianAccount.delete({ where: { id: guardian.id } });
-  await prisma.devAuthUser.delete({ where: { id: user.id } });
   /**
    * 🔴 **보호자로 들어오면 아동 모드를 끈다** — 어긋남 대장 D27.
    *
@@ -162,6 +158,54 @@ try {
   const dev = await prisma.deviceSession.findFirst({ where: { mode: "CHILD" }, select: { guardianId: true, childId: true } });
   check("아이 기기가 보호자를 가리킨다", dev === null || Boolean(dev.guardianId && dev.childId),
     "없으면 남의 아이인지 알 수 없다");
+
+  /**
+   * 🔴 **등록할 때마다 기기 줄이 쌓였다** — 브라우저 하나를 두 번 등록하면
+   *    보호자 화면에 기기가 2개로 보였다. 한 아이에 6줄까지 갔다.
+   *    한 번도 안 쓴 등록만 거두고, **쓰던 기기는 살려 둔다.**
+   */
+  const dchild = await prisma.childAccount.create({
+    data: { guardianId: guardian.id, displayName: "기기", birthYear: 2017, deviceType: "SHARED", state: "ACTIVE" },
+  });
+  const mkDevice = async (used) => {
+    const d = await prisma.deviceSession.create({
+      data: { guardianId: guardian.id, childId: dchild.id, deviceRef: randomBytes(6).toString("hex"),
+              mode: "CHILD", tokenHash: createHash("sha256").update(randomBytes(8)).digest("hex"),
+              expiresAt: new Date(Date.now() + 864e5) },
+    });
+    if (used) await prisma.deviceSession.update({ where: { id: d.id }, data: { lastSeenAt: new Date(Date.now() + 1000) } });
+    return d;
+  };
+  const unused = await mkDevice(false);
+  const inUse = await mkDevice(true);
+
+  // issueDeviceToken 이 하는 일을 그대로
+  await prisma.deviceSession.updateMany({
+    where: { guardianId: guardian.id, childId: dchild.id, mode: "CHILD", revokedAt: null,
+             lastSeenAt: { lte: prisma.deviceSession.fields.createdAt } },
+    data: { revokedAt: new Date() },
+  });
+
+  const after = async (id) => (await prisma.deviceSession.findUnique({ where: { id }, select: { revokedAt: true } }))?.revokedAt;
+  check("🔴 한 번도 안 쓴 옛 등록은 거둔다", (await after(unused.id)) !== null, "브라우저 하나가 기기 2개로 보였다");
+  check("🔴 쓰던 기기는 그대로 둔다", (await after(inUse.id)) === null, "끊으면 멀쩡히 쓰던 기기가 잠긴다");
+
+  const live = await prisma.deviceSession.count({
+    where: { guardianId: guardian.id, childId: dchild.id, mode: "CHILD", revokedAt: null },
+  });
+  check("살아 있는 기기는 하나", live === 1);
+
+  const src = readFileSync(new URL("../src/lib/session/device-session.ts", import.meta.url), "utf8");
+  check("진입할 때 마지막 사용 시각을 남긴다", /data: \{ lastSeenAt: new Date\(\) \}/.test(src),
+    "안 남기면 어느 기기를 해제할지 고를 수 없다");
+
+  await prisma.deviceSession.deleteMany({ where: { childId: dchild.id } });
+  await prisma.childAccount.delete({ where: { id: dchild.id } });
+
+  await prisma.deviceSession.deleteMany({ where: { guardianId: guardian.id } });
+  await prisma.childAccount.deleteMany({ where: { guardianId: guardian.id } });
+  await prisma.guardianAccount.delete({ where: { id: guardian.id } });
+  await prisma.devAuthUser.delete({ where: { id: user.id } });
 
   check("정리 완료", true);
 

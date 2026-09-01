@@ -23,6 +23,19 @@ export const rejectLabel = "이번엔 아니요";
 export const reasonPlaceholder = "아이가 볼 이유를 적어 주세요";
 
 export const interestPreview = (won: number) => `만기에 이자 ${won.toLocaleString("ko-KR")}원을 주게 됩니다`;
+
+/**
+ * 🔴 **여기가 이자율을 정하는 유일한 자리다.**
+ *
+ * 통장 화면에 「이자율 설정」 칸이 따로 있었는데 뺐다 — 같은 값을 두 곳에서 정하면
+ * 갈리고, 이자율은 아이가 **신청하는 순간** 그 약속에 박히므로 통장에서 바꿔도
+ * 이미 올라온 신청은 안 바뀐다. 보호자는 바꿨다고 믿는데 여기엔 옛 숫자가 남는다
+ * (어긋남 대장 D28-b).
+ *
+ * 그래서 여기서 정한 값이 **다음 신청의 기본값**도 된다. 그 사실을 말하지 않으면
+ * 보호자는 이 숫자가 이 한 건에만 쓰이는 줄 안다.
+ */
+export const pctCarryNote = "여기서 정한 이자율이 우리 집 기본이 됩니다. 다음에 아이가 신청할 때 이 값으로 올라와요.";
 export const daysLeft = (d: number) => `${d}일 남음`;
 export const maturedLabel = "만기가 됐어요";
 export const completeLabel = "다 됐어요 — 원금과 이자 주기";
