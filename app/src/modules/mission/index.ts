@@ -112,7 +112,17 @@ export async function getMissionBoard(childId: string): Promise<MissionBoardView
   return {
     todo: views.filter((v) => v.bucket === "TODO"),
     waiting: views.filter((v) => v.bucket === "WAITING"),
-    settled: views.filter((v) => v.bucket === "DONE" || v.bucket === "REJECTED"),
+    /**
+     * 🔴 **만료된 것도 여기 넣는다.** 빼면 아이 화면에서 **그냥 사라진다** —
+     *    아이는 「했어요」를 눌렀는데 그 미션이 없어진 것을 보게 되고,
+     *    무슨 일이 있었는지 알 방법이 없다.
+     *
+     *    `AC-032-3` 이 요구하는 것은 **「확인하지 못했어요」가 표시되는 것**이다.
+     *    사라지는 것은 그 요구와 반대다.
+     */
+    settled: views.filter(
+      (v) => v.bucket === "DONE" || v.bucket === "REJECTED" || v.bucket === "EXPIRED",
+    ),
   };
 }
 
