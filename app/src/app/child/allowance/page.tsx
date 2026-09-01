@@ -46,32 +46,43 @@ export default async function ChildPassbookPage({
     <Screen role="아이 화면" title={title} back={{ href: "/child/home", label: "내 방" }}>
       {/* 🔴 **가진 돈 전체가 먼저다.** 「쓸 수 있는 돈」만 크게 보이면
           목표에 떼어 둔 돈이 없어진 것처럼 보인다 — 부모 화면과 숫자가 갈리던 원인이다 */}
-      <div className="rounded-card border border-line bg-surface px-3 py-3 text-center">
-        <div className="text-cap text-ink-mute">{totalTitle}</div>
-        <b className="mt-0.5 block text-title tabular-nums">{won(p.total)}</b>
-      </div>
-      <div className={`mt-1.5 grid gap-1.5 ${p.locked > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
-        <div className="rounded-card border border-line bg-surface px-2 py-2 text-center">
-          <div className="text-micro text-ink-mute">{balanceTitle}</div>
-          <b className="mt-0.5 block text-body tabular-nums">{won(p.balance)}</b>
-        </div>
-        <div className="rounded-card border border-line bg-sand px-2 py-2 text-center">
-          <div className="text-micro text-ink-mute">{savedTitle}</div>
-          <b className="mt-0.5 block text-body tabular-nums">{won(p.savedWon)}</b>
-        </div>
-        {p.locked > 0 ? (
-          <div className="rounded-card border border-primary-l bg-primary-bg px-2 py-2 text-center">
-            <div className="text-micro text-ink-mute">{savings.lockedTitle}</div>
-            <b className="mt-0.5 block text-body tabular-nums">{won(p.locked)}</b>
+      {/*
+        🔴 **한 덩어리는 한 상자다.** 예전엔 상자가 넷이었다 — 전체 하나에 갈래 셋.
+           사실 하나의 「내 돈」인데 넷으로 쪼개져 다 같은 무게로 보였다.
+           합치고 **안에서 구분선**으로 나눈다.
+
+        🔴 **「가진 돈 전체」가 제일 크다.** 이건 안 뒤집는다 — 「쓸 수 있는 돈」만
+           크게 보이면 아이가 목표에 떼어 둔 돈이 **없어진 줄** 안다.
+      */}
+      <div className="rounded-card bg-surface px-4 py-4">
+        <b className="block text-center text-hero leading-none tabular-nums">{won(p.total)}</b>
+        <div className="mt-1 text-center text-cap text-ink-mute">{totalTitle}</div>
+
+        {/* 갈래는 **선 하나로** 나눈다. 상자를 또 만들지 않는다 */}
+        <dl className="mt-3 grid gap-1.5 border-t border-line pt-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <dt className="text-sub text-ink-soft">{balanceTitle}</dt>
+            <dd className="text-body font-bold tabular-nums">{won(p.balance)}</dd>
           </div>
-        ) : null}
+          <div className="flex items-baseline justify-between gap-2">
+            <dt className="text-sub text-ink-soft">{savedTitle}</dt>
+            <dd className="text-body font-bold tabular-nums">{won(p.savedWon)}</dd>
+          </div>
+          {p.locked > 0 ? (
+            <div className="flex items-baseline justify-between gap-2">
+              <dt className="text-sub text-ink-soft">{savings.lockedTitle}</dt>
+              <dd className="text-body font-bold tabular-nums text-primary-d">{won(p.locked)}</dd>
+            </div>
+          ) : null}
+        </dl>
       </div>
       {p.savedWon > 0 ? (
-        <p className="mt-1 text-center text-cap text-ink-mute">{setAsideNotice}</p>
+        <p className="mt-1.5 text-center text-cap text-ink-mute">{setAsideNotice}</p>
       ) : null}
 
       {/* 🔴 카드가 언제 오는지 아이가 알아야 한다 (UX-006 배송 대기) */}
-      <div className="mt-2 flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5">
+      {/* 🔴 **읽는 것은 테두리를 안 두른다.** 누를 수 없는데 눌리게 생기면 아이가 눌러 본다 */}
+      <div className="mt-3 flex items-center gap-2.5 px-1">
         <span className="text-[1.5em]">{stage.emoji}</span>
         <span className="flex-1">
           <b className="block text-sub">{stage.label}</b>
@@ -81,16 +92,19 @@ export default async function ChildPassbookPage({
 
       {/* 🔴 **봉투가 있던 자리다** (D41). 소비를 적고 맞춰보는 곳은 계획 카드 하나다 —
           돈 화면에서 그리로 가는 길이 없으면 아이가 못 찾는다 */}
+      {/* 🔴 **누르는 것은 배경을 깐다.** 읽는 것과 같은 모양이면 눌러 봐야 안다 */}
       <Link href="/child/plan"
-            className="mt-2 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
+            className="mt-3 flex min-h-touch items-center gap-2.5 rounded-card bg-surface px-3.5">
         <span className="text-[1.3em]">📝</span>
-        <span className="flex-1 text-sub font-bold">{planLink.label}</span>
+        <span className="flex-1 text-body font-bold">{planLink.label}</span>
         <span className="text-cap text-ink-mute">{planLink.hint} ›</span>
       </Link>
 
       {/* 🔴 「불리기」 실천을 여는 유일한 길 — SAVINGS_JOINED · SAVINGS_DONE (D25).
           은행 적금이 아니라 부모님과 하는 약속이다 (P-20 가입 중개 금지) */}
-      <h2 className="mb-1.5 mt-4 text-sub font-bold">{savings.title}</h2>
+      {/* 🔴 **구역 제목은 한 크기다.** `sub`·`title`·`cap` 이 섞여 있었다 —
+             같은 자리인데 크기가 다르면 아이는 어느 게 더 중요한지로 읽는다 */}
+      <h2 className="mb-2 mt-7 text-title font-bold leading-none">{savings.title}</h2>
       {sp.error ? (
         <div className="mb-1.5"><Card tone="miss">
           <p className="text-sub">{errors[sp.error] ?? errors.NOT_FOUND}</p>
@@ -114,7 +128,7 @@ export default async function ChildPassbookPage({
       ) : null}
 
       {open === null ? (
-        <div className="rounded-card border border-line bg-surface p-3">
+        <div className="rounded-card bg-surface p-3.5">
           <p className="text-sub leading-relaxed">{savings.what}</p>
           <p className="mt-1 text-cap text-ink-mute">{savings.notBank}</p>
 
@@ -222,7 +236,7 @@ export default async function ChildPassbookPage({
       {/* 🔴 **끝난 저금은 딴 화면이다.** 여기 붙으면 「지금 하는 저금」이 그 아래 묻힌다 */}
       {closed.length > 0 ? (
         <Link href="/child/allowance/savings"
-              className="mt-1.5 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
+              className="mt-1.5 flex min-h-touch items-center gap-2.5 rounded-card bg-surface px-3.5">
           <span className="text-[1.1em]">🐖</span>
           <span className="flex-1 text-sub">{savings.pastLink}</span>
           <span className="text-cap tabular-nums text-ink-mute">{closed.length}건 ›</span>
@@ -235,7 +249,7 @@ export default async function ChildPassbookPage({
         🔴 **여기서 돈을 넣지 않는다.** 넣는 자리는 「갖고 싶은 것」 화면 하나다 —
            두 군데서 넣으면 한도와 별 판정이 두 경로로 갈린다.
       */}
-      <h2 className="mb-1.5 mt-4 text-sub font-bold">{wishTitle}</h2>
+      <h2 className="mb-2 mt-7 text-title font-bold leading-none">{wishTitle}</h2>
       {wish.wishes.length === 0 ? (
         <p className="rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-cap text-ink-mute">
           {wishEmpty}
@@ -245,7 +259,7 @@ export default async function ChildPassbookPage({
           {wish.wishes.map((w) => (
             <li key={w.id}>
               <Link href="/child/wishlist"
-                    className="block rounded-card border border-line bg-surface px-3 py-2">
+                    className="block rounded-card bg-surface px-3.5 py-2.5">
                 <span className="flex items-baseline justify-between gap-2">
                   <b className="truncate text-sub">{w.name}</b>
                   <span className="shrink-0 text-cap text-ink-mute">{wishRank(w.rank)}</span>
@@ -274,7 +288,7 @@ export default async function ChildPassbookPage({
       {/* 🔴 **지난 기록은 딴 화면이다.** 30줄이 여기 붙으면 스크롤이 기록으로 끝나고
              목표도 저금도 그 밑에 묻힌다 — 기록을 줄인 게 아니라 자리를 옮겼다 */}
       <Link href="/child/allowance/history"
-            className="mt-4 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
+            className="mt-7 flex min-h-touch items-center gap-2.5 rounded-card bg-surface px-3.5">
         <span className="text-[1.1em]">📒</span>
         <span className="flex-1 text-sub font-bold">{historyTitle}</span>
         <span className="text-cap tabular-nums text-ink-mute">
