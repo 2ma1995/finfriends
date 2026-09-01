@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "@/db";
 import { countWaiting } from "@/modules/mission";
 import { getWalletTotals, topUp } from "@/modules/allowance";
-import { TOPUP_AMOUNTS, type BankView } from "@/contracts/bank";
+import { type BankView } from "@/contracts/bank";
 
 /**
  * 아이 통장(보호자용) — SRS §3 · 어긋남 대장 D21.
@@ -74,9 +74,22 @@ export async function getBank(
  *    오프라인 큐가 같은 키로 두 번 보내는 경우는 원장이 한 줄로 접는다 (규칙 ④).
  */
 export async function topUpAllowance(childId: string, amount: number) {
-  if (!TOPUP_AMOUNTS.includes(amount as (typeof TOPUP_AMOUNTS)[number])) {
-    return { ok: false, reason: "BAD_AMOUNT" } as const;
-  }
+  /**
+   * 🔴 **임의 금액을 받는다** (2026-09-01 사용자 요청 · 어긋남 대장 D53).
+   *
+   *    전에는 `TOPUP_AMOUNTS` 세 값만 받았다. 「입력란을 두면 실제 이체처럼 읽힌다」가
+   *    이유였는데, 그때는 **잔액이 시연용 컬럼 숫자**였다.
+   *    지금은 용돈 원장에 「얼마 줬다」를 적는 것이고(`D22`) 실제 돈은 앱 밖에서 오간다 —
+   *    **적는 금액을 세 값으로 묶을 이유가 없다.**
+   *
+   * 🔴 **상한은 그대로다.** `topUp` 이 `1 ~ MAX_TOPUP`(50만원)을 검사한다.
+   *    상한이 없으면 0 하나 더 눌린 실수가 그대로 아이 화면에 들어간다.
+   *    되돌릴 수는 있지만(`/parent/bank/adjust`) 아이가 이미 봤을 수 있다.
+   *
+   * 🔴 **정수만 받는다.** 원 단위 아래는 뜻이 없고, 소수가 들어오면
+   *    원장 합과 화면 표시가 어긋난다.
+   */
+  if (!Number.isInteger(amount)) return { ok: false, reason: "BAD_AMOUNT" } as const;
   // memo 를 비우면 원장이 「용돈을 받았어요」로 적는다 — 아이가 그대로 읽는 문장이다
   return topUp(childId, amount, "", `topup:${randomUUID()}`);
 }

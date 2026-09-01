@@ -31,6 +31,17 @@ export const walletLabels = {
   lockedNote: "「우리 집 적금」에 묶인 돈이에요. 만기가 되면 이자와 함께 돌아옵니다.",
 };
 export const topUpTitle = "용돈 넣기";
+
+/**
+ * 🔴 **자주 쓰는 금액은 버튼, 그 밖은 입력란**이다 (어긋남 대장 D53).
+ *    전에는 세 값만 받았다 — 잔액이 시연용 숫자였을 때의 규칙이다.
+ *    지금은 원장에 「얼마 줬다」를 적는 것이라 금액을 묶을 이유가 없다.
+ */
+export const customLabel = "직접 넣기";
+export const customPlaceholder = "금액";
+export const customSubmit = "넣기";
+/** 🔴 상한을 미리 말한다 — 넣고 나서 거절되면 왜 안 되는지 모른다 */
+export const customHint = "1원부터 500,000원까지 넣을 수 있어요.";
 export const savedNotice = "적어뒀어요. 아이 화면에 바로 보입니다.";
 
 export const topUpErrors: Record<string, string> = {

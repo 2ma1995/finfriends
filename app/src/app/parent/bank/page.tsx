@@ -8,8 +8,8 @@ import { topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { listForGuardian } from "@/modules/savings";
 import {
-  adjustLabel, cardNeeded, historyLabel, missionNotice, savedNotice, topUpErrors,
-  topUpTitle, walletLabels,
+  adjustLabel, cardNeeded, customHint, customLabel, customPlaceholder, customSubmit,
+  historyLabel, missionNotice, savedNotice, topUpErrors, topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
@@ -119,6 +119,7 @@ export default async function ParentBankPage({
           🔴 금액을 직접 입력받지 않는다. 시연에 필요한 것은 「용돈을 줬다고 적는다」이지
              임의 금액이 아니고, 입력란을 두면 실제 이체처럼 읽힌다.
         */}
+        {/* 🔴 자주 쓰는 금액은 버튼 — 세 번 중 두 번은 이걸로 끝난다 */}
         <div className="mt-1.5 grid grid-cols-3 gap-1.5">
           {TOPUP_AMOUNTS.map((a) => (
             <form key={a} action={topUpMockAction}>
@@ -132,6 +133,26 @@ export default async function ParentBankPage({
             </form>
           ))}
         </div>
+        {/*
+          🔴 **그 밖의 금액은 직접 넣는다** (D53).
+             `type="number"` 에 `min`·`max`·`step` 을 건다 — 화면 검사일 뿐이고
+             `topUpAllowance` 가 정수와 상한을 다시 본다 (§6.6 규약 ②).
+        */}
+        <form action={topUpMockAction} className="mt-1.5 flex items-center gap-1.5">
+          <label className="sr-only" htmlFor="topup-custom">{customLabel}</label>
+          <input
+            id="topup-custom" name="amount" type="number" inputMode="numeric"
+            min={1} max={500000} step={1} required placeholder={customPlaceholder}
+            className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-right text-[0.9em] tabular-nums"
+          />
+          <span className="shrink-0 text-[0.82em] text-ink-mute">원</span>
+          <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-[0.84em] font-bold text-white">
+            {customSubmit}
+          </button>
+        </form>
+        {/* 🔴 상한을 미리 말한다 — 넣고 나서 거절되면 왜 안 되는지 모른다 */}
+        <p className="mt-1 text-[0.74em] leading-relaxed text-ink-mute">{customHint}</p>
+
         {!view.cardActive ? (
           <p className="mt-1.5 text-[0.76em] leading-relaxed text-ink-mute">{cardNeeded}</p>
         ) : null}
