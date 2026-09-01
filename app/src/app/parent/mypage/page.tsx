@@ -2,12 +2,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { getGuardianEmail, getMyPage } from "@/modules/account";
+import { findChild } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { signOutAction } from "@/app/actions/auth";
 import { withdrawConsentAction } from "@/app/actions/consent";
 import { revokeDeviceAction } from "@/app/actions/parent-account";
 import { CARD_STEPS } from "@/contracts/account";
-import { cardNotice, deviceNotice, pinNotice, notCollected } from "./mypage.fixture";
+import { clearPinAction, setPinAction } from "@/app/actions/child-mode-pin";
+import { saveSchoolEndAction } from "@/app/actions/parent-schedule";
+import { getSchedule, toClock } from "@/modules/schedule";
+import {
+  cardNotice, deviceNotice, notCollected, pinChangeLabel, pinClearLabel, pinClearNotice,
+  pinDone, pinErrors, pinLabel, pinNotice, pinSetLabel,
+  schoolDone, schoolErrors, schoolNotice, schoolSaveLabel,
+} from "./mypage.fixture";
 
 // 마이페이지 — 보호자 계정 · 아이 · 기기 · 카드. 어긋남 대장 D20
 export const metadata = { title: "내 정보 · 핀프렌즈" };
@@ -21,12 +29,25 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function ParentMyPage() {
+export default async function ParentMyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pin?: string; pinErr?: string; school?: string; schoolErr?: string }>;
+}) {
+  const sp = await searchParams;
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
 
   const email = await getGuardianEmail(guardian.authRef);
   const view = await getMyPage(guardian.guardianId, email);
+
+  /**
+   * 🔴 아이 id 는 **세션의 보호자에게서** 찾는다 (`REQ-NF-009` — identity 안에서만).
+   *    하교 시각은 아이 단위라 아이가 없으면 정할 수 없다.
+   */
+  const child = await findChild(guardian.guardianId);
+  const schedule = child ? await getSchedule(child.id) : null;
+  const schoolClock = schedule ? toClock(schedule.schoolEndMin) : null;
 
   return (
     <Screen role="부모 화면" title="내 정보">
@@ -151,10 +172,84 @@ export default async function ParentMyPage() {
       <section className="mt-4">
         <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">아동 모드 잠금</h2>
         <div className="mt-1.5">
-          <Card>
-            <Row label="PIN" value={view.pinSet ? "설정됨" : "아직 없어요"} />
+          <Card tone={view.pinSet ? "grow" : "surface"}>
+            <Row label="PIN" value={view.pinSet ? "정해 뒀어요" : "아직 없어요"} />
             <p className="mt-2 text-[0.8em] leading-relaxed text-ink-soft">{pinNotice.body}</p>
-            <p className="mt-1 text-[0.78em] text-miss">{pinNotice.todo}</p>
+            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-mute">{pinNotice.why}</p>
+
+            {sp.pin ? (
+              <p className="mt-2 text-[0.84em] text-primary-d">{pinDone[sp.pin] ?? ""}</p>
+            ) : null}
+            {sp.pinErr ? (
+              <p className="mt-2 text-[0.84em] leading-relaxed text-miss">
+                {pinErrors[sp.pinErr] ?? pinErrors.BAD_FORMAT}
+              </p>
+            ) : null}
+
+            {/*
+              🔴 `type="password"` 다. 아이가 옆에서 보는 상황을 전제로 만든다.
+                 서버가 형식과 「너무 쉬운 값」을 다시 검사한다 — 화면 검사는 우회된다.
+            */}
+            <form action={setPinAction} className="mt-2 flex gap-1.5">
+              <input
+                name="pin" type="password" inputMode="numeric" autoComplete="off"
+                pattern="\d{4}" maxLength={4} required placeholder={pinLabel}
+                className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-center tracking-[0.3em] tabular-nums"
+              />
+              <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-[0.84em] font-bold text-white">
+                {view.pinSet ? pinChangeLabel : pinSetLabel}
+              </button>
+            </form>
+
+            <p className="mt-1.5 text-[0.76em] leading-relaxed text-ink-mute">{pinNotice.rule}</p>
+
+            {view.pinSet ? (
+              <form action={clearPinAction} className="mt-2">
+                <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.8em] text-ink-soft">
+                  {pinClearLabel}
+                </button>
+                {/* 🔴 지우면 무슨 일이 생기는지 말한다 */}
+                <p className="mt-1 text-[0.74em] leading-relaxed text-ink-mute">{pinClearNotice}</p>
+              </form>
+            ) : null}
+          </Card>
+        </div>
+      </section>
+
+      {/*
+        ── 하교 시각 — D41 ──
+        🔴 계획 카드의 가장 큰 구멍이 「적으라고 말할 자리가 없다」였다.
+           아이가 그냥 나가면 대조할 것이 없다 (C5 사각지대).
+      */}
+      <section className="mt-4">
+        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{schoolNotice.title}</h2>
+        <div className="mt-1.5">
+          <Card tone={schoolClock ? "grow" : "surface"}>
+            <p className="text-[0.84em] leading-relaxed text-ink-soft">{schoolNotice.body}</p>
+            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-mute">{schoolNotice.once}</p>
+
+            {sp.school ? <p className="mt-2 text-[0.84em] text-primary-d">{schoolDone}</p> : null}
+            {sp.schoolErr ? (
+              <p className="mt-2 text-[0.84em] text-miss">
+                {schoolErrors[sp.schoolErr] ?? schoolErrors.BAD_TIME}
+              </p>
+            ) : null}
+
+            <form action={saveSchoolEndAction} className="mt-2 flex gap-1.5">
+              <input
+                name="clock" type="time" required defaultValue={schoolClock ?? ""}
+                className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-[0.9em] tabular-nums"
+              />
+              <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-[0.84em] font-bold text-white">
+                {schoolSaveLabel}
+              </button>
+            </form>
+
+            {/* 🔴 바꾸면 그날 다시 묻는다 — 안 적으면 잘못 넣었다 고친 날 하루를 잃는다 */}
+            <p className="mt-1.5 text-[0.76em] leading-relaxed text-ink-mute">{schoolNotice.change}</p>
+            {!schoolClock ? (
+              <p className="mt-1 text-[0.76em] leading-relaxed text-ink-mute">{schoolNotice.empty}</p>
+            ) : null}
           </Card>
         </div>
       </section>

@@ -200,12 +200,6 @@ try {
     "안 남기면 어느 기기를 해제할지 고를 수 없다");
 
   await prisma.deviceSession.deleteMany({ where: { childId: dchild.id } });
-  await prisma.childAccount.delete({ where: { id: dchild.id } });
-
-  await prisma.deviceSession.deleteMany({ where: { guardianId: guardian.id } });
-  await prisma.childAccount.deleteMany({ where: { guardianId: guardian.id } });
-  await prisma.guardianAccount.delete({ where: { id: guardian.id } });
-  await prisma.devAuthUser.delete({ where: { id: user.id } });
 
   /**
    * 🔴 **초대 링크는 24시간짜리 1회용이다** — FR-002 · 어긋남 대장 D33.
@@ -257,6 +251,70 @@ try {
   check("살아 있는 초대는 하나뿐", liveInvites === 1);
 
   await prisma.childInvite.deleteMany({ where: { guardianId: guardian.id } });
+
+  /**
+   * 🔴 **아동 모드 PIN** — D5 · 어긋남 대장 D41.
+   *    컬럼은 처음부터 있었는데 **읽기만 하고 아무도 넣지 않았다.**
+   *    그래서 아동 모드를 푸는 유일한 길이 로그인이었고,
+   *    로그인하면 아이 기기 등록이 풀린다(D27).
+   */
+  const KEYLEN = 64;
+  const hashPin = (pin) => {
+    const salt = randomBytes(16).toString("hex");
+    return `${salt}:${scryptSync(pin, salt, KEYLEN).toString("hex")}`;
+  };
+  const pinMatches = (pin, stored) => {
+    const [salt, key] = stored.split(":");
+    if (!salt || !key) return false;
+    const a = Buffer.from(key, "hex"); const b = scryptSync(pin, salt, KEYLEN);
+    return a.length === b.length && timingSafeEqual(a, b);
+  };
+  /** setChildModePin 의 「너무 쉬운 값」 검사 */
+  const tooSimple = (pin) => {
+    if (!/^\d{4}$/.test(pin)) return "BAD_FORMAT";
+    const d = pin.split("").map(Number);
+    const same = d.every((x) => x === d[0]);
+    const up = d.every((x, i) => i === 0 || x === d[i - 1] + 1);
+    const down = d.every((x, i) => i === 0 || x === d[i - 1] - 1);
+    return same || up || down ? "TOO_SIMPLE" : null;
+  };
+
+  check("🔴 0000 은 막는다", tooSimple("0000") === "TOO_SIMPLE", "아이가 첫 번째로 눌러 본다");
+  check("🔴 1234 는 막는다", tooSimple("1234") === "TOO_SIMPLE");
+  check("🔴 9876 도 막는다", tooSimple("9876") === "TOO_SIMPLE", "내려가는 것도 마찬가지다");
+  check("네 자리가 아니면 막는다", tooSimple("123") === "BAD_FORMAT" && tooSimple("12a4") === "BAD_FORMAT");
+  check("평범한 PIN 은 통과", tooSimple("2957") === null);
+
+  const stored = hashPin("2957");
+  check("🔴 PIN 원문을 저장하지 않는다", !stored.includes("2957"), "scrypt salt:key");
+  check("맞는 PIN 은 통과", pinMatches("2957", stored));
+  check("틀린 PIN 은 거부", !pinMatches("2958", stored));
+  check("길이가 달라도 던지지 않는다", pinMatches("1", stored) === false, "timingSafeEqual 은 길이가 다르면 던진다");
+
+  await prisma.guardianAccount.update({ where: { id: guardian.id }, data: { childModePinHash: stored } });
+  const back = await prisma.guardianAccount.findUnique({ where: { id: guardian.id }, select: { childModePinHash: true } });
+  check("PIN 이 보호자에 저장된다", back.childModePinHash === stored);
+
+  // 🔴 다섯 번 틀리면 잠근다 — 네 자리는 10,000가지뿐이다
+  const dev2 = await prisma.deviceSession.create({
+    data: { guardianId: guardian.id, childId: dchild.id, deviceRef: randomBytes(6).toString("hex"),
+            mode: "CHILD", tokenHash: randomBytes(16).toString("hex"), expiresAt: new Date(Date.now() + 864e5),
+            blockedAttempts: 5 },
+  });
+  check("🔴 다섯 번 틀리면 잠긴다", dev2.blockedAttempts >= 5, "PIN 은 네 자리라 무차별 대입이 쉽다");
+  check("🔴 잠김은 **기기별**이다", dev2.guardianId === guardian.id && dev2.childId === dchild.id,
+    "보호자에 세면 다른 기기에서 틀린 것까지 합쳐진다");
+  await prisma.deviceSession.delete({ where: { id: dev2.id } });
+
+  const src2 = readFileSync(new URL("../src/middleware.ts", import.meta.url), "utf8");
+  check("미들웨어가 해제 쿠키를 본다", /ff_unlock/.test(src2), "PIN 으로 연 상태면 /parent/** 를 통과시킨다");
+
+  await prisma.childAccount.delete({ where: { id: dchild.id } });
+
+  await prisma.deviceSession.deleteMany({ where: { guardianId: guardian.id } });
+  await prisma.childAccount.deleteMany({ where: { guardianId: guardian.id } });
+  await prisma.guardianAccount.delete({ where: { id: guardian.id } });
+  await prisma.devAuthUser.delete({ where: { id: user.id } });
 
   check("정리 완료", true);
 
