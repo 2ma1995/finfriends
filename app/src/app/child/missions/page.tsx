@@ -5,7 +5,7 @@ import type { MissionView } from "@/contracts/mission";
 import { markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
   backfilledNotice, consentRequired, doneLabel, empty, intro, noDevice, photoLabel,
-  photoNotice, rejectedPrefix, sections, undoLabel, waitingNotice,
+  photoNotice, rejectedPrefix, sections, source, undoLabel, waitingNotice,
 } from "./missions.fixture";
 
 // PRC-001 — 미션. 🔴 아이가 하는 일은 「했어요」 하나뿐이다. 승인은 보호자가 한다
@@ -26,8 +26,25 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
 
   return (
     <li className={`rounded-card border p-3 ${tone}`}>
-      <div className="flex items-baseline justify-between gap-2">
-        <b className="text-[0.9em]">{m.icon} {m.title}</b>
+      {/*
+        🔴 **어느 칸에서 온 것인지 · 누가 낸 것인지**를 제목보다 먼저 말한다.
+           예전엔 영역 이름이 날짜와 함께 흐린 한 줄에 묻혀 있어서
+           **네 영역이 섞인 목록에서 무엇이 무엇인지 알 수 없었다.**
+      */}
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="rounded-full border border-line-2 bg-canvas px-1.5 py-0.5 text-[0.66em] font-bold">
+          {m.icon} {m.topicLabel}
+        </span>
+        {/* 🔴 「내가 배워서 한 것」과 「시킨 것」은 아이에게 다른 일이다 */}
+        <span className={`rounded-full px-1.5 py-0.5 text-[0.66em] ${
+          m.fromLesson ? "bg-primary-bg text-primary-d" : "bg-star-bg text-star-d"}`}>
+          {m.fromLesson ? `📚 ${source.lesson}` : `🎯 ${source.parent}`}
+        </span>
+        {m.whenLabel ? <span className="text-[0.66em] text-ink-mute">{m.whenLabel}</span> : null}
+      </div>
+
+      <div className="mt-1 flex items-baseline justify-between gap-2">
+        <b className="text-[0.9em]">{m.title}</b>
         <span className="shrink-0 text-[0.78em]">
           {/* 🔴 금액이 걸린 미션은 **용돈이 생긴다.** 별만 보이면 「벌기」가 안 보인다 */}
           {m.payoutWon > 0 ? (
@@ -35,9 +52,6 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
           ) : null}
           <span className="text-star-d">{m.payoutWon > 0 ? " · " : ""}⭐ {m.reward}</span>
         </span>
-      </div>
-      <div className="mt-0.5 text-[0.72em] text-ink-mute">
-        {m.topicLabel}{m.whenLabel ? ` · ${m.whenLabel}` : ""}
       </div>
 
       {/* 🔴 「기다리는 중」을 「안 했다」와 구별해 말한다 (AC-6.2) */}

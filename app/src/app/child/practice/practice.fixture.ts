@@ -16,6 +16,12 @@ export const rejected = "다시 해볼까요?";
 
 export const quizToday = "오늘의 문제";
 export const quizDone = "오늘 문제 다 풀었어요";
+/**
+ * 🔴 **왜 「오늘의 문제」가 넷인지 화면이 말한 적이 없다.** `FR-011` 은
+ *    **「분야별 1일 1개 · 총 4개」**다 — 하루 한 개는 **칸마다**이지 전체가 아니다.
+ *    안 적으면 「하루 하나라며 왜 넷이야」가 된다. 실제로 그렇게 읽혔다.
+ */
+export const quizRule = "문제는 칸마다 하루 한 개예요. 넷 다 안 풀어도 괜찮아요.";
 
 /** 🔴 불리기는 미션이 아니라 저금으로 실천한다 (D25) */
 export const savingsCta = "저금하러 가기 →";
@@ -30,7 +36,13 @@ export const claimed = "올렸어요! 부모님이 확인하면 별이 붙어요
  *    그래서 말로 못박는다 — 다른 설명을 백 줄 적는 것보다 이 한 줄이 낫다.
  */
 export const missionNone = "부모님이 준 미션 보기";
-export const missionDiff = "미션은 돈이 붙어요";
+/**
+ * 🔴 **「미션은 돈이 붙어요」라고 적었다가 고쳤다.** 부모가 금액을 0으로도 만들 수 있어
+ *    (`payoutWon` 이 선택 입력이다) **거짓이 될 수 있는 문장**이었다.
+ *    실제로 tester 의 미션 한 건이 0원이었다. 늘 참인 것만 적는다 —
+ *    **누가 냈는가**는 언제나 참이다.
+ */
+export const missionDiff = "미션은 부모님이 만들어 주신 거예요";
 
 export const hint = "네 가지를 다 할 필요는 없어요. 오늘 하나면 충분해요.";
 

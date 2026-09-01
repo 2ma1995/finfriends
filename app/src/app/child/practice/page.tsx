@@ -7,7 +7,7 @@ import { hasPlanToday } from "@/modules/plan";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
   claim, claimed, consentRequired, done, hint, intro, missionDiff, missionNone,
-  needsLesson, noDevice, nudge, quizDone, quizToday,
+  needsLesson, noDevice, nudge, quizDone, quizRule, quizToday,
   readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
 } from "./practice.fixture";
 
@@ -147,6 +147,8 @@ export default async function ChildPracticePage({
       </ul>
 
       <p className="mt-3 text-center text-[0.78em] text-ink-mute">{hint}</p>
+      {/* 🔴 「오늘의 문제」가 넷인 이유 — `FR-011` 분야별 1일 1개 · 총 4개 */}
+      <p className="mt-1 text-center text-[0.74em] text-ink-mute">{quizRule}</p>
       {/* 🔴 미션이 왜 다른지 — 아이에게 제일 큰 차이는 **돈이 붙는다**는 것이다 */}
       <p className="mt-1 text-center text-[0.74em] text-primary-d">🎯 {missionDiff}</p>
     </Screen>
