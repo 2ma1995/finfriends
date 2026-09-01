@@ -10,7 +10,8 @@ import {
   done, hint, intro, lessonWaiting,
   missionDiff, missionNone, needsLesson, noDevice, nudge,
   practicedToday as practicedTodayLabel, quizDone, quizRule, quizToday,
-  readFirst, rejected, savingsCta, savingsNone, savingsStage, savingsStarred, sub, title, waiting,
+  readFirst, rejected, savingsCta, savingsGoing, savingsNone, savingsStage, savingsStarred,
+  sub, title, waiting,
 } from "./practice.fixture";
 
 // 오늘의 실천 — 네 영역을 한 화면에. 🔴 「오늘 하나」가 실천을 만든다
@@ -106,9 +107,12 @@ export default async function ChildPracticePage({
                   <p className="mt-1 flex-1 text-[0.78em] leading-relaxed">
                     {c.savingsNote ?? savingsNone}
                   </p>
+                  {/* 🔴 돌고 있으면 **무엇이 도는지**를 말한다. 「하러 가기」는 아직 없을 때다 */}
                   <Link href="/child/allowance"
                         className="mt-1 grid min-h-touch place-items-center rounded-card bg-primary text-[0.78em] font-bold text-white">
-                    {savingsCta}
+                    {c.savingsStage === "GOING" && c.savingsKind
+                      ? savingsGoing[c.savingsKind]
+                      : savingsCta}
                   </Link>
                 </>
               ) : (

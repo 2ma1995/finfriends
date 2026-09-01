@@ -36,6 +36,8 @@ export type PracticeCell = {
    *    저금을 들고 있어도 안 들고 있어도 **같아 보였다.**
    */
   readonly savingsStage: "NONE" | "ASKED" | "GOING" | null;
+  /** 🔴 **예금인지 적금인지.** 「저금」으로 뭉뚱그리면 아이가 자기가 뭘 골랐는지 잊는다 */
+  readonly savingsKind: "DEPOSIT" | "INSTALLMENT" | null;
   /** 오늘 퀴즈를 이미 맞혔나 */
   readonly quizDone: boolean;
   readonly quizIndex: number;
@@ -98,6 +100,7 @@ export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
         ...base, task: null, lessonId: null, state: "NONE" as PracticeState,
         viaSavings: true,
         savingsStage: savings === null ? "NONE" : savings.state === "REQUESTED" ? "ASKED" : "GOING",
+        savingsKind: savings?.kind ?? null,
         savingsNote: savings === null ? null
           : savings.state === "REQUESTED" ? "부모님이 보고 계세요"
           : savings.kind === "INSTALLMENT"
@@ -119,6 +122,7 @@ export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
       viaSavings: false,
       savingsNote: null,
       savingsStage: null,
+      savingsKind: null,
     };
   }));
 }
