@@ -4,16 +4,30 @@ import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { INTEREST_CHOICES, TOPUP_AMOUNTS } from "@/contracts/bank";
 import { findChild } from "@/modules/consent";
 import { getBank } from "@/modules/bank";
-import { setInterestAction, topUpMockAction } from "@/app/actions/parent-bank";
+import { getHistory } from "@/modules/allowance";
+import { reverseEntryAction, setInterestAction, topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { mockBanner, interestNotice, missionNotice, cardNeeded } from "./bank.fixture";
+import {
+  balanceLabel, cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
+  historyTitle, interestNotice, missionNotice, moneyNotice, reversedBadge, savedNotice,
+  shortNotice, starSeparation, topUpErrors, topUpTitle,
+} from "./bank.fixture";
 
-// 아이 통장(보호자용) — SRS §3 · 충전 · 미션 관리 · 이자율 설정. 어긋남 대장 D21
+/**
+ * 아이 통장(보호자용) — SRS §3 · 충전 · 미션 관리 · 이자율 설정 · 어긋남 대장 D18 · D21.
+ *
+ * 🔴 **용돈 화면은 여기 하나다.** `/parent/allowance` 를 여기로 합쳤다 —
+ *    화면이 둘이면 잔액도 둘이 되고, 실제로 그렇게 갈렸다.
+ */
 export const metadata = { title: "아이 통장 · 핀프렌즈" };
 
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-export default async function ParentBankPage() {
+export default async function ParentBankPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string; fixed?: string; short?: string; fix?: string }>;
+}) {
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
   if (!guardian.consentCompleted) redirect("/consent");
@@ -38,25 +52,53 @@ export default async function ParentBankPage() {
     );
   }
 
-  const view = await getBank(guardian.guardianId, child.id, child.displayName);
+  const sp = await searchParams;
+  // 🔴 잔액과 기록은 **같은 원장**에서 온다. 두 곳에서 읽으면 다시 갈린다
+  const [view, history] = await Promise.all([
+    getBank(guardian.guardianId, child.id, child.displayName),
+    getHistory(child.id, 10),
+  ]);
 
   return (
     <Screen role="부모 화면" title="아이 통장" sub={child.displayName}>
-      {/* 🔴 맨 위에. 시연에서 실제 이체로 오해되면 안 된다 */}
-      <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
-        {mockBanner}
-      </p>
+      {sp.saved ? (
+        <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{savedNotice}</p></Card></div>
+      ) : null}
+      {sp.error ? (
+        <div className="mb-2"><Card tone="miss">
+          <p className="text-[0.88em]">{topUpErrors[sp.error] ?? topUpErrors.BAD_AMOUNT}</p>
+        </Card></div>
+      ) : null}
+      {sp.fixed ? (
+        <div className="mb-2"><Card tone={sp.short ? "miss" : "grow"}>
+          <p className="text-[0.88em]">{fixedNotice(Number(sp.fixed))}</p>
+          {/* 🔴 못 되돌린 금액을 조용히 넘기지 않는다 — 보호자는 다 취소된 줄 안다 */}
+          {sp.short ? <p className="mt-1 text-[0.86em] text-ink-soft">{shortNotice(Number(sp.short))}</p> : null}
+        </Card></div>
+      ) : null}
+      {sp.fix ? (
+        <div className="mb-2"><Card tone="miss">
+          <p className="text-[0.88em]">{fixErrors[sp.fix] ?? fixErrors.NOT_FOUND}</p>
+        </Card></div>
+      ) : null}
+
+      {/* 🔴 맨 위에. 앱이 돈을 보관한다는 오해를 만들면 안 된다 (D18) */}
+      <Card>
+        <b className="text-[0.82em]">{moneyNotice.title}</b>
+        <p className="mt-1 text-[0.86em] leading-relaxed text-ink-soft">{moneyNotice.body}</p>
+        <p className="mt-2 text-[0.8em] leading-relaxed text-ink-mute">{starSeparation}</p>
+      </Card>
 
       {/* ── 잔액과 충전 ── */}
       <div className="mt-2.5 rounded-card border border-line-2 bg-sand p-3 text-center">
-        <span className="block text-[0.72em] text-ink-mute">지금 쓸 수 있는 돈</span>
+        <span className="block text-[0.72em] text-ink-mute">{balanceLabel}</span>
         <b className="text-[1.6em] tabular-nums">{won(view.balanceWon)}</b>
       </div>
 
       <section className="mt-2.5">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">용돈 넣기</h2>
+        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{topUpTitle}</h2>
         {/*
-          🔴 금액을 직접 입력받지 않는다. 시연에 필요한 것은 「충전이 된다」이지
+          🔴 금액을 직접 입력받지 않는다. 시연에 필요한 것은 「용돈을 줬다고 적는다」이지
              임의 금액이 아니고, 입력란을 두면 실제 이체처럼 읽힌다.
         */}
         <div className="mt-1.5 grid grid-cols-3 gap-1.5">
@@ -73,9 +115,42 @@ export default async function ParentBankPage() {
           ))}
         </div>
         {!view.cardActive ? (
-          <p className="mt-1.5 text-[0.76em] leading-relaxed text-miss">{cardNeeded}</p>
+          <p className="mt-1.5 text-[0.76em] leading-relaxed text-ink-mute">{cardNeeded}</p>
         ) : null}
       </section>
+
+      {/* ── 기록과 되돌리기 — 원장이 있어야 성립한다 ── */}
+      {history.length > 0 ? (
+        <section className="mt-4">
+          <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{historyTitle}</h2>
+          <p className="mb-1.5 mt-1 text-[0.74em] text-ink-mute">{fixNotice}</p>
+          <ul className="grid gap-1">
+            {history.map((h) => (
+              <li key={h.id} className="rounded-card border border-line bg-surface px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 text-[0.84em]">{h.memo}</span>
+                  <span className="shrink-0 text-[0.72em] text-ink-mute">{h.whenLabel}</span>
+                  <b className={`shrink-0 tabular-nums text-[0.84em] ${h.delta > 0 ? "text-primary-d" : "text-ink-soft"}`}>
+                    {h.delta > 0 ? "+" : ""}{won(h.delta)}
+                  </b>
+                </div>
+                {/* 🔴 보호자가 적은 줄만 되돌린다. 아이가 적은 것은 아이 쪽에서 되돌린다 */}
+                {h.byGuardian && !h.reversed ? (
+                  <form action={reverseEntryAction} className="mt-1.5 flex gap-1.5">
+                    <input type="hidden" name="entryId" value={h.id} />
+                    <input name="reason" maxLength={30} placeholder={fixReasonPlaceholder}
+                           className="min-h-touch flex-1 rounded-card border border-line-2 bg-surface px-2 text-[0.74em]" />
+                    <button className="min-h-touch shrink-0 rounded-card border border-line-2 bg-surface px-3 text-[0.76em] text-ink-soft">
+                      {fixLabel}
+                    </button>
+                  </form>
+                ) : null}
+                {h.reversed ? <p className="mt-1 text-[0.72em] text-ink-mute">{reversedBadge}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* ── 이자율 설정 · 부모가 직접 주는 이자 (§9 A3) ── */}
       <section className="mt-4">
