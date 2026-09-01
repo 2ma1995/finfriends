@@ -77,6 +77,12 @@ export default async function ChildPassbookPage({
 
       {/* 🔴 「불리기」 실천을 여는 유일한 길 — SAVINGS_JOINED · SAVINGS_DONE (D25).
           은행 적금이 아니라 부모님과 하는 약속이다 (P-20 가입 중개 금지) */}
+      {/* 🔴 충전한 돈을 **쓸 곳별로 나눠 담는** 자리 (FR-020) */}
+      <a href="/child/envelopes"
+         className="mt-3 flex min-h-touch w-full items-center justify-center gap-1 rounded-card border-2 border-primary bg-primary-bg text-[0.88em] font-bold text-primary-d">
+        ✉️ 봉투에 나눠 담기 →
+      </a>
+
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{savings.title}</h2>
       {sp.error ? (
         <div className="mb-1.5"><Card tone="miss">

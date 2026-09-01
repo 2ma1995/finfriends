@@ -36,6 +36,7 @@ const ROUTES = {
       { href: "/child/quiz/spend",     name: "퀴즈",         task: "LRN-001" },
       { href: "/child/plan",           name: "계획 카드",     task: "PLN-002" },
       { href: "/child/allowance",      name: "내 통장",       task: "D18" },
+      { href: "/child/envelopes",      name: "봉투",         task: "FR-020" },
       { href: "/child/plan/new",       name: "계획 카드 적기", task: "PLN-001" },
       { href: "/child/retro/r-201",    name: "계획 ↔ 실제",  task: "PLN-003" },
       { href: "/child/wishlist",       name: "갖고 싶은 것",  task: "PRC-004" },
