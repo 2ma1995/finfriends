@@ -6,7 +6,7 @@ import {
 } from "@/modules/savings";
 import { breakSavingsAction, payInstallmentAction, requestSavingsAction } from "@/app/actions/savings";
 import {
-  balanceTitle, card, consentRequired, empty, historyTitle, inLabel, interest,
+  balanceTitle, card, consentRequired, empty, historyTitle, inLabel,
   errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
   setAsideNotice, title, totalTitle,
 } from "./allowance.fixture";
@@ -73,22 +73,6 @@ export default async function ChildPassbookPage({
           <b className="block text-[0.86em]">{stage.label}</b>
           <span className="text-[0.74em] text-ink-mute">{stage.body}</span>
         </span>
-      </div>
-
-      {/* 🔴 아직 받은 이자가 아니다. 「한 번 줄 때 얼마인지」만 보여준다 */}
-      <div className="mt-2">
-        <Card tone="grow">
-          <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{interest.title}</h2>
-          {p.interestPct === null ? (
-            <p className="mt-1 text-[0.86em] text-ink-soft">{interest.none}</p>
-          ) : (
-            <>
-              <p className="mt-1 text-[0.92em] font-bold text-primary-d">{interest.rate(p.interestPct)}</p>
-              {/* 🔴 무엇에 붙는지 분명히 말한다. 안 적으면 아이는 모든 돈에 붙는 줄 안다 */}
-              <p className="mt-1 text-[0.76em] text-ink-mute">{interest.notice}</p>
-            </>
-          )}
-        </Card>
       </div>
 
       {/* 🔴 「불리기」 실천을 여는 유일한 길 — SAVINGS_JOINED · SAVINGS_DONE (D25).
@@ -182,6 +166,8 @@ export default async function ChildPassbookPage({
                 <p className="text-[0.72em] text-ink-mute">
                   {p.interestPct === null ? savings.wantNoRate : savings.wantNotice(p.interestPct)}
                 </p>
+                {/* 🔴 이자가 무엇에 붙는지는 여기서 말한다. 위의 이자 칸을 없앴기 때문이다 */}
+                <p className="text-[0.7em] text-ink-mute">{savings.onlyOnSavings}</p>
                 <ul className="mt-0.5 grid grid-cols-4 gap-1">
                   {WANTED_CHOICES.map((w) => (
                     <li key={w}>
