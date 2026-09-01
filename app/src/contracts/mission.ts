@@ -50,6 +50,29 @@ export type MissionView = {
   readonly hasPhoto: boolean;
 };
 
+/**
+ * 사진이 필요한가 — 🔴 **시스템이 스스로 확인할 수 없는 것만** 사진을 받는다.
+ *
+ * 아이·부모 화면이 **같은 답을 내야 한다.** 한쪽만 알면 아이는 사진칸이 없는데
+ * 부모는 사진을 기다리거나, 반대가 된다. 그래서 계약에 둔다.
+ *
+ *   벌기 · 부모 미션   집안일 · 심부름 — **앱이 볼 수 없다.** 사진이 유일한 증거
+ *   잘 쓰기            카드 결제 내역이 답한다
+ *   모으기             통장 · 위시리스트 잔액이 답한다
+ *   불리기             적금 회차가 답한다
+ *   배워서 한 것        아이가 스스로 고른 실천이다 — 부모가 시킨 일이 아니다
+ *
+ * 🔴 **`FR-032` 는 사진을 「선택」으로 뒀다** (어긋남 대장 D49).
+ *    벌기 부모 미션만 필수로 올리는 것은 그 요건에서 벗어난 것이고,
+ *    사용자 결정이다 — 「벌기 부모 미션에서만 사진을 보내야 한다」.
+ *
+ * 🔴 **넓히지 않는다.** 찍을 수 없는 실천(참기 · 기록하기)이 실제로 있고,
+ *    전부 필수로 만들면 그런 실천은 **아예 올릴 수 없게 된다.**
+ */
+export function needsPhoto(topic: Topic, fromLesson: boolean) {
+  return topic === "EARN" && !fromLesson;
+}
+
 export type MissionBoardView = {
   readonly todo: readonly MissionView[];
   readonly waiting: readonly MissionView[];

@@ -9,7 +9,7 @@ import { findChild } from "@/modules/consent";
 import { listOpenForGuardian } from "@/modules/mission";
 import { createMissionAction } from "@/app/actions/parent-mission";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { examples, hints } from "./new-mission.fixture";
+import { examples, hints, photoRule } from "./new-mission.fixture";
 
 // PRC-001 — 미션 만들기. §6.1 진입점 4번 `createMission`
 export const metadata = { title: "미션 만들기 · 핀프렌즈" };
@@ -101,6 +101,10 @@ export default async function NewMissionPage({
             ))}
           </div>
           <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.topic}</small>
+          {/* 🔴 걸기 전에 말한다 — 찍을 수 없는 일을 벌기로 걸면 아이가 올릴 방법이 없다 (D49) */}
+          <small className="mt-1 block rounded-card border border-line-2 bg-surface px-2.5 py-2 text-[0.74em] leading-relaxed text-ink-soft">
+            📷 {photoRule}
+          </small>
         </fieldset>
 
         {/* 🔴 `REQ-FUNC-002` — 보호자가 정하는 것은 **금액**이다. ⭐는 1로 못박혀 있다.

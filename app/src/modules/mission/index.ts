@@ -452,6 +452,18 @@ export type AttachPhotoResult =
  * 🔴 **「했어요」를 누른 미션에만** 붙는다. 판정을 기다리는 것이 아니면 볼 사람이 없다.
  * 🔴 **한 장이다.** 다시 올리면 덮어쓴다 — 여러 장을 허용하면 「보고 지운다」가 흐려진다.
  */
+/**
+ * 사진 규칙을 판단할 최소 정보 — 🔴 **`bytes` 를 안 읽는다.**
+ *    올리기 전에 「이 미션이 사진을 요구하나」만 보면 되므로 두 필드면 족하다.
+ */
+export async function findForPhoto(childId: string, missionId: string) {
+  const m = await prisma.mission.findFirst({
+    where: { id: missionId, childId },
+    select: { topic: true, sourceId: true },
+  });
+  return m ? { topic: m.topic as Topic, fromLesson: m.sourceId != null } : null;
+}
+
 export async function attachPhoto(
   childId: string, missionId: string, bytes: Uint8Array, mime: string,
 ): Promise<AttachPhotoResult> {

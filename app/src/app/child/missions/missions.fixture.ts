@@ -24,7 +24,11 @@ export const doneLabel = "했어요";
  * 🔴 사진은 **선택**이다 (FR-032). 찍을 수 없는 실천(참기·기록하기)도 있다.
  * 🔴 **부모가 보고 나면 바로 지워진다**는 것을 아이에게 말한다 — 아동 이미지다.
  */
-export const photoLabel = "사진 보여주기 (안 해도 돼요)";
+/**
+ * 🔴 **벌기 부모 미션만 사진이 필수다** (D49). 「안 해도 돼요」를 지웠다 —
+ *    필수인데 안 해도 된다고 적으면 아이가 그냥 눌렀다가 막힌다.
+ */
+export const photoLabel = "사진 보여주기";
 export const photoNotice = "부모님만 보시고 바로 지워져요.";
 
 /**
@@ -33,6 +37,20 @@ export const photoNotice = "부모님만 보시고 바로 지워져요.";
  *    아이는 **하고 나서** 찍는다 — 누르기 전에 찍어 두라는 건 어른의 순서다.
  */
 export const photoLater = "사진 나중에 보여주기";
+
+/**
+ * 🔴 **사진을 왜 받는지, 왜 안 받는지 말한다.** 어떤 미션은 사진칸이 있고
+ *    어떤 것은 없으면 아이는 「왜 다르지」가 된다. 이유가 각각 다르다.
+ */
+export const photoWhy = "부모님이 볼 수 없는 일이라서 사진이 있어야 해요.";
+export const noPhotoWhy: Partial<Record<string, string>> = {
+  SPEND: "카드로 쓴 내역이 부모님께 보여요. 사진은 안 찍어도 돼요.",
+  SAVE: "통장에 모인 돈이 부모님께 보여요. 사진은 안 찍어도 돼요.",
+  GROW: "저금한 것이 부모님께 보여요. 사진은 안 찍어도 돼요.",
+  /** 🔴 배워서 스스로 고른 실천 — 부모가 시킨 일이 아니라서 증거를 요구하지 않는다 */
+  LESSON: "내가 배우고 스스로 고른 실천이에요. 사진은 안 찍어도 돼요.",
+  EARN: "내가 배우고 스스로 고른 실천이에요. 사진은 안 찍어도 돼요.",
+};
 export const photoAttached = "📷 사진을 보여줬어요";
 export const photoReplace = "다른 사진으로 바꾸기";
 
@@ -43,6 +61,8 @@ export const photoResult: Record<string, string> = {
   TOO_LARGE: "사진이 너무 커요. 조금 작게 찍어 볼래요?",
   EMPTY: "사진이 비어 있어요. 다시 골라 볼래요?",
   NOT_FOUND: "이 미션에는 지금 사진을 붙일 수 없어요.",
+  /** 🔴 「안 돼요」로 끝내지 않는다 — 무엇을 하면 되는지 적는다 (ACE-1.1) */
+  NEED: "이 미션은 사진이 있어야 해요. 한 장 찍어서 같이 보내 주세요.",
 };
 export const undoLabel = "아니에요";
 
