@@ -5,6 +5,7 @@ import {
   type NewPlanCard, type PlanCardView, type RetroView,
   type SpendLineView, type SpendSummaryView,
 } from "@/contracts/plan";
+import { kstDay } from "@/modules/attendance";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
 import { attach as attachTxn, findByRecord } from "@/modules/card";
@@ -226,6 +227,21 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
  *
  * 원래 설계는 실제 지출이 **카드 연동**(`DAT-004`)에서 온다. 그게 붙기 전까지 손으로 적는다.
  */
+
+/**
+ * 오늘 만든 계획 카드가 있나 — 🔴 **판단을 한 곳에 둔다.**
+ *
+ * 하교 모달(`D41` 조건 ③)과 실천 화면의 「쓰기」 칸이 같은 것을 묻는다.
+ * 각자 세면 **한쪽은 「계획 없음」이라 흔들고 다른 쪽은 안 묻는** 상태가 생긴다.
+ *
+ * 🔴 KST 하루의 경계를 UTC 로 돌려서 센다. 서버가 어디서 돌든 아이가 사는 날짜다.
+ */
+export async function hasPlanToday(childId: string, now = new Date()) {
+  const today = kstDay(now);
+  const dayStart = new Date(Date.parse(`${today}T00:00:00.000Z`) - 9 * 60 * 60 * 1000);
+  const n = await prisma.planCard.count({ where: { childId, createdAt: { gte: dayStart } } });
+  return n > 0;
+}
 
 export async function getPlanCards(childId: string): Promise<PlanCardView[]> {
   const rows = await prisma.planCard.findMany({

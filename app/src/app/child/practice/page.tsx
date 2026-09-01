@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Screen, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getTodayBoard } from "@/modules/practice";
+import { getMissionBoard } from "@/modules/mission";
+import { hasPlanToday } from "@/modules/plan";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
-  claim, claimed, consentRequired, done, hint, needsLesson, noDevice, quizDone, quizToday,
+  claim, claimed, consentRequired, done, hint, needsLesson, noDevice, nudge, quizDone, quizToday,
   parentMissions, readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
 } from "./practice.fixture";
 
@@ -26,7 +28,18 @@ export default async function ChildPracticePage({
     );
   }
 
-  const [cells, sp] = await Promise.all([getTodayBoard(access.childId), searchParams]);
+  /**
+   * 🔴 **벌기·쓰기는 「배운 것 해보기」와 다른 일이다.**
+   *    벌기는 **부모가 걸어 둔 미션**이고 쓰기는 **나가기 전에 세우는 계획**이다 —
+   *    둘 다 미루면 그날이 그냥 지나간다. 남아 있으면 칸이 둠칫둠칫 움직인다.
+   */
+  const [cells, board, plannedToday, sp] = await Promise.all([
+    getTodayBoard(access.childId),
+    getMissionBoard(access.childId),
+    hasPlanToday(access.childId),
+    searchParams,
+  ]);
+  const missionsLeft = board.todo.length;
 
   return (
     <Screen role="아이 화면" title={title} sub={sub} back={{ href: "/child/learn", label: "배우기" }}>
@@ -89,6 +102,24 @@ export default async function ChildPracticePage({
                   )}
                 </>
               )}
+
+              {/*
+                🔴 **넷 중 둘만 흔든다.** 넷 다 흔들면 아무것도 안 흔드는 것과 같다.
+                   벌기 — 부모가 걸어 둔 미션이 남았을 때
+                   쓰기 — 오늘 세운 계획이 없을 때
+                   `transform` 만 쓰므로 옆 칸을 밀지 않는다 (`.ff-nudge`)
+              */}
+              {c.topic === "EARN" && missionsLeft > 0 ? (
+                <Link href="/child/missions"
+                      className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-[0.78em] font-bold text-star-d">
+                  🎯 {nudge.earn.replace("{n}", String(missionsLeft))}
+                </Link>
+              ) : c.topic === "SPEND" && !plannedToday ? (
+                <Link href="/child/plan/new"
+                      className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-[0.78em] font-bold text-star-d">
+                  📝 {nudge.spend}
+                </Link>
+              ) : null}
 
               {/* 🔴 하루에 한 문제. 다 풀었으면 그렇게 말한다 */}
               <Link href={`/child/quiz/${slug}`}

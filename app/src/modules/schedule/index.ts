@@ -1,5 +1,6 @@
 import { prisma } from "@/db";
 import { kstDay } from "@/modules/attendance";
+import { hasPlanToday } from "@/modules/plan";
 
 /**
  * 하교 시각 — 어긋남 대장 D41.
@@ -78,12 +79,8 @@ export async function shouldAsk(childId: string, now = new Date()): Promise<AskS
   const today = kstDay(now);
   if (row.askedDay === today) return { ask: false };       // ④
 
-  // ③ 오늘 만든 계획 카드 — KST 하루의 경계를 UTC 로 돌려서 센다
-  const dayStart = new Date(Date.parse(`${today}T00:00:00.000Z`) - 9 * 60 * 60 * 1000);
-  const madeToday = await prisma.planCard.count({
-    where: { childId, createdAt: { gte: dayStart } },
-  });
-  if (madeToday > 0) return { ask: false };
+  // ③ 🔴 세는 것은 `modules/plan` 이다. 여기서 또 세면 실천 화면과 갈라진다
+  if (await hasPlanToday(childId, now)) return { ask: false };
 
   return { ask: true, schoolEnd: toClock(row.schoolEndMin) };
 }
