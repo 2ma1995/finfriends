@@ -110,66 +110,7 @@ export const errors: Record<string, string> = {
   NOT_FOUND: "찾을 수 없어요.",
 };
 
-/**
- * 봉투 — `FR-020` · `FR-021`. 🔴 **돈 화면은 통장 하나다.**
- *    봉투를 따로 두면 아이가 돈을 네 군데서 찾아야 한다.
- */
-export const envelope = {
-  title: "봉투",
-  sub: "쓸 곳을 미리 나눠 담아요",
-  unallocated: (won: number) => `아직 안 담은 돈 ${won.toLocaleString("ko-KR")}원`,
-  allDone: "다 담았어요",
-  remaining: (won: number) => `${won.toLocaleString("ko-KR")}원 남음`,
-  /** 🔴 음수를 안 보여준다. 아이가 빚으로 읽는다 */
-  over: (won: number) => `${won.toLocaleString("ko-KR")}원 넘었어요`,
-  overAsk: "다음엔 얼마로 할까요?",
-  save: "이렇게 담기",
-  saved: "담았어요!",
-  spent: "봉투 안에서 썼어요. ⭐ 1개!",
-  overNotice: (won: number) =>
-    `${won.toLocaleString("ko-KR")}원 넘었어요. 이번엔 별이 안 붙어요. 결제는 됐어요.`,
-  mockTitle: "카드에서 온 내역",
-  mockBadge: "카드 연결 전이라 예시 데이터입니다",
-  settle: "봉투에서 빼기",
-  /** 🔴 어느 봉투로 갈지 **누르기 전에** 보인다. 눌러 보고 아는 건 늦다 */
-  goesTo: (name: string) => `→ ${name}`,
-  unknownMcc: "→ 어느 봉투인지 몰라요",
-  spentTitle: "쓴 내역",
-  within: "봉투 안",
-  overBadge: "넘음",
-  unclassified: "어느 봉투인지 몰라요",
-  /** 🔴 사후 수정이 소급되지 않는다는 것을 미리 말한다 (AC-021-3) */
-  notice: "봉투를 나중에 고쳐도 이미 쓴 것은 그대로예요.",
-  /** 🔴 업종을 안 붙이면 아무 결제도 그 봉투로 안 간다. 그 사실을 말한다 */
-  editTitle: "봉투 고치기",
-  nameLabel: "이름",
-  emojiLabel: "그림",
-  catsLabel: "여기서 쓴 걸로 칠 곳",
-  noCats: "아직 정하지 않았어요. 정하지 않으면 이 봉투로 아무것도 안 들어와요.",
-  defaultCats: "다른 봉투에 없는 건 모두 여기로 와요.",
-  editSave: "고치기",
-  remove: "봉투 지우기",
-  removeNotice: "담은 돈은 안 없어져요. 쓴 기록도 그대로예요.",
-  addTitle: "봉투 만들기",
-  addLabel: "만들기",
-  edited: "고쳤어요!",
-  added: "만들었어요!",
-  removed: "지웠어요. 담았던 돈은 다시 쓸 수 있어요.",
-  taken: (name: string) => `${name} 봉투에서 가져왔어요`,
 
-  errors: {
-    OVER_WALLET: "쓸 수 있는 돈보다 많이 담았어요. 줄여서 다시 담아요.",
-    TOO_MANY: "봉투는 6개까지 만들 수 있어요.",
-    BAD_NAME: "이름을 1~12글자로 적어 주세요.",
-    IS_DEFAULT: "「그 밖에」 봉투는 지울 수 없어요. 나머지가 갈 곳이 없어져요.",
-    NOT_FOUND: "봉투를 찾을 수 없어요.",
-    BAD_AMOUNT: "금액을 다시 봐주세요.",
-    NO_ENVELOPE: "봉투를 찾을 수 없어요.",
-    ALREADY: "이미 봉투에서 뺀 결제예요.",
-  } as Record<string, string>,
-};
-
-export const envelopeTitle = "봉투에 담은 돈";
 
 export const historyTitle = "들어오고 나간 돈";
 export const empty = {
@@ -184,3 +125,9 @@ export const notice = "쓴 돈과 모은 돈이 여기 다 적혀요. 남은 돈
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
 export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };
+
+/**
+ * 계획 카드로 가는 길 — 🔴 **봉투가 있던 자리다** (D41).
+ * 돈 화면에서 소비를 적는 곳으로 갈 수 없으면 아이는 그 기능을 못 찾는다.
+ */
+export const planLink = { label: "쓸 계획 적기", hint: "쓰기 전에 적어요" };

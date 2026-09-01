@@ -831,3 +831,39 @@ model EnvelopeChange {
   @@map("envelope_changes")
   @@schema("activity")
 }
+
+/// 가맹점 분류 교정 — `FR-021` 예외 ②. 어긋남 대장 D34.
+/// 🔴 **사람이 한 번 본 것이 코드보다 낫다.** MCC 표는 오분류가 남고,
+///    보호자가 고친 것을 기억해 다음부터 그 가게는 그 봉투에서 뺀다.
+/// 🔴 **지난 결제에는 소급하지 않는다** — 옮기면 이미 내린 ⭐ 판정이 흔들린다.
+model MerchantRule {
+  childId   String   @map("child_id") @db.Uuid
+  /// 🔴 지금은 **이름**이 키다. 실제 카드는 가맹점 ID 를 주므로 제휴 시 바꿔야 한다
+  merchant  String
+  category  String
+  /// 무엇을 보고 정했는지 — 나중에 MCC 표를 고칠 때 근거가 된다
+  seenMcc   String?  @map("seen_mcc")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([childId, merchant])
+  @@map("merchant_rules")
+  @@schema("activity")
+}
+
+/// 하교 시각 — 어긋남 대장 D39.
+///
+/// 🔴 **묻는 때를 부모가 정한다.** 「오늘 쓸 계획 있니?」는 아이가 학교에서 나온
+///    직후에만 쓸모가 있다. 그 시각을 아는 것은 서버가 아니라 부모다.
+model ChildSchedule {
+  childId      String   @id @map("child_id") @db.Uuid
+  guardianId   String   @map("guardian_id") @db.Uuid
+  /// 자정 기준 분 (0–1439). 900 = 15:00
+  schoolEndMin Int      @map("school_end_min")
+  /// 오늘 이미 물었는지 — KST 날짜 문자열. 없으면 화면마다 다시 뜬다
+  askedDay     String?  @map("asked_day")
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([guardianId])
+  @@map("child_schedules")
+  @@schema("activity")
+}

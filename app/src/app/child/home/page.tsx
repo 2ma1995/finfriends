@@ -14,6 +14,10 @@ import { restartTourAction } from "@/app/actions/onboarding";
 import { consentRequired, finishBonus, noDevice, restartLabel } from "../welcome/welcome.fixture";
 import { attendanceNotice } from "./room.fixture";
 import { redirect } from "next/navigation";
+import { shouldAsk } from "@/modules/schedule";
+import { PlanAskModal } from "@/components/child/PlanAskModal";
+import { labels as planLabels, placeholders as planPlaceholders, submitLabel as planSubmit } from "../plan/new/plan.fixture";
+import * as ask from "./ask.fixture";
 
 // UX-003 · STR-003 · STR-005 — 아이가 여는 첫 화면
 export const metadata = { title: "내 방 · 핀프렌즈" };
@@ -21,7 +25,8 @@ export const metadata = { title: "내 방 · 핀프렌즈" };
 export default async function ChildHomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ turn?: string; edit?: string; welcome?: string }>;
+  searchParams: Promise<{ turn?: string; edit?: string; welcome?: string;
+                          planned?: string; error?: string }>;
 }) {
   // 🔴 촬영 통로 — 방 각도와 꾸미기 모드. 헤드리스에서 클릭을 못 하므로 URL 로 연다
   const sp = await searchParams;
@@ -55,10 +60,15 @@ export default async function ChildHomePage({
    */
   const attended = await markAttendance(access.childId);
 
-  const [board, room, allowance] = await Promise.all([
+  /**
+   * 🔴 **하교 시각이 지났는데 오늘 계획이 없을 때만** 묻는다 (D41).
+   *    조건은 넷 다 서버가 본다 — 화면은 뜨라면 뜬다.
+   */
+  const [board, room, allowance, askState] = await Promise.all([
     getMissionBoard(access.childId),
     getRoom(access.childId),
     getWalletTotals(access.childId),
+    shouldAsk(access.childId),
   ]);
   const placed = placedItems(room);
   const badge = (href: string) =>
@@ -82,7 +92,23 @@ export default async function ChildHomePage({
         </p>
       ) : null}
 
+      {sp.planned ? (
+        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-[0.86em] font-bold text-primary-d">
+          {ask.plannedNotice}
+        </p>
+      ) : null}
+
       <MoneyHUD stars={room.stars} allowance={allowance.total} />
+
+      {askState.ask ? (
+        <PlanAskModal
+          schoolEnd={askState.schoolEnd}
+          title={ask.askTitle} body={ask.askBody}
+          yesLabel={ask.yesLabel} noLabel={ask.noLabel} noHint={ask.noHint}
+          formTitle={ask.formTitle} closeLabel={ask.closeLabel}
+          labels={planLabels} placeholders={planPlaceholders} submitLabel={planSubmit}
+        />
+      ) : null}
 
       <div className="mt-3 rounded-card border border-line bg-surface py-3">
         <RoomStage items={placed} layout={room.layout} characterId={room.characterId}

@@ -6,6 +6,8 @@
  * 아이는 둘이 다른 곳인 줄 안다. 미션·배우기·내 별·상점은 탭에 있다.
  */
 export const todo = [
+  // 🔴 봉투를 접고 되돌아온 자리 (D41). 아이가 소비를 적는 길은 다시 계획 카드다
+  { href: "/child/plan", emoji: "📝", label: "쓸 계획 적기" },
   { href: "/child/practice", emoji: "✋", label: "실천하기" },
   { href: "/child/wishlist", emoji: "🎁", label: "갖고 싶은 것" },
 ];
