@@ -17,11 +17,15 @@ import { usePathname } from "next/navigation";
  *    대신 **통장**을 넣었다. 별과 돈은 늘 볼 수 있어야 한다.
  */
 
+/**
+ * 🔴 **「내 별」은 여기 없다.** 「내 방」 맨 위 ⭐ 를 누르면 간다 (`MoneyHUD`) —
+ *    두 자리에 두면 탭이 다섯이 되고, 아이가 매일 고르는 것은 그중 넷뿐이다.
+ *    별은 **보는 것**이지 **하는 것**이 아니라서, 할 일 목록에 낄 자리가 아니다.
+ */
 const TABS = [
   { href: "/child/home",     emoji: "🏠", label: "내 방" },
   { href: "/child/missions", emoji: "🎯", label: "미션" },
   { href: "/child/learn",    emoji: "📚", label: "배우기" },
-  { href: "/child/stars",    emoji: "⭐", label: "내 별" },
   { href: "/child/allowance", emoji: "💰", label: "내 통장" },
 ] as const;
 
@@ -39,7 +43,9 @@ export function ChildTabs({ todoCount = 0 }: { todoCount?: number }) {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-frame border-t border-line bg-surface/95 backdrop-blur">
-      <ul className="grid grid-cols-5">
+      {/* 🔴 **칸 수를 문자열로 만들지 않는다.** `grid-cols-${TABS.length}` 로 쓰면
+             Tailwind 가 그 클래스를 못 찾아 CSS 를 아예 안 만든다 — 탭이 세로로 쌓인다 */}
+      <ul className="grid grid-cols-4">
         {TABS.map((t) => {
           // /child/home 은 정확히 일치할 때만. 나머지는 하위 경로도 같은 탭이다
           const on = t.href === "/child/home" ? path === t.href : path.startsWith(t.href);
