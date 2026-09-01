@@ -5,10 +5,11 @@ import { getPassbook } from "@/modules/allowance";
 import { getWishlist } from "@/modules/wishlist";
 import { remainingLabel, reachedLabel } from "@/app/child/wishlist/wishlist.fixture";
 import {
-  getClosed, getOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, WANTED_CHOICES,
+  getClosed, listOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, MAX_OPEN, WANTED_CHOICES,
 } from "@/modules/savings";
-import { breakSavingsAction, payInstallmentAction, requestSavingsAction } from "@/app/actions/savings";
+import { requestSavingsAction } from "@/app/actions/savings";
 import { SavingsForm } from "@/components/child/SavingsForm";
+import { SavingsCard } from "@/components/child/SavingsCard";
 import {
   balanceTitle, card, consentRequired, historyTitle,
   errors, noDevice, notice, savedTitle, savings,
@@ -34,9 +35,9 @@ export default async function ChildPassbookPage({
   }
 
   const sp = await searchParams;
-  const [p, open, closed, wish] = await Promise.all([
+  const [p, opens, closed, wish] = await Promise.all([
     getPassbook(access.childId, access.guardianId),
-    getOpen(access.childId),
+    listOpen(access.childId),
     getClosed(access.childId, 3),
     getWishlist(access.childId),
   ]);
@@ -126,7 +127,7 @@ export default async function ChildPassbookPage({
       ) : null}
 
       {/* 🔴 반려는 끝이 아니다. 「거절」을 쓰지 않고 다시 이야기할 자리를 연다 (AC-031-4) */}
-      {open === null && closed[0]?.state === "REJECTED" ? (
+      {opens.length === 0 && closed[0]?.state === "REJECTED" ? (
         <div className="mb-1.5 rounded-card border border-miss-line bg-miss-bg p-3">
           <b className="text-sub text-miss">{savings.talkAgain}</b>
           {closed[0].rejectReason ? (
@@ -136,7 +137,19 @@ export default async function ChildPassbookPage({
         </div>
       ) : null}
 
-      {open === null ? (
+      {/*
+        🔴 **세 개까지 나란히 놓인다** (사용자 결정 · 예전엔 하나였다).
+           적금은 매주 넣어야 해서 개수가 늘수록 지킬 일이 는다 — 셋이 상한이다.
+      */}
+      {opens.length > 0 ? (
+        <ul className="grid gap-1.5">
+          {opens.map((o) => <li key={o.id}><SavingsCard open={o} /></li>)}
+        </ul>
+      ) : null}
+
+      {/* 🔴 **자리가 남았을 때만 폼을 연다.** 꽉 찼는데 폼이 보이면 눌러 보고 막힌다 */}
+      {opens.length < MAX_OPEN ? (
+        <div className={opens.length > 0 ? "mt-2" : ""}>
         <div className="rounded-card bg-surface p-3.5">
           <p className="text-sub leading-relaxed">{savings.what}</p>
           <p className="mt-1 text-cap text-ink-mute">{savings.notBank}</p>
@@ -167,79 +180,9 @@ export default async function ChildPassbookPage({
             }}
           />
         </div>
-      ) : (
-        <div className={`rounded-card border p-3 ${
-          open.state === "REQUESTED" ? "border-star bg-star-bg" : "border-primary-l bg-primary-bg"}`}>
-          <div className="flex items-baseline justify-between gap-2">
-            <b className="text-body">{open.goal}</b>
-            <b className="shrink-0 tabular-nums text-body">{won(open.amount)}</b>
-          </div>
-          <p className="mt-0.5 text-cap text-ink-mute">
-            {open.kind === "INSTALLMENT"
-              ? `${savings.kinds.INSTALLMENT.label} · 한 주 ${won(open.perPeriod ?? 0)}`
-              : `${savings.kinds.DEPOSIT.label} · ${open.months}달`}
-          </p>
-          {/* 🔴 바란 것과 다르면 그 사실을 말한다. 조용히 넘기면 「왜 물어봤지」가 된다 */}
-          {open.wantedPct !== null ? (
-            <p className={`mt-0.5 text-cap ${open.differs ? "text-star-d" : "text-primary-d"}`}>
-              {/* 🔴 바란 것도 받은 것도 **금액**으로 말한다. 아이는 퍼센트를 못 읽는다 */}
-              {open.state === "REQUESTED"
-                ? savings.wantedShown(Math.floor((open.amount * open.wantedPct) / 100))
-                : open.differs ? savings.gaveInstead(open.interestWon) : savings.sameAsWanted}
-            </p>
-          ) : null}
-
-          {open.state === "REQUESTED" ? (
-            <p className="mt-1.5 text-sub text-ink-soft">
-              {savings.waiting} · {savings.waitingBody}
-            </p>
-          ) : (
-            <>
-              <p className="mt-1.5 text-sub font-bold text-primary-d">
-                {open.matured ? savings.matured : savings.active(open.daysLeft ?? 0)}
-              </p>
-              <p className="mt-0.5 text-sub text-star-d">
-                {open.interestWon > 0 ? savings.willGet(open.interestWon) : savings.noInterest}
-              </p>
-              {/* 🔴 적금은 아이가 매주 직접 넣는다. 자동이면 실천이 아니다 */}
-              {open.kind === "INSTALLMENT" ? (
-                <div className="mt-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-line">
-                    <div className="h-full rounded-full bg-primary-l"
-                         style={{ width: `${(open.paidCount / (open.periods || 1)) * 100}%` }} />
-                  </div>
-                  <p className="mt-1 text-cap text-ink-mute">
-                    {savings.progress(open.paidCount, open.periods ?? 0)} · {won(open.paidSoFar)} 모음
-                  </p>
-                  {open.fullyPaid ? (
-                    <p className="mt-1 text-sub font-bold text-primary-d">{savings.allPaid}</p>
-                  ) : open.paidThisWeek ? (
-                    <p className="mt-1 text-sub text-ink-soft">{savings.paidThisWeek}</p>
-                  ) : (
-                    <form action={payInstallmentAction} className="mt-1.5">
-                      <input type="hidden" name="planId" value={open.id} />
-                      <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
-                        {savings.payLabel(open.perPeriod ?? 0)}
-                      </button>
-                      <p className="mt-1 text-cap text-ink-mute">{savings.skipOk}</p>
-                    </form>
-                  )}
-                </div>
-              ) : null}
-
-              {/* 🔴 깨는 것을 막지 않는다. 아이 돈이다. 대신 대가를 먼저 말한다 */}
-              {!open.matured ? (
-                <form action={breakSavingsAction} className="mt-2">
-                  <input type="hidden" name="planId" value={open.id} />
-                  <p className="mb-1 text-cap text-miss">{savings.breakWarn}</p>
-                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub text-ink-soft">
-                    {savings.breakLabel}
-                  </button>
-                </form>
-              ) : null}
-            </>
-          )}
         </div>
+      ) : (
+        <p className="mt-2 text-center text-cap text-ink-mute">{savings.full}</p>
       )}
 
       {/* 🔴 **끝난 저금은 딴 화면이다.** 여기 붙으면 「지금 하는 저금」이 그 아래 묻힌다 */}

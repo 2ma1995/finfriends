@@ -33,6 +33,8 @@ export const card = {
  *    통장에는 **지금 하고 있는 저금 하나**만 남고, 끝난 것은 링크로 간다.
  */
 export const savings = {
+  /** 🔴 세 자리가 다 찼을 때 — 「안 돼요」가 아니라 언제 열리는지 말한다 (ACE-1.1) */
+  full: "저금 세 개를 하고 있어요. 하나가 끝나면 또 시작할 수 있어요.",
   pastTitle: "지난 저금",
   pastLink: "지난 저금 보기",
   pastEmpty: { title: "아직 끝난 저금이 없어요", body: "저금을 시작하면 여기에 쌓여요" },
@@ -107,7 +109,7 @@ export const savings = {
 };
 
 export const errors: Record<string, string> = {
-  ALREADY_OPEN: "이미 하고 있는 적금이 있어요. 하나씩 해요.",
+  ALREADY_OPEN: "저금은 세 개까지 할 수 있어요. 하나가 끝나면 또 시작해요.",
   BAD_GOAL: "무엇을 위해 모으는지 적어 주세요.",
   BAD_AMOUNT: "1,000원부터 넣을 수 있어요.",
   BAD_MONTHS: "1달부터 12달까지 정할 수 있어요.",

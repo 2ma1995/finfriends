@@ -103,12 +103,32 @@ const SELECT = {
 } as const;
 
 /** 지금 굴러가는 것 하나 — 🔴 한 번에 하나만 (DB 부분 유니크가 막는다) */
-export async function getOpen(childId: string): Promise<SavingsView | null> {
-  const r = await prisma.savingsPlan.findFirst({
+/**
+ * 🔴 **한 번에 세 개까지 한다** (사용자 결정 · 예전엔 하나였다).
+ *
+ * 셋으로 정한 이유는 **적금은 매주 넣어야 하기 때문**이다. 개수가 늘수록 지킬 일이
+ * 늘고, 하나만 잊어도 그게 실패로 남는다 — 「약속하고 지키기」를 배우는 자리에서
+ * 지킬 수 없는 개수를 열어 주면 배우는 것이 실패뿐이다.
+ *
+ * 🔴 **종류를 안 가린다.** 예금 셋도 되고 적금 셋도 된다. 갈라 세면
+ *    「예금 3 + 적금 3 = 여섯」이 되어 셋으로 제한한 뜻이 없어진다.
+ */
+export const MAX_OPEN = 3;
+
+/** 지금 살아 있는 저금 전부 — 신청 중과 진행 중을 함께 본다 */
+export async function listOpen(childId: string): Promise<SavingsView[]> {
+  const rows = await prisma.savingsPlan.findMany({
     where: { childId, state: { in: ["REQUESTED", "ACTIVE"] } },
+    orderBy: { requestedAt: "asc" },
     select: SELECT,
   });
-  return r ? toView(r) : null;
+  return rows.map(toView);
+}
+
+/** 🔴 **한 개만 필요한 자리**가 아직 있다(실천 칸). 첫 것을 준다 */
+export async function getOpen(childId: string): Promise<SavingsView | null> {
+  const [first] = await listOpen(childId);
+  return first ?? null;
 }
 
 /** 끝난 것들 — 지킨 것과 깬 것을 함께 본다 */
@@ -139,7 +159,8 @@ export async function request(
 ): Promise<SavingsResult> {
   const g = goal.trim();
   if (!g || g.length > 30) return { ok: false, reason: "BAD_GOAL" };
-  if (await getOpen(childId)) return { ok: false, reason: "ALREADY_OPEN" };
+  // 🔴 **서버가 센다.** 화면이 폼을 감춰도 주소만 알면 던질 수 있다 (§6.6)
+  if ((await listOpen(childId)).length >= MAX_OPEN) return { ok: false, reason: "ALREADY_OPEN" };
 
   const inst = kind === "INSTALLMENT";
   let total: number;

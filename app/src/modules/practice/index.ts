@@ -5,7 +5,7 @@ import { isPracticeOpen, TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts
 import { practicedToday } from "@/modules/mission";
 import { getLessonList } from "@/modules/learning";
 import { getPracticeState, type PracticeState } from "@/modules/mission";
-import { getOpen } from "@/modules/savings";
+import { listOpen } from "@/modules/savings";
 import { answeredToday, todayIndex } from "@/modules/quiz";
 
 /**
@@ -64,8 +64,8 @@ const cycleOf = (d: Date) => d.getFullYear() * 100 + (d.getMonth() + 1);
 
 export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
   // 🔴 나무와 **같은 표**를 센다. 따로 세면 화면과 나무가 다른 말을 한다
-  const [savings, credits] = await Promise.all([
-    getOpen(childId),
+  const [opens, credits] = await Promise.all([
+    listOpen(childId),
     prisma.practiceCredit.groupBy({
       by: ["topic"],
       where: { childId, cycleId: cycleOf(new Date()) },
@@ -75,6 +75,10 @@ export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
   const creditsBy = new Map(
     credits.filter((c) => c.topic !== null).map((c) => [c.topic as Topic, c._count._all]),
   );
+
+  // 🔴 **이번 주 넣을 차례인 적금** — 여럿 중 하나라도 있으면 그것이 오늘 할 일이다
+  const due = opens.find((o) => o.state === "ACTIVE" && o.kind === "INSTALLMENT"
+    && !o.fullyPaid && !o.paidThisWeek) ?? null;
 
   return Promise.all(ORDER.map(async (topic) => {
     const slug = SLUG[topic];
@@ -99,13 +103,20 @@ export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
       return {
         ...base, task: null, lessonId: null, state: "NONE" as PracticeState,
         viaSavings: true,
-        savingsStage: savings === null ? "NONE" : savings.state === "REQUESTED" ? "ASKED" : "GOING",
-        savingsKind: savings?.kind ?? null,
-        savingsNote: savings === null ? null
-          : savings.state === "REQUESTED" ? "부모님이 보고 계세요"
-          : savings.kind === "INSTALLMENT"
-            ? (savings.fullyPaid ? "다 넣었어요" : savings.paidThisWeek ? "이번 주는 넣었어요" : "이번 주 넣을 차례예요")
-            : "저금하는 중이에요",
+        /**
+         * 🔴 **저금이 셋까지 된다.** 칸은 하나라 **제일 급한 것**을 말한다 —
+         *    이번 주 넣을 차례인 적금이 하나라도 있으면 그것이 오늘 할 일이다.
+         *    「다 넣었어요」를 보여주고 넘어가면 옆의 안 넣은 적금이 묻힌다.
+         */
+        savingsStage: opens.length === 0 ? "NONE"
+          : opens.every((o) => o.state === "REQUESTED") ? "ASKED" : "GOING",
+        savingsKind: due?.kind ?? opens[0]?.kind ?? null,
+        savingsNote: opens.length === 0 ? null
+          : due ? "이번 주 넣을 차례예요"
+          : opens.every((o) => o.state === "REQUESTED") ? "부모님이 보고 계세요"
+          : opens.some((o) => o.kind === "INSTALLMENT" && o.fullyPaid) ? "다 넣었어요"
+          : opens.some((o) => o.kind === "INSTALLMENT") ? "이번 주는 넣었어요"
+          : "저금하는 중이에요",
       };
     }
 
