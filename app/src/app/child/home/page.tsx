@@ -137,7 +137,7 @@ export default async function ChildHomePage({
         />
       ) : null}
 
-      <div className="mt-3 rounded-card border border-line bg-surface py-3">
+      <div className="mt-3 rounded-card bg-surface py-3">
         <RoomStage items={placed} layout={room.layout} characterId={room.characterId}
                    wear={room.wear} turn={turn} startEdit={startEdit}
                    sideAction={

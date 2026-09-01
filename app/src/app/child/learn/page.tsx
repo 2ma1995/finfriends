@@ -42,7 +42,7 @@ export default async function ChildLearnPage() {
           return (
             <li key={t.topic}>
               <Link href={`/child/learn/${t.topic.toLowerCase()}`}
-                    className="flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">{body}</Link>
+                    className="flex min-h-touch items-center gap-2.5 rounded-card bg-surface px-3.5 py-2.5">{body}</Link>
             </li>
           );
         })}

@@ -47,7 +47,7 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
              style={{ width: `${((at + 1) / lessons.length) * 100}%` }} />
       </div>
 
-      <div className="rounded-card border border-line bg-surface px-4 py-5">
+      <div className="rounded-card bg-surface px-4 py-5">
         <div className="text-center text-[2.6em] leading-none">{lesson.emoji}</div>
         <h2 className="ff-serif mt-2 text-center text-title font-bold leading-snug">{lesson.title}</h2>
         <div className="mt-3 grid gap-2">

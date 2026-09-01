@@ -13,7 +13,7 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 function Column({ head, lines, alert }: { head: string; lines: readonly SpendLineView[]; alert: boolean }) {
   const sum = lines.reduce((a, b) => a + b.amount, 0);
   return (
-    <div className="rounded-card border border-line bg-surface p-3">
+    <div className="rounded-card bg-surface p-3.5">
       <h2 className="mb-1.5 text-cap tracking-[0.04em] text-ink-mute">{head}</h2>
       {lines.length === 0 ? (
         <p className="py-1 text-sub text-ink-mute">없어요</p>

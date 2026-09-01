@@ -46,14 +46,14 @@ export default async function ChildMissionsPage({
 
       {board.todo.length > 0 ? (
         <>
-          <h2 className="mb-1.5 text-sub font-bold">{sections.todo}</h2>
+          <h2 className="mb-2 text-title font-bold leading-none">{sections.todo}</h2>
           <ul className="grid gap-1.5">{board.todo.map((m) => <MissionRow key={m.id} m={m} action="done" />)}</ul>
         </>
       ) : null}
 
       {board.waiting.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-sub font-bold">{sections.waiting}</h2>
+          <h2 className="mb-2 mt-7 text-title font-bold leading-none">{sections.waiting}</h2>
           <ul className="grid gap-1.5">{board.waiting.map((m) => <MissionRow key={m.id} m={m} action="undo" />)}</ul>
         </>
       ) : null}
@@ -61,7 +61,7 @@ export default async function ChildMissionsPage({
       {/* 🔴 **지난 것은 딴 화면이다.** 여기 쌓이면 오늘 할 것이 매일 아래로 밀린다 */}
       {board.settled.length > 0 ? (
         <Link href="/child/missions/past"
-              className="mt-4 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
+              className="mt-7 flex min-h-touch items-center gap-2.5 rounded-card bg-surface px-3.5">
           <span className="text-[1.1em]">🗂</span>
           <span className="flex-1 text-sub font-bold">{pastLink}</span>
           <span className="text-cap tabular-nums text-ink-mute">{board.settled.length}건 ›</span>

@@ -48,7 +48,8 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
     : m.bucket === "TODO" ? "border-primary bg-surface shadow-[0_1px_0_var(--ff-primary-l)]"
     /* 🔴 **거절색을 쓰지 않는다.** 아이가 잘못한 게 아니라 부모가 못 본 것이다 */
     : m.bucket === "EXPIRED" ? "border-dashed border-line-2 bg-canvas"
-    : "border-line bg-surface";
+    /* 🔴 뜻 없는 기본 선은 안 두른다. 위 갈래가 전부 **상태**다 */
+    : "border-transparent bg-surface";
 
   return (
     <li className={`rounded-card border p-3 ${tone}`}>

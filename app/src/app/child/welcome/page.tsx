@@ -53,7 +53,7 @@ export default async function ChildWelcomePage({
         ))}
       </div>
 
-      <div className="mt-4 rounded-card border border-line bg-surface px-4 py-7 text-center">
+      <div className="mt-4 rounded-card bg-surface px-4 py-7 text-center">
         <div className="text-[3.2em] leading-none">{s.emoji}</div>
         <h2 className="ff-serif mt-3 text-title font-bold leading-snug">{s.title}</h2>
         <div className="mt-2 grid gap-1">

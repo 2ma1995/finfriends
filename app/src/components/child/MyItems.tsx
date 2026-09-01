@@ -38,7 +38,7 @@ export function MyItems({
            「내 아이템」은 **가진 것을 보는 자리**이고, 옆에 사러 가는 길을 붙이면
            그 자리가 다시 상점 입구가 된다. 한 화면에 같은 문이 둘일 이유도 없다.
       */}
-      <h2 className="mt-3 text-sub font-bold">{title.replace("{n}", String(placedCount))}</h2>
+      <h2 className="mb-2 mt-7 text-title font-bold leading-none">{title.replace("{n}", String(placedCount))}</h2>
 
       {/*
         🔴 **일곱을 한 줄에 넣는다.** 좁은 폰에서 두 줄로 접히면 「작게 한 줄」이 아니게 된다.
@@ -72,7 +72,7 @@ export function MyItems({
         items.length > 0 ? (
           <ul className="mt-1.5 grid grid-cols-4 gap-1.5">
             {items.map((i) => (
-              <li key={i.id} className="rounded-card border border-line bg-surface p-1.5 text-center">
+              <li key={i.id} className="rounded-card bg-surface p-1.5 text-center">
                 <div className="grid h-[52px] place-items-center rounded-card bg-sand">
                   {i.thumb ? (
                     <Image src={i.thumb} alt="" width={48} height={48} className="h-12 w-12 object-contain" />

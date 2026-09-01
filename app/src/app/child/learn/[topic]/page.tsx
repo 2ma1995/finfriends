@@ -69,8 +69,8 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
                 </div>
               ) : (
                 <Link href={`/child/learn/${slug}/${l.id}`}
-                      className={`flex min-h-touch items-center gap-2 rounded-card border px-3 py-2 ${
-                        l.read ? "border-line bg-surface" : "border-primary-l bg-primary-bg"}`}>
+                      className={`flex min-h-touch items-center gap-2.5 rounded-card px-3.5 py-2.5 ${
+                        l.read ? "bg-surface" : "border border-primary-l bg-primary-bg"}`}>
                   {body}
                 </Link>
               )}

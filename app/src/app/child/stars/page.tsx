@@ -33,7 +33,7 @@ export default async function ChildStarsPage() {
       ) : (
         <ul className="mt-3 grid gap-1.5">
           {wallet.entries.map((e) => (
-            <li key={e.id} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2">
+            <li key={e.id} className="flex items-center justify-between rounded-card bg-surface px-3.5 py-2.5">
               <span className="min-w-0">
                 <b className="block text-sub">{e.reason}</b>
                 <span className="text-cap text-ink-mute">{e.whenLabel} · {e.kind}</span>
