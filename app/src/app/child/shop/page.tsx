@@ -39,7 +39,10 @@ export default async function ChildShopPage({
   const short = sp.failed === "NOT_ENOUGH" && cheapest !== undefined ? cheapest - room.stars : null;
 
   return (
-    <Screen role="아이 화면" title="상점" sub={`내 별 ⭐ ${room.stars}`}>
+    /* 🔴 **돌아갈 길이 없었다.** 기기가 안 열렸을 때 화면에만 `back` 이 있고
+          정작 상점 본 화면에는 없어서, 들어오면 탭으로만 나갈 수 있었다 */
+    <Screen role="아이 화면" title="상점" sub={`내 별 ⭐ ${room.stars}`}
+            back={{ href: "/child/home", label: "내 방" }}>
       {bought ? (
         <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{boughtNotice(bought.name)}</p></Card></div>
       ) : null}

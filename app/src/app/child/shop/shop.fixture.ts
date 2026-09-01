@@ -9,7 +9,12 @@ export const boughtNotice = (name: string) => `「${name}」를 샀어요. 방�
 export const shortNotice = (need: number) => `별이 ${need}개 더 있으면 살 수 있어요.`;
 export const ownedLabel = "가진 것";
 export const wearingLabel = "입는 중";
-export const buyLabel = "바꾸기";
+/**
+ * 🔴 **「바꾸기」가 아니라 「교환」이다.** 「바꾸기」는 이 화면에서 **다른 뜻으로도 읽힌다** —
+ *    입던 옷을 갈아입거나, 놓은 가구를 다른 것으로 옮기는 것도 「바꾸기」다.
+ *    별을 내고 새로 얻는 것은 **교환**이고, 그 말이 무엇을 내주는지도 같이 말한다.
+ */
+export const buyLabel = "교환";
 export const equipLabel = "입기";
 export const unequipLabel = "벗기";
 export const lockedHint = "별이 모자라요";
