@@ -41,20 +41,20 @@ export default async function BankAdjustPage({
             back={{ href: "/parent/bank", label: "아이 통장" }}>
       {sp.fixed ? (
         <div className="mb-2"><Card tone={sp.short ? "miss" : "grow"}>
-          <p className="text-[0.88em]">{fixedNotice(Number(sp.fixed))}</p>
+          <p className="text-sub">{fixedNotice(Number(sp.fixed))}</p>
           {/* 🔴 못 되돌린 금액을 조용히 넘기지 않는다 — 보호자는 다 취소된 줄 안다 */}
-          {sp.short ? <p className="mt-1 text-[0.86em] text-ink-soft">{shortNotice(Number(sp.short))}</p> : null}
+          {sp.short ? <p className="mt-1 text-sub text-ink-soft">{shortNotice(Number(sp.short))}</p> : null}
         </Card></div>
       ) : null}
       {sp.fix ? (
         <div className="mb-2"><Card tone="miss">
-          <p className="text-[0.88em]">{fixErrors[sp.fix] ?? fixErrors.NOT_FOUND}</p>
+          <p className="text-sub">{fixErrors[sp.fix] ?? fixErrors.NOT_FOUND}</p>
         </Card></div>
       ) : null}
 
       <Card>
-        <p className="text-[0.86em] leading-relaxed">{lead}</p>
-        <p className="mt-1.5 text-[0.8em] leading-relaxed text-ink-mute">{onlyGuardianNotice}</p>
+        <p className="text-sub leading-relaxed">{lead}</p>
+        <p className="mt-1.5 text-sub leading-relaxed text-ink-mute">{onlyGuardianNotice}</p>
       </Card>
 
       {fixable.length === 0 ? (
@@ -66,15 +66,15 @@ export default async function BankAdjustPage({
           {fixable.map((h) => (
             <li key={h.id} className="rounded-card border border-line bg-surface px-3 py-2.5">
               <div className="flex items-center gap-2">
-                <span className="flex-1 text-[0.86em]">{h.memo}</span>
-                <span className="shrink-0 text-[0.72em] text-ink-mute">{h.whenLabel}</span>
-                <b className="shrink-0 tabular-nums text-[0.86em] text-primary-d">+{won(h.delta)}</b>
+                <span className="flex-1 text-sub">{h.memo}</span>
+                <span className="shrink-0 text-cap text-ink-mute">{h.whenLabel}</span>
+                <b className="shrink-0 tabular-nums text-sub text-primary-d">+{won(h.delta)}</b>
               </div>
               <form action={reverseEntryAction} className="mt-2 flex gap-1.5">
                 <input type="hidden" name="entryId" value={h.id} />
                 <input name="reason" maxLength={30} placeholder={fixReasonPlaceholder}
-                       className="min-h-touch flex-1 rounded-card border border-line-2 bg-surface px-2 text-[0.76em]" />
-                <button className="min-h-touch shrink-0 rounded-card border border-miss-line bg-miss-bg px-3 text-[0.78em] text-miss">
+                       className="min-h-touch flex-1 rounded-card border border-line-2 bg-surface px-2 text-cap" />
+                <button className="min-h-touch shrink-0 rounded-card border border-miss-line bg-miss-bg px-3 text-sub text-miss">
                   {fixLabel}
                 </button>
               </form>
@@ -85,12 +85,12 @@ export default async function BankAdjustPage({
 
       {/* 이미 되돌린 것 — 왜 목록에 없는지 알 수 있게 */}
       {history.some((h) => h.byGuardian && h.reversed) ? (
-        <p className="mt-2 text-[0.74em] text-ink-mute">{reversedBadge} — 되돌린 기록은 「기록」에 남아 있어요.</p>
+        <p className="mt-2 text-cap text-ink-mute">{reversedBadge} — 되돌린 기록은 「기록」에 남아 있어요.</p>
       ) : null}
 
       <Link
         href="/parent/bank/history"
-        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-line-2 bg-surface text-[0.86em] text-ink-soft"
+        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-line-2 bg-surface text-sub text-ink-soft"
       >
         {historyLink}
       </Link>

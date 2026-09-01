@@ -8,15 +8,15 @@ export function Screen({
   return (
     <main className="px-gap pb-10 pt-4">
       <div className="flex items-baseline justify-between">
-        <span className="text-[0.72em] tracking-[0.06em] text-ink-mute">{role}</span>
+        <span className="text-cap tracking-[0.06em] text-ink-mute">{role}</span>
         {back ? (
-          <Link href={back.href} className="text-[0.72em] text-ink-mute underline underline-offset-2">
+          <Link href={back.href} className="text-cap text-ink-mute underline underline-offset-2">
             {back.label}
           </Link>
         ) : null}
       </div>
       <h1 className="ff-serif mt-1 text-title font-bold tracking-[-0.01em]">{title}</h1>
-      {sub ? <p className="mb-3 mt-0.5 text-[0.8em] text-ink-mute">{sub}</p> : <div className="mb-3" />}
+      {sub ? <p className="mb-3 mt-0.5 text-sub text-ink-mute">{sub}</p> : <div className="mb-3" />}
       {children}
     </main>
   );
@@ -29,10 +29,10 @@ export function Empty({ emoji, title, body, hint }: {
   return (
     <div className="rounded-card border border-dashed border-line-2 bg-sand px-4 py-6 text-center">
       <div className="text-[1.6em]">{emoji}</div>
-      <p className="mt-2 text-[0.9em] leading-relaxed text-ink-soft">
+      <p className="mt-2 text-body leading-relaxed text-ink-soft">
         <b className="text-ink">{title}</b><br />{body}
       </p>
-      {hint ? <small className="mt-2 block text-[0.78em] text-ink-mute">{hint}</small> : null}
+      {hint ? <small className="mt-2 block text-sub text-ink-mute">{hint}</small> : null}
     </div>
   );
 }

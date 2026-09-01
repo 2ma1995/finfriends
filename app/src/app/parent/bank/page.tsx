@@ -48,7 +48,7 @@ export default async function ParentBankPage({
         />
         <Link
           href="/parent/child/new"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           아이 프로필 만들기
         </Link>
@@ -68,11 +68,11 @@ export default async function ParentBankPage({
   return (
     <Screen role="부모 화면" title="아이 통장" sub={child.displayName}>
       {sp.saved ? (
-        <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{savedNotice}</p></Card></div>
+        <div className="mb-2"><Card tone="grow"><p className="text-sub">{savedNotice}</p></Card></div>
       ) : null}
       {sp.error ? (
         <div className="mb-2"><Card tone="miss">
-          <p className="text-[0.88em]">{topUpErrors[sp.error] ?? topUpErrors.BAD_AMOUNT}</p>
+          <p className="text-sub">{topUpErrors[sp.error] ?? topUpErrors.BAD_AMOUNT}</p>
         </Card></div>
       ) : null}
       {/*
@@ -83,8 +83,8 @@ export default async function ParentBankPage({
       */}
       <div className="mt-2.5 rounded-card border border-line-2 bg-sand p-3">
         <div className="text-center">
-          <span className="block text-[0.72em] text-ink-mute">{walletLabels.total(child.displayName)}</span>
-          <b className="text-[1.6em] tabular-nums">{won(view.totalWon)}</b>
+          <span className="block text-cap text-ink-mute">{walletLabels.total(child.displayName)}</span>
+          <b className="text-hero tabular-nums">{won(view.totalWon)}</b>
         </div>
         {/*
           🔴 **부분의 합이 항상 위 숫자와 같아야 한다.** 묶인 돈이 늘 때마다
@@ -100,13 +100,13 @@ export default async function ParentBankPage({
             .filter((r) => r.always || r.amount > 0)
             .map((r) => (
               <div key={r.label}>
-                <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
+                <div className="flex items-baseline justify-between gap-2 text-sub">
                   <span className="text-ink-mute">{r.label}</span>
                   <b className="tabular-nums">{won(r.amount)}</b>
                 </div>
                 {/* 🔴 숫자만 보면 「어디 갔지」가 된다. 묶인 이유를 그 자리에서 말한다 */}
                 {r.note && r.amount > 0 ? (
-                  <p className="text-[0.76em] leading-relaxed text-ink-mute">{r.note}</p>
+                  <p className="text-cap leading-relaxed text-ink-mute">{r.note}</p>
                 ) : null}
               </div>
             ))}
@@ -114,7 +114,7 @@ export default async function ParentBankPage({
       </div>
 
       <section className="mt-2.5">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{topUpTitle}</h2>
+        <h2 className="text-cap tracking-[0.06em] text-ink-mute">{topUpTitle}</h2>
         {/*
           🔴 금액을 직접 입력받지 않는다. 시연에 필요한 것은 「용돈을 줬다고 적는다」이지
              임의 금액이 아니고, 입력란을 두면 실제 이체처럼 읽힌다.
@@ -126,7 +126,7 @@ export default async function ParentBankPage({
               <input type="hidden" name="amount" value={a} />
               <button
                 type="submit"
-                className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.84em] tabular-nums text-ink-soft"
+                className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub tabular-nums text-ink-soft"
               >
                 +{a.toLocaleString("ko-KR")}
               </button>
@@ -143,18 +143,18 @@ export default async function ParentBankPage({
           <input
             id="topup-custom" name="amount" type="number" inputMode="numeric"
             min={1} max={500000} step={1} required placeholder={customPlaceholder}
-            className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-right text-[0.9em] tabular-nums"
+            className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums"
           />
-          <span className="shrink-0 text-[0.82em] text-ink-mute">원</span>
-          <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-[0.84em] font-bold text-white">
+          <span className="shrink-0 text-sub text-ink-mute">원</span>
+          <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white">
             {customSubmit}
           </button>
         </form>
         {/* 🔴 상한을 미리 말한다 — 넣고 나서 거절되면 왜 안 되는지 모른다 */}
-        <p className="mt-1 text-[0.74em] leading-relaxed text-ink-mute">{customHint}</p>
+        <p className="mt-1 text-cap leading-relaxed text-ink-mute">{customHint}</p>
 
         {!view.cardActive ? (
-          <p className="mt-1.5 text-[0.76em] leading-relaxed text-ink-mute">{cardNeeded}</p>
+          <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{cardNeeded}</p>
         ) : null}
 
         {/*
@@ -165,13 +165,13 @@ export default async function ParentBankPage({
         <div className="mt-2 grid grid-cols-2 gap-1.5">
           <Link
             href="/parent/bank/adjust"
-            className="flex min-h-touch items-center justify-center rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft"
+            className="flex min-h-touch items-center justify-center rounded-card border border-line-2 bg-surface text-sub text-ink-soft"
           >
             {adjustLabel}
           </Link>
           <Link
             href="/parent/bank/history"
-            className="flex min-h-touch items-center justify-center rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft"
+            className="flex min-h-touch items-center justify-center rounded-card border border-line-2 bg-surface text-sub text-ink-soft"
           >
             {historyLabel}
           </Link>
@@ -181,11 +181,11 @@ export default async function ParentBankPage({
       {/* ── 미션 관리 — SRS 는 이것도 통장 안에 뒀다 ── */}
       {/* 🔴 「불리기」 실천을 여는 자리 — 아이가 신청하면 여기로 온다 (D25) */}
       <section className="mt-4">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">우리 집 적금</h2>
+        <h2 className="text-cap tracking-[0.06em] text-ink-mute">우리 집 적금</h2>
         <div className="mt-1.5 grid gap-1">
           <Link
             href="/parent/bank/savings"
-            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-[0.86em]"
+            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-sub"
           >
             <span>적금 신청과 만기</span>
             <b className={savingsRequested > 0 ? "text-miss" : "text-ink-mute"}>
@@ -196,11 +196,11 @@ export default async function ParentBankPage({
       </section>
 
       <section className="mt-4">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">미션 관리</h2>
+        <h2 className="text-cap tracking-[0.06em] text-ink-mute">미션 관리</h2>
         <div className="mt-1.5 grid gap-1">
           <Link
             href="/parent/bank/missions"
-            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-[0.86em]"
+            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-sub"
           >
             <span>승인을 기다리는 미션</span>
             <b className={view.waitingMissions > 0 ? "text-miss" : "text-ink-mute"}>
@@ -209,13 +209,13 @@ export default async function ParentBankPage({
           </Link>
           <Link
             href="/parent/bank/missions/new"
-            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-[0.86em]"
+            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-sub"
           >
             <span>미션 만들기</span>
-            <span className="text-[0.86em] text-ink-mute">아직 안 한 미션 {view.openMissions}개 →</span>
+            <span className="text-sub text-ink-mute">아직 안 한 미션 {view.openMissions}개 →</span>
           </Link>
         </div>
-        <p className="mt-1.5 text-[0.74em] leading-relaxed text-ink-mute">{missionNotice}</p>
+        <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{missionNotice}</p>
       </section>
     </Screen>
   );

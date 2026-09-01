@@ -42,18 +42,18 @@ export default async function ChildWishlistPage({
       {/* 🔴 별이 아니라 용돈이다. 여기서 떼어 목표에 넣는다 (D18) */}
       <a href="/child/allowance"
          className="mb-2 block rounded-card border border-line bg-sand px-3 py-2 text-center">
-        <b className="text-[0.86em]">{walletLabel(allowance)}</b>
-        {allowance === 0 ? <p className="mt-0.5 text-[0.74em] text-ink-mute">{walletEmpty}</p> : null}
+        <b className="text-sub">{walletLabel(allowance)}</b>
+        {allowance === 0 ? <p className="mt-0.5 text-cap text-ink-mute">{walletEmpty}</p> : null}
       </a>
 
       {sp.error ? (
         <div className="mb-2"><Card tone="miss">
-          <p className="text-[0.88em]">{errors[sp.error] ?? errors.NOT_FOUND}</p>
+          <p className="text-sub">{errors[sp.error] ?? errors.NOT_FOUND}</p>
         </Card></div>
       ) : null}
       {sp.added || sp.saved || sp.ranked ? (
         <div className="mb-2"><Card tone="grow">
-          <p className="text-[0.88em]">{sp.added ? addedNotice : sp.saved ? savedNotice : rankedNotice}</p>
+          <p className="text-sub">{sp.added ? addedNotice : sp.saved ? savedNotice : rankedNotice}</p>
         </Card></div>
       ) : null}
 
@@ -62,10 +62,10 @@ export default async function ChildWishlistPage({
           {wishes.map((w, i) => (
             <li key={w.id} className="rounded-card border border-line bg-surface p-3">
               <div className="flex items-baseline justify-between gap-2">
-                <b className="text-[0.92em]">{w.name}</b>
-                <b className="shrink-0 tabular-nums text-[0.86em] text-ink-mute">{won(w.targetAmount)}</b>
+                <b className="text-body">{w.name}</b>
+                <b className="shrink-0 tabular-nums text-sub text-ink-mute">{won(w.targetAmount)}</b>
               </div>
-              <div className="text-[0.74em] text-ink-mute">{w.rank}순위</div>
+              <div className="text-cap text-ink-mute">{w.rank}순위</div>
 
               {/* 🔴 넣은 게 **0%로 보이면 안 된다.** 1,000/300,000 은 0% 로 내려간다 —
                   아이는 「넣었는데 아무 일도 안 일어났다」로 느낀다. 조금이라도 넣었으면 보인다 */}
@@ -76,13 +76,13 @@ export default async function ChildWishlistPage({
 
               {/* 🔴 퍼센트보다 **모은 돈과 남은 돈**이 아이에게 구체적이다 */}
               <div className="mt-1 flex items-baseline justify-between gap-2">
-                <b className="text-[0.86em] tabular-nums text-primary-d">{won(w.savedAmount)}</b>
-                <span className="text-[0.76em] text-ink-mute">
+                <b className="text-sub tabular-nums text-primary-d">{won(w.savedAmount)}</b>
+                <span className="text-cap text-ink-mute">
                   {w.remaining > 0 ? remainingLabel(w.remaining) : reachedLabel}
                 </span>
               </div>
 
-              <div className="mt-0.5 flex justify-between text-[0.72em] text-ink-mute">
+              <div className="mt-0.5 flex justify-between text-cap text-ink-mute">
                 <span />
                 {/* 지난 단계는 이미 별을 받은 것 · 다음 단계는 앞으로 받을 것 */}
                 {/* 🔴 아이 화면에 `%` 를 쓰지 않는다 (AC-031-5). 다음 별까지 **금액**으로 말한다 */}
@@ -99,9 +99,9 @@ export default async function ChildWishlistPage({
                 <input name="amount" type="number" inputMode="numeric"
                        min={1} max={Math.min(MAX_DEPOSIT, allowance || 1)} step={1}
                        disabled={allowance <= 0} required placeholder={depositPlaceholder}
-                       className="min-h-touch w-full flex-1 rounded-card border border-line bg-surface px-3 text-right text-[0.9em] tabular-nums" />
+                       className="min-h-touch w-full flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums" />
                 <button disabled={allowance <= 0}
-                        className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-[0.8em] font-bold text-white disabled:opacity-40">
+                        className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white disabled:opacity-40">
                   {depositLabel}
                 </button>
               </form>
@@ -110,14 +110,14 @@ export default async function ChildWishlistPage({
                 {i > 0 && rankChangesLeft > 0 ? (
                   <form action={raiseRankAction} className="flex-1">
                     <input type="hidden" name="wishId" value={w.id} />
-                    <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.76em] text-ink-soft">
+                    <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-cap text-ink-soft">
                       {rankUpLabel}
                     </button>
                   </form>
                 ) : null}
                 <form action={removeWishAction} className="flex-1">
                   <input type="hidden" name="wishId" value={w.id} />
-                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.76em] text-ink-mute">
+                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-cap text-ink-mute">
                     {removeLabel}
                   </button>
                 </form>
@@ -130,30 +130,30 @@ export default async function ChildWishlistPage({
       {/* 🔴 이 폼이 없어서 화면이 읽기 전용이었다. 학습은 「여기 적어 두세요」라고 안내하는데 적을 데가 없었다 */}
       {!full ? (
         <div className="mt-3 rounded-card border border-line bg-surface p-3">
-          <h2 className="text-[0.82em] font-bold">{addTitle}</h2>
+          <h2 className="text-sub font-bold">{addTitle}</h2>
           <form action={addWishAction} className="mt-2 grid gap-2">
             <label className="grid gap-1">
-              <span className="text-[0.74em] text-ink-mute">{nameLabel}</span>
+              <span className="text-cap text-ink-mute">{nameLabel}</span>
               <input name="name" required maxLength={30} placeholder={namePlaceholder}
-                     className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.9em]" />
+                     className="min-h-touch rounded-card border border-line bg-surface px-3 text-body" />
             </label>
             <label className="grid gap-1">
-              <span className="text-[0.74em] text-ink-mute">{targetLabel}</span>
+              <span className="text-cap text-ink-mute">{targetLabel}</span>
               <input name="targetAmount" type="number" inputMode="numeric"
                      min={MIN_TARGET} max={MAX_TARGET} step={1} required placeholder={targetPlaceholder}
-                     className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-[0.92em] font-bold tabular-nums" />
+                     className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-body font-bold tabular-nums" />
             </label>
-            <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
+            <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
               {addLabel}
             </button>
           </form>
         </div>
       ) : (
-        <p className="mt-3 text-center text-[0.76em] text-ink-mute">{errors.TOO_MANY}</p>
+        <p className="mt-3 text-center text-cap text-ink-mute">{errors.TOO_MANY}</p>
       )}
 
-      <p className="mt-2 text-center text-[0.74em] text-ink-mute">{milestoneHint}</p>
-      <p className="mt-1 text-center text-[0.74em] text-ink-mute">{rankNotice(rankChangesLeft)}</p>
+      <p className="mt-2 text-center text-cap text-ink-mute">{milestoneHint}</p>
+      <p className="mt-1 text-center text-cap text-ink-mute">{rankNotice(rankChangesLeft)}</p>
     </Screen>
   );
 }

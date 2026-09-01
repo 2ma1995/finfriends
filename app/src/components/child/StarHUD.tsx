@@ -7,12 +7,12 @@ import Link from "next/link";
 export function StarHUD({ balance, earned }: { balance: number; earned?: number }) {
   return (
     <div className="flex items-center justify-between rounded-card border border-line-2 bg-star-bg px-3 py-2">
-      <span className="text-[0.78em] text-ink-soft">내 별</span>
+      <span className="text-sub text-ink-soft">내 별</span>
       <Link href="/child/stars" className="flex items-baseline gap-1">
         <span className={earned ? "ff-star-earn text-[1.1em]" : "text-[1.1em]"}
               style={{ textShadow: "0 0 10px var(--ff-star-glow)" }}>⭐</span>
         <b className="text-title tabular-nums text-star-d">{balance}</b>
-        {earned ? <span className="text-[0.72em] font-bold text-primary">+{earned}</span> : null}
+        {earned ? <span className="text-cap font-bold text-primary">+{earned}</span> : null}
       </Link>
     </div>
   );

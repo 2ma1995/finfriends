@@ -74,22 +74,22 @@ export function SavingsForm({
       <input type="hidden" name="kind" value={kind} />
 
       <label className="grid gap-1">
-        <span className="text-[0.72em] text-ink-mute">{copy.goalLabel}</span>
+        <span className="text-cap text-ink-mute">{copy.goalLabel}</span>
         <input name="goal" required maxLength={30} placeholder={copy.goalPlaceholder}
-               className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.9em]" />
+               className="min-h-touch rounded-card border border-line bg-surface px-3 text-body" />
       </label>
 
       {/* 🔴 고르면 아래 칸이 바뀐다. 접힌 상자를 따로 두지 않는다 */}
       <div className="grid gap-1">
-        <span className="text-[0.72em] text-ink-mute">{copy.kindLabel}</span>
+        <span className="text-cap text-ink-mute">{copy.kindLabel}</span>
         <ul className="grid grid-cols-2 gap-1.5">
           {(["INSTALLMENT", "DEPOSIT"] as const).map((k) => (
             <li key={k}>
               <button type="button" onClick={() => setKind(k)}
-                      className={`grid min-h-touch w-full place-items-center rounded-card border py-1 text-center text-[0.76em] ${
+                      className={`grid min-h-touch w-full place-items-center rounded-card border py-1 text-center text-cap ${
                         kind === k ? "border-primary bg-primary-bg" : "border-line bg-surface"}`}>
                 <b>{copy.kinds[k].label}</b>
-                <span className="text-[0.86em] text-ink-mute">{copy.kinds[k].hint}</span>
+                <span className="text-sub text-ink-mute">{copy.kinds[k].hint}</span>
               </button>
             </li>
           ))}
@@ -100,21 +100,21 @@ export function SavingsForm({
         <>
           <div className="grid grid-cols-2 gap-2">
             <label className="grid gap-1">
-              <span className="text-[0.72em] text-ink-mute">{copy.perPeriodLabel}</span>
+              <span className="text-cap text-ink-mute">{copy.perPeriodLabel}</span>
               <input name="perPeriod" type="number" inputMode="numeric" step={100}
                      min={limits.minPerPeriod} max={Math.max(limits.minPerPeriod, balance)}
                      value={perPeriod} onChange={(e) => setPerPeriod(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
             <label className="grid gap-1">
-              <span className="text-[0.72em] text-ink-mute">{copy.periodsLabel}</span>
+              <span className="text-cap text-ink-mute">{copy.periodsLabel}</span>
               <input name="periods" type="number" inputMode="numeric" step={1}
                      min={limits.minPeriods} max={limits.maxPeriods}
                      value={periods} onChange={(e) => setPeriods(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
           </div>
-          <p className="text-[0.8em] font-bold text-primary-d">
+          <p className="text-sub font-bold text-primary-d">
             {fill(copy.totalPreview, { n: String(periods), won: won(total) })}
           </p>
         </>
@@ -122,21 +122,21 @@ export function SavingsForm({
         <>
           <div className="grid grid-cols-2 gap-2">
             <label className="grid gap-1">
-              <span className="text-[0.72em] text-ink-mute">{copy.amountLabel}</span>
+              <span className="text-cap text-ink-mute">{copy.amountLabel}</span>
               <input name="amount" type="number" inputMode="numeric" step={100}
                      min={limits.minAmount} max={Math.max(limits.minAmount, balance)}
                      value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
             <label className="grid gap-1">
-              <span className="text-[0.72em] text-ink-mute">{copy.monthsLabel}</span>
+              <span className="text-cap text-ink-mute">{copy.monthsLabel}</span>
               <input name="months" type="number" inputMode="numeric" step={1}
                      min={1} max={limits.maxMonths}
                      value={months} onChange={(e) => setMonths(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
           </div>
-          <p className="text-[0.8em] font-bold text-primary-d">
+          <p className="text-sub font-bold text-primary-d">
             {fill(copy.depositPreview, { n: String(months), won: won(total) })}
           </p>
         </>
@@ -144,27 +144,27 @@ export function SavingsForm({
 
       {/* 🔴 **내가 모을 금액 기준**으로 보여준다. `%` 는 쓰지 않는다 (AC-031-5) */}
       <div className="grid gap-1">
-        <span className="text-[0.72em] text-ink-mute">{copy.wantLabel}</span>
+        <span className="text-cap text-ink-mute">{copy.wantLabel}</span>
         <input type="hidden" name="wantedPct" value={wanted} />
         <ul className="grid grid-cols-4 gap-1">
           {choices.map((pct) => (
             <li key={pct}>
               <button type="button" onClick={() => setWanted(pct)}
-                      className={`grid min-h-touch w-full place-items-center rounded-card border text-[0.78em] tabular-nums ${
+                      className={`grid min-h-touch w-full place-items-center rounded-card border text-sub tabular-nums ${
                         wanted === pct ? "border-primary bg-primary-bg font-bold" : "border-line bg-surface"}`}>
                 {won(Math.floor((total * pct) / 100))}원
               </button>
             </li>
           ))}
         </ul>
-        <p className="text-[0.8em] font-bold text-star-d">
+        <p className="text-sub font-bold text-star-d">
           {interest > 0 ? fill(copy.interestPreview, { won: won(interest) }) : copy.noInterest}
         </p>
-        <p className="text-[0.72em] font-bold text-ink-soft">{copy.wantWho}</p>
+        <p className="text-cap font-bold text-ink-soft">{copy.wantWho}</p>
       </div>
 
       <button disabled={total <= 0}
-              className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white disabled:opacity-40">
+              className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white disabled:opacity-40">
         {copy.ask}
       </button>
     </form>

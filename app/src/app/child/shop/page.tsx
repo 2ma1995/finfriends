@@ -44,10 +44,10 @@ export default async function ChildShopPage({
     <Screen role="아이 화면" title="상점" sub={`내 별 ⭐ ${room.stars}`}
             back={{ href: "/child/home", label: "내 방" }}>
       {bought ? (
-        <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">{boughtNotice(bought.name)}</p></Card></div>
+        <div className="mb-2"><Card tone="grow"><p className="text-sub">{boughtNotice(bought.name)}</p></Card></div>
       ) : null}
       {short !== null && short > 0 ? (
-        <div className="mb-2"><Card tone="miss"><p className="text-[0.88em]">{shortNotice(short)}</p></Card></div>
+        <div className="mb-2"><Card tone="miss"><p className="text-sub">{shortNotice(short)}</p></Card></div>
       ) : null}
 
       {/* 카테고리 탭 — kit 하나가 카테고리 하나다 */}
@@ -55,7 +55,7 @@ export default async function ChildShopPage({
         {CATEGORIES.map((c) => (
           <li key={c.key} className="shrink-0">
             <Link href={`/child/shop?c=${c.key}`}
-                  className={`flex min-h-touch items-center gap-1 rounded-card border px-3 text-[0.82em] ${
+                  className={`flex min-h-touch items-center gap-1 rounded-card border px-3 text-sub ${
                     c.key === active ? "border-primary bg-primary-bg font-bold" : "border-line bg-surface"}`}>
               <span>{c.emoji}</span>{c.label}
             </Link>
@@ -68,8 +68,8 @@ export default async function ChildShopPage({
                 back={`/child/shop?c=${active}`} />
 
       <div className="mt-3 grid gap-2">
-        <Card tone="grow"><p className="text-[0.84em] leading-relaxed">{savingHint}</p></Card>
-        <Card><p className="text-[0.82em] leading-relaxed text-ink-soft">{notice}</p></Card>
+        <Card tone="grow"><p className="text-sub leading-relaxed">{savingHint}</p></Card>
+        <Card><p className="text-sub leading-relaxed text-ink-soft">{notice}</p></Card>
       </div>
     </Screen>
   );

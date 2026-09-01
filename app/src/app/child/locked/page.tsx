@@ -18,26 +18,26 @@ export default async function ChildLockedPage({
   return (
     <Screen role="아이 화면" title={view.title} back={{ href: "/child/home", label: "내 방" }}>
       <Card tone="grow">
-        <p className="text-[0.9em] leading-relaxed">
+        <p className="text-body leading-relaxed">
           {view.body.map((line) => <span key={line} className="block">{line}</span>)}
         </p>
       </Card>
 
       {/* 아이 탓으로 읽히지 않게 — 막혔다가 아니라 「여긴 어른 화면」이다 */}
       <Link href="/child/home"
-            className="mt-3 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
+            className="mt-3 block min-h-touch rounded-card bg-primary text-center text-body font-bold leading-[44px] text-white">
         {backHome}
       </Link>
 
       {/* 🔴 아이가 눌러서 오는 자리다. 「너는 못 들어와」가 아니라 「어른이 쓰는 자리」로 말한다.
           PIN 이 없는 집이면 `/unlock` 이 정하는 법을 안내한다 — 죽은 길로 끝나지 않는다 */}
       <Link href="/unlock"
-            className="mt-2 block min-h-touch rounded-card border border-line bg-surface text-center text-[0.82em] leading-[44px] text-ink-soft">
+            className="mt-2 block min-h-touch rounded-card border border-line bg-surface text-center text-sub leading-[44px] text-ink-soft">
         {guardianLink}
       </Link>
 
       {sp.from ? (
-        <p className="mt-3 text-center text-[0.7em] text-ink-mute">
+        <p className="mt-3 text-center text-cap text-ink-mute">
           {/* 🔴 실제 서비스에서는 안 보인다. 지금은 무엇이 막혔는지 확인하려고 남겨 둔다 */}
           막힌 경로 <code>{sp.from}</code>
         </p>

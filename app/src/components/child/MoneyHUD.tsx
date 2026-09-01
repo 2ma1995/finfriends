@@ -17,19 +17,19 @@ export function MoneyHUD({ stars, allowance, earned }: {
     <div className="grid grid-cols-2 gap-1.5">
       <Link href="/child/stars"
             className="flex items-center justify-between rounded-card border border-line-2 bg-star-bg px-3 py-2">
-        <span className="text-[0.74em] text-ink-soft">내 별</span>
+        <span className="text-cap text-ink-soft">내 별</span>
         <span className="flex items-baseline gap-1">
-          <span className={earned ? "ff-star-earn text-[1em]" : "text-[1em]"}
+          <span className={earned ? "ff-star-earn text-body" : "text-body"}
                 style={{ textShadow: "0 0 10px var(--ff-star-glow)" }}>⭐</span>
-          <b className="text-[1.15em] tabular-nums text-star-d">{stars}</b>
-          {earned ? <span className="text-[0.7em] font-bold text-primary">+{earned}</span> : null}
+          <b className="text-title tabular-nums text-star-d">{stars}</b>
+          {earned ? <span className="text-cap font-bold text-primary">+{earned}</span> : null}
         </span>
       </Link>
 
       <Link href="/child/allowance"
             className="flex items-center justify-between rounded-card border border-line-2 bg-sand px-3 py-2">
-        <span className="text-[0.74em] text-ink-soft">내 통장</span>
-        <b className="text-[1.05em] tabular-nums">{allowance.toLocaleString("ko-KR")}<span className="text-[0.7em] font-normal">원</span></b>
+        <span className="text-cap text-ink-soft">내 통장</span>
+        <b className="text-title tabular-nums">{allowance.toLocaleString("ko-KR")}<span className="text-cap font-normal">원</span></b>
       </Link>
     </div>
   );

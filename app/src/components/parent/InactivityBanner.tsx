@@ -7,11 +7,11 @@ import { Card } from "@/components/shared/Screen";
 export function InactivityBanner({ title, lines, days }: { title: string; lines: readonly string[]; days: number }) {
   return (
     <Card tone="grow">
-      <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{title}</h2>
-      <p className="mt-1 text-[0.9em] leading-relaxed">
+      <h2 className="text-cap tracking-[0.03em] text-primary-d">{title}</h2>
+      <p className="mt-1 text-body leading-relaxed">
         {lines.map((l) => <span key={l} className="block">{l}</span>)}
       </p>
-      <small className="mt-1 block text-[0.72em] text-ink-mute">{days}일째 같은 단계</small>
+      <small className="mt-1 block text-cap text-ink-mute">{days}일째 같은 단계</small>
     </Card>
   );
 }

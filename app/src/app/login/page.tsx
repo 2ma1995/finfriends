@@ -27,7 +27,7 @@ export default async function LoginPage({
       <form action={signInAction} className="grid gap-2.5">
         {fields.map((f) => (
           <div key={f.key} className="grid gap-1">
-            <Label htmlFor={f.key} className="text-[0.8em] font-normal text-ink-soft">
+            <Label htmlFor={f.key} className="text-sub font-normal text-ink-soft">
               {f.label}
             </Label>
             <Input
@@ -38,35 +38,35 @@ export default async function LoginPage({
               defaultValue={f.key === "email" ? email : undefined}
               placeholder={f.placeholder}
               autoComplete={f.autoComplete}
-              className="min-h-touch rounded-card border-line bg-surface px-3 text-[0.9em] text-ink placeholder:text-ink-mute"
+              className="min-h-touch rounded-card border-line bg-surface px-3 text-body text-ink placeholder:text-ink-mute"
             />
           </div>
         ))}
 
         {error ? (
-          <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+          <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-sub leading-relaxed text-miss">
             {error}
           </p>
         ) : null}
 
         <button
           type="submit"
-          className="mt-0.5 min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-0.5 min-h-touch w-full rounded-card bg-primary text-body font-bold text-white"
         >
           {submitLabel}
         </button>
       </form>
 
-      <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-mute">{resetNotice}</p>
+      <p className="mt-2 text-center text-cap leading-relaxed text-ink-mute">{resetNotice}</p>
 
       <div className="mt-3">
         <Card tone="grow">
-          <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{sessionNotice.title}</h2>
-          <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{sessionNotice.body}</p>
+          <h2 className="text-cap tracking-[0.03em] text-primary-d">{sessionNotice.title}</h2>
+          <p className="mt-1 text-sub leading-relaxed text-ink-soft">{sessionNotice.body}</p>
         </Card>
       </div>
 
-      <p className="mt-4 text-center text-[0.82em] text-ink-soft">
+      <p className="mt-4 text-center text-sub text-ink-soft">
         {signupPrompt.question}{" "}
         <Link href={signupPrompt.href} className="font-bold text-primary-d underline underline-offset-2">
           {signupPrompt.label}

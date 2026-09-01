@@ -470,7 +470,7 @@ export function Room3D({
   if (state === "failed") {
     return (
       <div className="grid h-[220px] place-items-center rounded-card bg-sand text-center">
-        <p className="text-[0.82em] text-ink-soft">🐻<br />이 기기에서는 3D를 못 그려요</p>
+        <p className="text-sub text-ink-soft">🐻<br />이 기기에서는 3D를 못 그려요</p>
       </div>
     );
   }

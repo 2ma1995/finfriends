@@ -45,16 +45,16 @@ export default async function ChildQuizPage({
       {/* 🔴 오늘 이미 맞혔으면 다시 풀 게 없다. 같은 문제를 또 내면 별이 안 붙어 아이가 혼란스럽다 */}
       {alreadyDone ? (
         <>
-          <Card tone="grow"><p className="text-[0.9em] leading-relaxed">{doneToday}</p></Card>
+          <Card tone="grow"><p className="text-body leading-relaxed">{doneToday}</p></Card>
           <Link href="/child/practice"
-                className="mt-2 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
+                className="mt-2 block min-h-touch rounded-card bg-primary text-center text-body font-bold leading-[44px] text-white">
             {backToPractice}
           </Link>
         </>
       ) : (
       <>
 
-      <Card><p className="text-[1em] font-bold leading-relaxed">{q.question}</p></Card>
+      <Card><p className="text-body font-bold leading-relaxed">{q.question}</p></Card>
 
       {!answered ? (
         <form action={submitAnswer} className="mt-2 grid gap-1.5">
@@ -62,7 +62,7 @@ export default async function ChildQuizPage({
           <input type="hidden" name="n" value={q.index} />
           {q.choices.map((c) => (
             <button key={c.key} name="choice" value={c.key} type="submit"
-                    className="flex min-h-touch w-full items-center gap-2 rounded-card border border-line bg-surface px-3 py-2 text-left text-[0.9em]">
+                    className="flex min-h-touch w-full items-center gap-2 rounded-card border border-line bg-surface px-3 py-2 text-left text-body">
               <span className="text-ink-mute">{c.key.toUpperCase()}</span>{c.text}
             </button>
           ))}
@@ -70,32 +70,32 @@ export default async function ChildQuizPage({
       ) : (
         <>
           <div className={`mt-2 rounded-card border p-3 ${correct ? "border-primary-l/50 bg-primary-bg" : "border-miss-line bg-miss-bg"}`}>
-            <b className={`text-[0.92em] ${correct ? "text-primary-d" : "text-miss"}`}>
+            <b className={`text-body ${correct ? "text-primary-d" : "text-miss"}`}>
               {correct ? correctLabel : wrongLabel}
             </b>
             {/* 🔴 틀려도 별을 깎지 않는다. 그 사실을 화면에 적는다 */}
             {!correct ? (
               <>
-                <p className="mt-1 text-[0.84em] text-ink-soft">{wrongNotice}</p>
-                <p className="mt-0.5 text-[0.84em] font-bold text-primary-d">{wrongPractice}</p>
+                <p className="mt-1 text-sub text-ink-soft">{wrongNotice}</p>
+                <p className="mt-0.5 text-sub font-bold text-primary-d">{wrongPractice}</p>
               </>
             ) : null}
-            {sp.star ? <p className="mt-1 text-[0.86em] font-bold text-star-d">{starNotice}</p> : null}
+            {sp.star ? <p className="mt-1 text-sub font-bold text-star-d">{starNotice}</p> : null}
             {/* 🔴 맞혔는데 한도라 못 받은 것 — 「틀렸다」와 갈라 말한다 */}
-            {sp.limit ? <p className="mt-1 text-[0.84em] text-ink-soft">{limitNotice}</p> : null}
+            {sp.limit ? <p className="mt-1 text-sub text-ink-soft">{limitNotice}</p> : null}
           </div>
 
           <div className="mt-2">
             <Card tone="grow">
-              <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{explainTitle}</h2>
-              <p className="mt-1 text-[0.88em] leading-relaxed">{q.explain}</p>
+              <h2 className="text-cap tracking-[0.03em] text-primary-d">{explainTitle}</h2>
+              <p className="mt-1 text-sub leading-relaxed">{q.explain}</p>
             </Card>
           </div>
 
           {/* 🔴 「다음 문제」가 없다. 하루에 한 문제다 */}
-          <p className="mt-2 text-center text-[0.8em] text-ink-mute">{tomorrow}</p>
+          <p className="mt-2 text-center text-sub text-ink-mute">{tomorrow}</p>
           <Link href="/child/practice"
-                className="mt-1 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
+                className="mt-1 block min-h-touch rounded-card bg-primary text-center text-body font-bold leading-[44px] text-white">
             {backToPractice}
           </Link>
         </>

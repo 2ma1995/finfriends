@@ -53,7 +53,7 @@ export default async function NewMissionPage({
         />
         <Link
           href="/parent/child/new"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           아이 프로필 만들기
         </Link>
@@ -73,7 +73,7 @@ export default async function NewMissionPage({
     >
       <form action={createMissionAction} className="grid gap-2.5">
         <div className="grid gap-1">
-          <Label htmlFor="title" className="text-[0.8em] font-normal text-ink-soft">
+          <Label htmlFor="title" className="text-sub font-normal text-ink-soft">
             무엇을 하면 되나요
           </Label>
           <Input
@@ -84,9 +84,9 @@ export default async function NewMissionPage({
             maxLength={TITLE_MAX}
             defaultValue={title}
             placeholder="예: 장 볼 때 가격표 두 개 비교하기"
-            className="min-h-touch rounded-card border-line bg-surface px-3 text-[0.9em] text-ink placeholder:text-ink-mute"
+            className="min-h-touch rounded-card border-line bg-surface px-3 text-body text-ink placeholder:text-ink-mute"
           />
-          <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.title}</small>
+          <small className="text-cap leading-relaxed text-ink-mute">{hints.title}</small>
         </div>
 
         {/*
@@ -95,7 +95,7 @@ export default async function NewMissionPage({
              값은 hidden 으로 넘기고 화면은 **무엇으로 셀지 알려주기만** 한다.
         */}
         <fieldset className="grid gap-1">
-          <legend className="mb-1 text-[0.8em] text-ink-soft">무엇으로 셀까요</legend>
+          <legend className="mb-1 text-sub text-ink-soft">무엇으로 셀까요</legend>
           <div className="grid gap-1">
             {OPENABLE.map((t) => (
               <div
@@ -104,17 +104,17 @@ export default async function NewMissionPage({
               >
                 {/* 🔴 서버가 다시 검사한다 — hidden 은 폼을 우회하면 아무 값이나 올 수 있다 */}
                 <input type="hidden" name="topic" value={t} />
-                <span className="flex-1 text-[0.84em] leading-relaxed">
+                <span className="flex-1 text-sub leading-relaxed">
                   <b>{TOPIC_ICON[t]} {TOPIC_LABEL[t]}</b>
                   <br />
-                  <small className="text-[0.86em] text-ink-soft">{examples[t]}</small>
+                  <small className="text-sub text-ink-soft">{examples[t]}</small>
                 </span>
               </div>
             ))}
           </div>
-          <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.topic}</small>
+          <small className="text-cap leading-relaxed text-ink-mute">{hints.topic}</small>
           {/* 🔴 걸기 전에 말한다 — 찍을 수 없는 일을 벌기로 걸면 아이가 올릴 방법이 없다 (D49) */}
-          <small className="mt-1 block rounded-card border border-line-2 bg-surface px-2.5 py-2 text-[0.74em] leading-relaxed text-ink-soft">
+          <small className="mt-1 block rounded-card border border-line-2 bg-surface px-2.5 py-2 text-cap leading-relaxed text-ink-soft">
             📷 {photoRule}
           </small>
         </fieldset>
@@ -123,7 +123,7 @@ export default async function NewMissionPage({
             미션은 「벌기」의 실체다 — 심부름하고 용돈을 받는 것이 아이가 겪는
             유일한 「버는」 경험이다 */}
         <div className="grid gap-1">
-          <Label htmlFor="payoutWon" className="text-[0.8em] font-normal text-ink-soft">
+          <Label htmlFor="payoutWon" className="text-sub font-normal text-ink-soft">
             해내면 줄 용돈
           </Label>
           <Input
@@ -135,27 +135,27 @@ export default async function NewMissionPage({
             max={PAYOUT_MAX}
             step={100}
             defaultValue={payoutWon ?? "1000"}
-            className="min-h-touch rounded-card border-line bg-surface px-3 text-right text-[0.9em] tabular-nums text-ink"
+            className="min-h-touch rounded-card border-line bg-surface px-3 text-right text-body tabular-nums text-ink"
           />
-          <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.payout}</small>
+          <small className="text-cap leading-relaxed text-ink-mute">{hints.payout}</small>
         </div>
 
         <div className="mt-0.5">
           <Card tone="grow">
-            <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{hints.approvalTitle}</h2>
-            <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{hints.approvalBody}</p>
+            <h2 className="text-cap tracking-[0.03em] text-primary-d">{hints.approvalTitle}</h2>
+            <p className="mt-1 text-sub leading-relaxed text-ink-soft">{hints.approvalBody}</p>
           </Card>
         </div>
 
         {error ? (
-          <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+          <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-sub leading-relaxed text-miss">
             {error}
           </p>
         ) : null}
 
         <button
           type="submit"
-          className="min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white"
         >
           미션 만들기
         </button>
@@ -163,16 +163,16 @@ export default async function NewMissionPage({
 
       {open.length > 0 ? (
         <section className="mt-4">
-          <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">
+          <h2 className="text-cap tracking-[0.06em] text-ink-mute">
             아직 안 한 미션 {open.length}개
           </h2>
           <ul className="mt-1.5 grid gap-1">
             {open.map((m) => (
               <li key={m.id} className="flex items-baseline justify-between gap-2 rounded-card border border-line bg-surface px-3 py-2">
-                <span className="flex-1 text-[0.82em] leading-relaxed text-ink-soft">
+                <span className="flex-1 text-sub leading-relaxed text-ink-soft">
                   {m.icon} {m.title}
                 </span>
-                <b className="shrink-0 text-[0.78em] text-star-d">⭐ {m.reward}</b>
+                <b className="shrink-0 text-sub text-star-d">⭐ {m.reward}</b>
               </li>
             ))}
           </ul>

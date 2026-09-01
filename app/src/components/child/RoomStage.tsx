@@ -111,7 +111,7 @@ export function RoomStage({
               return (
                 <li key={i.id}>
                   <button onClick={() => setSel(on ? null : i.id)}
-                          className={`min-h-touch rounded-card border px-2.5 text-[0.74em] ${
+                          className={`min-h-touch rounded-card border px-2.5 text-cap ${
                             on ? "border-primary bg-primary text-white font-bold" : "border-line bg-surface"}`}>
                     {i.name}{up ? " ↑" : ""}
                   </button>
@@ -120,7 +120,7 @@ export function RoomStage({
             })}
           </ul>
 
-          <p className="text-[0.74em] text-ink-soft">
+          <p className="text-cap text-ink-soft">
             {selName ? (
               <>
                 「{selName}」를 골랐어요 · <b>끌어서 옮기기</b>
@@ -130,26 +130,26 @@ export function RoomStage({
           </p>
           <div className="flex flex-wrap justify-center gap-1.5">
             <button onClick={() => rotate(-45)} disabled={!sel}
-                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em] disabled:opacity-40">↺ 왼쪽</button>
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-sub disabled:opacity-40">↺ 왼쪽</button>
             <button onClick={() => rotate(45)} disabled={!sel}
-                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em] disabled:opacity-40">↻ 오른쪽</button>
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-sub disabled:opacity-40">↻ 오른쪽</button>
             <button onClick={drop} disabled={!sel || !(layout[sel]?.y)}
-                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em] disabled:opacity-40">↓ 바닥에</button>
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-sub disabled:opacity-40">↓ 바닥에</button>
             <button onClick={reset}
-                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.8em]">처음으로</button>
+                    className="min-h-touch rounded-card border border-line bg-surface px-3 text-sub">처음으로</button>
             <button onClick={() => { setEdit(false); setSel(null); }}
-                    className="min-h-touch rounded-card bg-primary px-4 text-[0.84em] font-bold text-white">다 꾸몄어요</button>
+                    className="min-h-touch rounded-card bg-primary px-4 text-sub font-bold text-white">다 꾸몄어요</button>
           </div>
         </>
       ) : (
         <>
-          <span className="text-[0.72em] text-ink-mute">끌어서 방을 돌려보기</span>
+          <span className="text-cap text-ink-mute">끌어서 방을 돌려보기</span>
           {/* 🔴 방을 바꾸는 두 가지를 나란히 둔다 — 꾸미기와 사기.
               🔴 **높이는 44px 아래로 안 내린다** — 아이 손가락의 하한이다(--ff-touch).
                  대신 글씨·테두리를 가볍게 하고 사이를 벌려 작아 보이게 한다 */}
           <div className={`grid w-full gap-3 px-2 ${sideAction ? "grid-cols-2" : ""}`}>
             <button onClick={() => setEdit(true)}
-                    className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-[0.78em] font-bold text-primary-d">
+                    className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-sub font-bold text-primary-d">
               🛠 방 꾸미기
             </button>
             {sideAction}

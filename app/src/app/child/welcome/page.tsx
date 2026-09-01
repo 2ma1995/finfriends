@@ -55,15 +55,15 @@ export default async function ChildWelcomePage({
 
       <div className="mt-4 rounded-card border border-line bg-surface px-4 py-7 text-center">
         <div className="text-[3.2em] leading-none">{s.emoji}</div>
-        <h2 className="ff-serif mt-3 text-[1.25em] font-bold leading-snug">{s.title}</h2>
+        <h2 className="ff-serif mt-3 text-title font-bold leading-snug">{s.title}</h2>
         <div className="mt-2 grid gap-1">
           {s.lines.map((l) => (
-            <p key={l} className={`text-[0.95em] leading-relaxed ${
+            <p key={l} className={`text-body leading-relaxed ${
               l.startsWith("★") ? "font-bold text-star-d" : "text-ink-soft"}`}>{l}</p>
           ))}
         </div>
         {liveLine ? (
-          <p className="mt-3 inline-block rounded-full bg-primary-bg px-3 py-1 text-[0.84em] font-bold text-primary-d">
+          <p className="mt-3 inline-block rounded-full bg-primary-bg px-3 py-1 text-sub font-bold text-primary-d">
             {liveLine}
           </p>
         ) : null}
@@ -71,7 +71,7 @@ export default async function ChildWelcomePage({
 
       {s.peek ? (
         <Link href={s.peek.href}
-              className="mt-2 flex min-h-touch items-center justify-center rounded-card border border-dashed border-line-2 text-[0.8em] text-ink-soft">
+              className="mt-2 flex min-h-touch items-center justify-center rounded-card border border-dashed border-line-2 text-sub text-ink-soft">
           {s.peek.label} →
         </Link>
       ) : null}
@@ -79,21 +79,21 @@ export default async function ChildWelcomePage({
       <div className="mt-3 flex gap-1.5">
         {step > 0 ? (
           <Link href={`/child/welcome?step=${step - 1}`}
-                className="flex min-h-touch flex-1 items-center justify-center rounded-card border border-line-2 bg-surface text-[0.86em] text-ink-soft">
+                className="flex min-h-touch flex-1 items-center justify-center rounded-card border border-line-2 bg-surface text-sub text-ink-soft">
             {prevLabel}
           </Link>
         ) : null}
 
         {last ? (
           <form action={finishTourAction} className="flex-[2]">
-            <button className="min-h-touch w-full rounded-card bg-primary text-[0.95em] font-bold text-white">
+            <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
               {startLabel}
             </button>
           </form>
         ) : (
           <form action={advanceTourAction} className="flex-[2]">
             <input type="hidden" name="to" value={step + 1} />
-            <button className="min-h-touch w-full rounded-card bg-primary text-[0.95em] font-bold text-white">
+            <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
               {nextLabel}
             </button>
           </form>
@@ -103,7 +103,7 @@ export default async function ChildWelcomePage({
       {/* 🔴 가두지 않는다. 못 빠져나가는 화면이 첫 경험이 되면 안 된다 */}
       {!last ? (
         <form action={skipTourAction} className="mt-2">
-          <button className="min-h-touch w-full text-[0.78em] text-ink-mute underline underline-offset-2">
+          <button className="min-h-touch w-full text-sub text-ink-mute underline underline-offset-2">
             {skipLabel}
           </button>
         </form>

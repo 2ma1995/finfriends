@@ -26,7 +26,7 @@ export default async function ParentForestPage() {
         />
         <Link
           href="/parent/child/new"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           아이 프로필 만들기
         </Link>
@@ -47,10 +47,10 @@ export default async function ParentForestPage() {
         className="rounded-card border border-star p-3 text-center"
         style={{ background: "linear-gradient(180deg, var(--ff-star-bg), var(--ff-star-bg-2))" }}
       >
-        <b className="block text-[1.7em] tabular-nums text-star-d">{view.starsEarned}</b>
-        <span className="text-[0.78em] text-ink-soft">이번 달 획득 별</span>
+        <b className="block text-hero tabular-nums text-star-d">{view.starsEarned}</b>
+        <span className="text-sub text-ink-soft">이번 달 획득 별</span>
         {view.starsSpent > 0 ? (
-          <p className="mt-1 text-[0.74em] text-ink-mute">
+          <p className="mt-1 text-cap text-ink-mute">
             이 중 {view.starsSpent}개를 방 아이템으로 바꿨어요
           </p>
         ) : null}
@@ -62,10 +62,10 @@ export default async function ParentForestPage() {
         </div>
       ) : (
         <section className="mt-3">
-          <h2 className="mb-1.5 text-[0.76em] tracking-[0.04em] text-ink-mute">이번 달 네 영역</h2>
+          <h2 className="mb-1.5 text-cap tracking-[0.04em] text-ink-mute">이번 달 네 영역</h2>
           <ul className="grid grid-cols-2 gap-1.5">
             {view.slotStages.map((s) => (
-              <li key={s.label} className="flex items-baseline justify-between rounded-card border border-line bg-surface px-3 py-2 text-[0.84em]">
+              <li key={s.label} className="flex items-baseline justify-between rounded-card border border-line bg-surface px-3 py-2 text-sub">
                 <span>{s.label}</span>
                 <b className="text-ink-soft">{s.stage}</b>
               </li>
@@ -78,11 +78,11 @@ export default async function ParentForestPage() {
         ③④ 지난달과 비교 — 🔴 전월 스냅샷이 없으면 **0으로 그리지 않는다** (AC-E2).
             0으로 그리면 보호자는 「변화 없음」이 아니라 「고장」으로 읽는다.
       */}
-      <h2 className="mb-1.5 mt-3 text-[0.76em] tracking-[0.04em] text-ink-mute">지난달과 비교</h2>
+      <h2 className="mb-1.5 mt-3 text-cap tracking-[0.04em] text-ink-mute">지난달과 비교</h2>
       {view.hasPrevMonth && view.deltas.length > 0 ? (
         <ul className="grid gap-1.5">
           {view.deltas.map((d) => (
-            <li key={d.label} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-[0.84em]">
+            <li key={d.label} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-sub">
               <span>{d.label}</span>
               <span className={`font-bold tabular-nums ${d.improved ? "text-primary-d" : ""}`}>
                 {d.from} → {d.to}
@@ -96,8 +96,8 @@ export default async function ParentForestPage() {
 
       <div className="mt-3">
         <Card>
-          <h2 className="text-[0.76em] tracking-[0.03em] text-ink-mute">{snapshotNotice.title}</h2>
-          <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{snapshotNotice.body}</p>
+          <h2 className="text-cap tracking-[0.03em] text-ink-mute">{snapshotNotice.title}</h2>
+          <p className="mt-1 text-sub leading-relaxed text-ink-soft">{snapshotNotice.body}</p>
         </Card>
       </div>
     </Screen>

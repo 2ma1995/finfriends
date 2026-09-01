@@ -106,19 +106,19 @@ export default async function ChildHomePage({
     <Screen role="아이 화면" title="내 방">
       {/* 🔴 받았을 때만 말한다. 매번 띄우면 아이가 무시하게 된다 */}
       {attended.granted ? (
-        <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
+        <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-sub font-bold text-star-d">
           {attendanceNotice}
         </p>
       ) : null}
 
       {justFinished ? (
-        <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
+        <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-sub font-bold text-star-d">
           {finishBonus}
         </p>
       ) : null}
 
       {sp.planned ? (
-        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-[0.86em] font-bold text-primary-d">
+        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-sub font-bold text-primary-d">
           {ask.plannedNotice}
         </p>
       ) : null}
@@ -140,12 +140,12 @@ export default async function ChildHomePage({
                    wear={room.wear} turn={turn} startEdit={startEdit}
                    sideAction={
                      <Link href="/child/shop"
-                           className="flex min-h-touch w-full items-center justify-center rounded-card border border-primary bg-primary text-[0.78em] font-bold text-white">
+                           className="flex min-h-touch w-full items-center justify-center rounded-card border border-primary bg-primary text-sub font-bold text-white">
                        🛍 {shopLink}
                      </Link>
                    } />
         {placed.length === 0 ? (
-          <p className="mt-1 text-center text-[0.74em] text-ink-mute">
+          <p className="mt-1 text-center text-cap text-ink-mute">
             <b>{emptyRoom.title}</b> · {emptyRoom.body}
           </p>
         ) : null}
@@ -159,7 +159,7 @@ export default async function ChildHomePage({
                  allDone={todayAllDone} missionMore={missionMore} won={won} />
 
       <form action={restartTourAction} className="mt-4">
-        <button className="min-h-touch w-full text-[0.78em] text-ink-mute underline underline-offset-2">
+        <button className="min-h-touch w-full text-sub text-ink-mute underline underline-offset-2">
           {restartLabel}
         </button>
       </form>

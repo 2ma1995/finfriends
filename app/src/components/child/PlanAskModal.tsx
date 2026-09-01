@@ -37,8 +37,8 @@ export function PlanAskModal({
         <div className="flex items-start gap-2">
           <span className="text-[1.6em] leading-none">🏫</span>
           <div className="min-w-0 flex-1">
-            <b className="block text-[1.02em]">{title}</b>
-            <p className="mt-1 text-[0.82em] leading-relaxed text-ink-mute">
+            <b className="block text-body">{title}</b>
+            <p className="mt-1 text-sub leading-relaxed text-ink-mute">
               {body.replace("{time}", schoolEnd)}
             </p>
           </div>
@@ -53,38 +53,38 @@ export function PlanAskModal({
           <>
             <div className="mt-3 grid grid-cols-2 gap-1.5">
               <button type="button" onClick={() => setWriting(true)}
-                      className="min-h-touch rounded-card bg-primary text-[0.9em] font-bold text-white">
+                      className="min-h-touch rounded-card bg-primary text-body font-bold text-white">
                 {yesLabel}
               </button>
               {/* 🔴 「없어요」는 **오늘은 끝**이다. 서버가 오늘 날짜를 적어 다시 안 묻는다 */}
               <form action={async () => { await dismissPlanAskAction(); setOpen(false); }}>
-                <button type="submit" className="min-h-touch w-full rounded-card border border-line bg-surface text-[0.9em]">
+                <button type="submit" className="min-h-touch w-full rounded-card border border-line bg-surface text-body">
                   {noLabel}
                 </button>
               </form>
             </div>
-            <p className="mt-2 text-center text-[0.72em] text-ink-mute">{noHint}</p>
+            <p className="mt-2 text-center text-cap text-ink-mute">{noHint}</p>
           </>
         ) : (
           <form action={savePlanCard} className="mt-3 grid gap-2">
             {/* 🔴 적고 나서 **온 자리로** 돌아간다 — 모달에서 적었는데 목록으로 떨어지면 길을 잃는다 */}
             <input type="hidden" name="from" value="home" />
-            <p className="text-[0.76em] text-ink-mute">{formTitle}</p>
+            <p className="text-cap text-ink-mute">{formTitle}</p>
 
             <label className="grid gap-1">
-              <span className="text-[0.76em] text-ink-mute">{labels.where}</span>
+              <span className="text-cap text-ink-mute">{labels.where}</span>
               <input name="where" required placeholder={placeholders.where} autoFocus
-                     className="min-h-touch rounded-card border border-line bg-canvas px-3 text-[0.92em]" />
+                     className="min-h-touch rounded-card border border-line bg-canvas px-3 text-body" />
             </label>
 
             <div className="grid gap-1">
-              <span className="text-[0.76em] text-ink-mute">{labels.what}</span>
+              <span className="text-cap text-ink-mute">{labels.what}</span>
               <ul className="grid grid-cols-4 gap-1.5">
                 {CATEGORIES.map((c, i) => (
                   <li key={c.code}>
                     <label className="block cursor-pointer">
                       <input type="radio" name="category" value={c.code} defaultChecked={i === 0} className="peer sr-only" required />
-                      <span className="grid min-h-touch place-items-center rounded-card border border-line bg-canvas text-center text-[0.7em] peer-checked:border-primary-l peer-checked:bg-primary-bg peer-checked:font-bold">
+                      <span className="grid min-h-touch place-items-center rounded-card border border-line bg-canvas text-center text-cap peer-checked:border-primary-l peer-checked:bg-primary-bg peer-checked:font-bold">
                         <span className="text-[1.25em]">{c.icon}</span>{c.label}
                       </span>
                     </label>
@@ -94,14 +94,14 @@ export function PlanAskModal({
             </div>
 
             <label className="grid gap-1">
-              <span className="text-[0.76em] text-ink-mute">{labels.amount}</span>
+              <span className="text-cap text-ink-mute">{labels.amount}</span>
               {/* 🔴 `step` 은 검사 도구가 아니다. 100 으로 두면 1500 이 조용히 막힌다 — 실제로 겪었다 */}
               <input name="limitAmount" type="number" inputMode="numeric"
                      min={1} max={1000000} step={1} required placeholder={placeholders.amount}
-                     className="min-h-touch rounded-card border border-line bg-canvas px-3 text-right text-[1.1em] font-bold tabular-nums" />
+                     className="min-h-touch rounded-card border border-line bg-canvas px-3 text-right text-title font-bold tabular-nums" />
             </label>
 
-            <button type="submit" className="mt-1 min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white">
+            <button type="submit" className="mt-1 min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
               {submitLabel}
             </button>
           </form>

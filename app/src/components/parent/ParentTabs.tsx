@@ -62,7 +62,7 @@ export function ParentTabs() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 /* 🔴 `min-h-[68px]` · `py-3` · `gap-1` — 아이 GNB 와 같은 값이다 */
-                className={`grid min-h-[68px] place-items-center gap-1 py-3 text-[0.7em] ${
+                className={`grid min-h-[68px] place-items-center gap-1 py-3 text-cap ${
                   active ? "font-bold text-primary-d" : "text-ink-mute"
                 }`}
               >

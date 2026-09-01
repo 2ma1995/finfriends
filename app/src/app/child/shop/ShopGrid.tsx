@@ -43,13 +43,13 @@ export function ShopGrid({ items, owned, stars, characterId, wear, back }: {
             </div>
 
             <div className="mt-1.5 flex items-baseline justify-between gap-1">
-              <b className={`text-[0.82em] ${canBuy ? "" : "text-ink-mute"}`}>{i.name}</b>
+              <b className={`text-sub ${canBuy ? "" : "text-ink-mute"}`}>{i.name}</b>
               {has ? (
-                <span className="shrink-0 text-[0.7em] text-primary-d">
+                <span className="shrink-0 text-cap text-primary-d">
                   {equipped ? wearingLabel : ownedLabel}
                 </span>
               ) : (
-                <span className={`shrink-0 text-[0.74em] tabular-nums ${canBuy ? "text-star-d" : "text-ink-mute"}`}>
+                <span className={`shrink-0 text-cap tabular-nums ${canBuy ? "text-star-d" : "text-ink-mute"}`}>
                   {canBuy ? "" : "🔒 "}⭐ {i.cost}
                 </span>
               )}
@@ -60,23 +60,23 @@ export function ShopGrid({ items, owned, stars, characterId, wear, back }: {
                 <input type="hidden" name="itemId" value={i.id} />
                 <input type="hidden" name="kind" value={i.placement.kind} />
                 <input type="hidden" name="back" value={back} />
-                <button className={`min-h-touch w-full rounded-card text-[0.78em] font-bold ${
+                <button className={`min-h-touch w-full rounded-card text-sub font-bold ${
                   equipped ? "border border-line-2 bg-surface text-ink-soft" : "bg-primary text-white"}`}>
                   {equipped ? unequipLabel : equipLabel}
                 </button>
               </form>
             ) : has ? (
-              <p className="mt-1.5 grid min-h-touch place-items-center text-[0.74em] text-ink-mute">방에 있어요</p>
+              <p className="mt-1.5 grid min-h-touch place-items-center text-cap text-ink-mute">방에 있어요</p>
             ) : canBuy ? (
               <form action={buyItemAction} className="mt-1.5">
                 <input type="hidden" name="itemId" value={i.id} />
                 <input type="hidden" name="back" value={back} />
-                <button className="min-h-touch w-full rounded-card bg-primary text-[0.78em] font-bold text-white">
+                <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
                   {buyLabel}
                 </button>
               </form>
             ) : (
-              <p className="mt-1.5 grid min-h-touch place-items-center text-[0.74em] text-ink-mute">{lockedHint}</p>
+              <p className="mt-1.5 grid min-h-touch place-items-center text-cap text-ink-mute">{lockedHint}</p>
             )}
           </li>
         );

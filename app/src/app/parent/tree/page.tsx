@@ -20,7 +20,7 @@ function Gauge({ c }: { c: Condition }) {
   const pct = Math.min(100, Math.round((c.current / c.required) * 100));
   return (
     <li>
-      <div className="flex items-baseline justify-between text-[0.72em]">
+      <div className="flex items-baseline justify-between text-cap">
         <span className="text-ink-soft">{c.label}</span>
         <span className="tabular-nums text-ink-mute">{c.current}/{c.required}</span>
       </div>
@@ -35,12 +35,12 @@ function TreeCard({ t }: { t: TreeSlotView }) {
   return (
     <div className={`rounded-card border p-2.5 text-center ${t.stalledDays ? "border-miss-line bg-miss-bg" : "border-line bg-surface"}`}>
       <TreeArt stage={t.stage} icon={t.icon} />
-      <div className="mt-1 text-[0.82em] font-bold">{t.label}</div>
-      <div className="text-[0.7em] text-ink-mute">
+      <div className="mt-1 text-sub font-bold">{t.label}</div>
+      <div className="text-cap text-ink-mute">
         {t.locked ? "곧 열려요" : t.stalledDays ? `${t.stalledDays}일째 그대로` : STAGE_LABEL[t.stage]}
       </div>
       {!t.locked && t.nextStageLabel ? (
-        <div className="text-[0.66em] text-ink-mute">{t.nextStageLabel}</div>
+        <div className="text-micro text-ink-mute">{t.nextStageLabel}</div>
       ) : null}
       <ul className="mt-2 grid gap-1 text-left">{t.conditions.map((c) => <Gauge key={c.label} c={c} />)}</ul>
       {/*
@@ -75,7 +75,7 @@ export default async function ParentTreePage() {
         />
         <Link
           href="/parent/child/new"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           아이 프로필 만들기
         </Link>
@@ -105,7 +105,7 @@ export default async function ParentTreePage() {
 
       {/* ④ 승인 대기 — 조건부. 없으면 자리도 없다 */}
       {view.pendingApprovals > 0 ? (
-        <Link href="/parent/bank/missions" className="mt-2 flex items-center justify-between rounded-card border border-line-2 bg-sand px-3 py-2 text-[0.82em] text-ink-soft">
+        <Link href="/parent/bank/missions" className="mt-2 flex items-center justify-between rounded-card border border-line-2 bg-sand px-3 py-2 text-sub text-ink-soft">
           <span>승인을 기다리는 미션</span>
           <b className="text-miss">{view.pendingApprovals}건 →</b>
         </Link>
@@ -118,7 +118,7 @@ export default async function ParentTreePage() {
       */}
       <Link
         href="/parent/bank/missions/new"
-        className="mt-2 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.88em] font-bold text-white"
+        className="mt-2 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-sub font-bold text-white"
       >
         미션 만들기
       </Link>
@@ -129,8 +129,8 @@ export default async function ParentTreePage() {
       */}
       <div className="mt-3">
         <Card>
-          <h2 className="text-[0.76em] tracking-[0.03em] text-ink-mute">{engineNotice.title}</h2>
-          <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{engineNotice.body}</p>
+          <h2 className="text-cap tracking-[0.03em] text-ink-mute">{engineNotice.title}</h2>
+          <p className="mt-1 text-sub leading-relaxed text-ink-soft">{engineNotice.body}</p>
         </Card>
       </div>
 
@@ -143,7 +143,7 @@ export default async function ParentTreePage() {
       {unread > 0 ? (
         <Link
           href="/parent/alerts"
-          className="mb-2 flex min-h-touch items-center justify-between rounded-card border border-primary-l bg-primary-bg px-3 text-[0.86em] font-bold text-primary-d"
+          className="mb-2 flex min-h-touch items-center justify-between rounded-card border border-primary-l bg-primary-bg px-3 text-sub font-bold text-primary-d"
         >
           <span>🔔 {alertsLabel(unread)}</span>
           <span aria-hidden>→</span>
@@ -153,7 +153,7 @@ export default async function ParentTreePage() {
 
       {/* 🔴 정합성이 깨진 줄이 있으면 숨기지 않는다 (AC-012-3) */}
       {view.quarantinedStars > 0 ? (
-        <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.76em] leading-relaxed text-ink-soft">
+        <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-cap leading-relaxed text-ink-soft">
           {quarantineNotice(view.quarantinedStars)}
         </p>
       ) : null}
@@ -170,8 +170,8 @@ export default async function ParentTreePage() {
       ) : null}
 
       {/* 🔴 매달 실천만 비워지는 이유를 적는다 — 안 적으면 「쉽게 올랐다」로 읽힌다 */}
-      <p className="mt-3 text-[0.68em] leading-relaxed text-ink-mute">{cycleNotice}</p>
-      <p className="mt-1 text-[0.68em] leading-relaxed text-ink-mute">{stageNotice}</p>
+      <p className="mt-3 text-micro leading-relaxed text-ink-mute">{cycleNotice}</p>
+      <p className="mt-1 text-micro leading-relaxed text-ink-mute">{stageNotice}</p>
     </Screen>
   );
 }

@@ -173,8 +173,13 @@
   --ff-star-bg-2: #F7EAD2;
   --ff-star-glow: transparent;
   --ff-radius: 13px;
-  --ff-text-body: 15px;
+  /* 보호자 — 증거를 읽는 화면이다. 아이보다 작고 촘촘하다 */
+  --ff-text-hero:  24px;
   --ff-text-title: 20px;
+  --ff-text-body:  15px;
+  --ff-text-sub:   13.5px;
+  --ff-text-cap:   12px;
+  --ff-text-micro: 10.5px;
   --ff-space: 14px;
   --ff-motion: 150ms ease;
   /* Clean 은 페이드만. 스케일·바운스 금지 — 컴포넌트를 고치지 않고 토큰으로 가른다 */
@@ -204,15 +209,38 @@
   --ff-star-bg-2: #FFEDC2;
   --ff-star-glow: #FFE9A8;
   --ff-radius: 20px;
-  --ff-text-body: 18px;
+  /* 아이 — 🔴 **제목과 본문의 차이를 크게 벌린다.** 아이는 크기로 먼저 읽는다 */
+  --ff-text-hero:  32px;
   --ff-text-title: 26px;
+  --ff-text-body:  18px;
+  --ff-text-sub:   15px;
+  --ff-text-cap:   13px;
+  --ff-text-micro: 11px;
   --ff-space: 20px;
   --ff-motion: 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --ff-star-anim: ff-star-pop;
 }
 
 /* 토큰 → Tailwind 유틸리티. inline 이라 [data-mode] 가 바뀌면 유틸리티도 따라 바뀐다 */
+/* ────────────────────────────────────────────────────────────────
+   글자 위계 — 🔴 **여섯 단이다. 그 사이는 없다.**
+
+   한동안 화면이 `text-[0.72em]` 처럼 **그때그때 정한 값**을 썼고 33종이 됐다.
+   그중 **스무 종이 1em 아래**에 몰려 있었다 — `0.72` 와 `0.74` 는 사람 눈에 같다.
+   크기가 다 비슷하면 **무엇이 중요한지 화면이 말하지 않는다.** 「AI 가 만든 것 같다」의
+   정체가 이것이다. 사람은 제목 하나를 크게 키우고 나머지를 과감히 줄인다.
+
+   🔴 **모드마다 값이 다르다.** 아이 화면은 크고 부모 화면은 작다 —
+      컴포넌트는 `text-title` 만 쓰고 어느 모드인지 모른다.
+   ──────────────────────────────────────────────────────────────── */
 @theme inline {
+  --text-hero:  var(--ff-text-hero);
+  --text-title: var(--ff-text-title);
+  --text-body:  var(--ff-text-body);
+  --text-sub:   var(--ff-text-sub);
+  --text-cap:   var(--ff-text-cap);
+  --text-micro: var(--ff-text-micro);
+
   --color-canvas: var(--ff-canvas);
   --color-surface: var(--ff-surface);
   --color-primary: var(--ff-primary);

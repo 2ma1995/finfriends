@@ -39,12 +39,12 @@ export default async function ChildHistoryPage() {
                 className={`flex items-center gap-2 rounded-card border px-3 py-2 ${
                   h.code === "ADJUST" ? "border-star bg-star-bg" : "border-line bg-surface"}`}>
               <span className="flex-1">
-                <b className="block text-[0.84em]">{h.memo}</b>
-                <span className="text-[0.7em] text-ink-mute">
+                <b className="block text-sub">{h.memo}</b>
+                <span className="text-cap text-ink-mute">
                   {h.whenLabel} · {movedLabel[h.code] ?? (h.delta > 0 ? inLabel : outLabel)}
                 </span>
               </span>
-              <b className={`shrink-0 tabular-nums text-[0.86em] ${
+              <b className={`shrink-0 tabular-nums text-sub ${
                 h.delta > 0 ? "text-primary-d" : "text-ink-soft"}`}>
                 {h.delta > 0 ? "+" : ""}{won(h.delta)}
               </b>
@@ -54,7 +54,7 @@ export default async function ChildHistoryPage() {
       )}
 
       <div className="mt-3 rounded-card border border-line bg-surface px-3 py-2.5">
-        <p className="text-[0.82em] leading-relaxed">{notice}</p>
+        <p className="text-sub leading-relaxed">{notice}</p>
       </div>
     </Screen>
   );

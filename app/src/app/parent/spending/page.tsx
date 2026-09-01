@@ -21,10 +21,10 @@ function SpendRow({ r }: { r: SpendRecordView }) {
     <li className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
       <span aria-hidden className="shrink-0 text-[1.1em]">{r.icon}</span>
       <span className="min-w-0 flex-1">
-        <b className="block truncate text-[0.86em] font-medium">{r.categoryLabel}</b>
-        <span className="block text-[0.74em] text-ink-mute">{r.dayLabel} · {r.planNote}</span>
+        <b className="block truncate text-sub font-medium">{r.categoryLabel}</b>
+        <span className="block text-cap text-ink-mute">{r.dayLabel} · {r.planNote}</span>
       </span>
-      <b className="shrink-0 tabular-nums text-[0.88em]">{won(r.amount)}</b>
+      <b className="shrink-0 tabular-nums text-sub">{won(r.amount)}</b>
     </li>
   );
 }
@@ -46,7 +46,7 @@ export default async function ParentSpendingPage() {
         />
         <Link
           href="/parent/child/new"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           아이 프로필 만들기
         </Link>
@@ -67,13 +67,13 @@ export default async function ParentSpendingPage() {
         <Empty emoji={e.emoji} title={e.title} body={e.body} hint={e.hint} />
         {view.prevRecords.length > 0 ? (
           <>
-            <h2 className="mb-1.5 mt-4 text-[0.74em] tracking-[0.06em] text-ink-mute">{prevRecordsTitle}</h2>
+            <h2 className="mb-1.5 mt-4 text-cap tracking-[0.06em] text-ink-mute">{prevRecordsTitle}</h2>
             <ul className="grid gap-1">
               {view.prevRecords.map((r) => (
                 <SpendRow key={r.id} r={r} />
               ))}
             </ul>
-            <p className="mt-1.5 text-[0.72em] leading-relaxed text-ink-mute">{recordsNotice}</p>
+            <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{recordsNotice}</p>
           </>
         ) : null}
       </Screen>
@@ -90,31 +90,31 @@ export default async function ParentSpendingPage() {
       */}
       {view.hasPrevMonth ? (
         <div className="rounded-card border border-line-2 bg-sand p-3 text-center">
-          <span className="block text-[0.72em] text-ink-mute">지난달보다</span>
-          <b className={`text-[1.5em] tabular-nums ${down ? "text-primary-d" : "text-miss"}`}>
+          <span className="block text-cap text-ink-mute">지난달보다</span>
+          <b className={`text-hero tabular-nums ${down ? "text-primary-d" : "text-miss"}`}>
             {down ? "−" : "+"}
             {won(Math.abs(view.delta))}
           </b>
-          <span className="mt-0.5 block text-[0.76em] text-ink-soft">
+          <span className="mt-0.5 block text-cap text-ink-soft">
             {won(view.prevTotal)} → {won(view.total)}
           </span>
         </div>
       ) : (
         <div className="rounded-card border border-line-2 bg-sand p-3 text-center">
-          <b className="text-[1.5em] tabular-nums">{won(view.total)}</b>
-          <span className="mt-0.5 block text-[0.76em] text-ink-soft">{noPrevNotice}</span>
+          <b className="text-hero tabular-nums">{won(view.total)}</b>
+          <span className="mt-0.5 block text-cap text-ink-soft">{noPrevNotice}</span>
         </div>
       )}
 
-      <h2 className="mb-1.5 mt-3 text-[0.76em] tracking-[0.04em] text-ink-mute">업종별</h2>
+      <h2 className="mb-1.5 mt-3 text-cap tracking-[0.04em] text-ink-mute">업종별</h2>
       <ul className="grid gap-1.5">
         {view.byCategory.map((l) => (
-          <li key={l.label} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-[0.86em]">
+          <li key={l.label} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-sub">
             <span>
               {l.icon} {l.label}
             </span>
             <span className="flex items-baseline gap-2">
-              {l.unplanned ? <span className="text-[0.72em] text-miss">계획에 없던 업종</span> : null}
+              {l.unplanned ? <span className="text-cap text-miss">계획에 없던 업종</span> : null}
               <b className="tabular-nums">{won(l.amount)}</b>
             </span>
           </li>
@@ -123,7 +123,7 @@ export default async function ParentSpendingPage() {
 
       {/* 🔴 계획 없이 나간 소비 = C5 사각지대. 크기를 숨기지 않는다 */}
       {view.noPlanCount > 0 ? (
-        <p className="mt-2 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.78em] leading-relaxed text-ink-soft">
+        <p className="mt-2 rounded-card border border-dashed border-line-2 px-3 py-2 text-sub leading-relaxed text-ink-soft">
           {noPlanNotice(view.noPlanCount)}
         </p>
       ) : null}
@@ -135,16 +135,16 @@ export default async function ParentSpendingPage() {
         🔴 「계획 없이」를 색으로 가르지 않는다. ⭐ 판정은 금액 단독이고(ADR-008)
            경고색을 쓰면 다그치는 화면이 된다 (P-03).
       */}
-      <h2 className="mb-1.5 mt-4 text-[0.74em] tracking-[0.06em] text-ink-mute">{recordsTitle}</h2>
+      <h2 className="mb-1.5 mt-4 text-cap tracking-[0.06em] text-ink-mute">{recordsTitle}</h2>
       <ul className="grid gap-1">
         {view.records.map((r) => (
           <SpendRow key={r.id} r={r} />
         ))}
       </ul>
-      <p className="mt-1.5 text-[0.72em] leading-relaxed text-ink-mute">{recordsNotice}</p>
-      <p className="mt-1 text-[0.72em] leading-relaxed text-ink-mute">{seedNotice}</p>
+      <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{recordsNotice}</p>
+      <p className="mt-1 text-cap leading-relaxed text-ink-mute">{seedNotice}</p>
 
-      <p className="mt-3 text-[0.72em] leading-relaxed text-ink-mute">{notice}</p>
+      <p className="mt-3 text-cap leading-relaxed text-ink-mute">{notice}</p>
     </Screen>
   );
 }

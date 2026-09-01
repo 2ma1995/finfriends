@@ -61,15 +61,15 @@ export default async function ParentMissionsPage({
       ) : (
         <>
           <Card tone="grow">
-            <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{retroNotice.title}</h2>
-            <p className="mt-1 text-[0.88em] leading-relaxed">{retroNotice.body}</p>
+            <h2 className="text-cap tracking-[0.03em] text-primary-d">{retroNotice.title}</h2>
+            <p className="mt-1 text-sub leading-relaxed">{retroNotice.body}</p>
           </Card>
 
           {/* PRC-003 — 밀린 게 많을 때만 열린다. 평소엔 한 건씩 보게 한다 */}
           {pendings.length >= BULK_THRESHOLD ? (
             <form action={approveAllAction} className="mt-2">
               <input type="hidden" name="missionIds" value={pendings.map((p) => p.id).join(",")} />
-              <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
+              <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
                 {bulkLabel} ({pendings.length}건)
               </button>
             </form>
@@ -80,7 +80,7 @@ export default async function ParentMissionsPage({
                다그치지 않는다 — 말해야 하는 것은 **아이가 기다리고 있다**는 사실이다.
           */}
           {overdue > 0 ? (
-            <p className="mt-2 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.78em] leading-relaxed text-ink-soft">
+            <p className="mt-2 rounded-card border border-dashed border-line-2 px-3 py-2 text-sub leading-relaxed text-ink-soft">
               {overdueNotice(overdue)}
             </p>
           ) : null}
@@ -94,21 +94,21 @@ export default async function ParentMissionsPage({
                 }`}
               >
                 <div className="flex items-baseline justify-between gap-2">
-                  <b className="text-[0.9em]">{p.title}</b>
-                  <span className="shrink-0 text-[0.72em] text-ink-mute">{p.whenLabel}</span>
+                  <b className="text-body">{p.title}</b>
+                  <span className="shrink-0 text-cap text-ink-mute">{p.whenLabel}</span>
                 </div>
                 {/* 🔴 움직임만으로는 무엇이 새 건지 말이 안 된다. 글로도 적는다 */}
                 {unseen.has(p.id) ? (
-                  <p className="mt-0.5 text-[0.72em] font-bold text-primary-d">✨ {newBadge}</p>
+                  <p className="mt-0.5 text-cap font-bold text-primary-d">✨ {newBadge}</p>
                 ) : null}
                 {p.fromLesson ? (
-                  <p className="mt-0.5 text-[0.72em] font-bold text-primary-d">📚 {fromLessonBadge}</p>
+                  <p className="mt-0.5 text-cap font-bold text-primary-d">📚 {fromLessonBadge}</p>
                 ) : null}
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="rounded-full bg-primary-bg px-2 py-0.5 text-[0.7em] text-primary-d">
+                  <span className="rounded-full bg-primary-bg px-2 py-0.5 text-cap text-primary-d">
                     {p.icon} {p.topicLabel}
                   </span>
-                  <span className="text-[0.78em] text-star-d">⭐ {p.reward}</span>
+                  <span className="text-sub text-star-d">⭐ {p.reward}</span>
                 </div>
 
                 {/*
@@ -123,7 +123,7 @@ export default async function ParentMissionsPage({
                       alt={photoAlt}
                       className="max-h-56 w-full rounded-card border border-line object-contain"
                     />
-                    <p className="mt-1 text-[0.72em] leading-relaxed text-ink-mute">{photoNotice}</p>
+                    <p className="mt-1 text-cap leading-relaxed text-ink-mute">{photoNotice}</p>
                   </div>
                 ) : null}
 
@@ -140,24 +140,24 @@ export default async function ParentMissionsPage({
                   <div className="grid grid-cols-2 gap-1.5">
                     <button
                       formAction={approveMissionAction}
-                      className="min-h-touch w-full rounded-card bg-primary text-[0.82em] font-bold text-white"
+                      className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white"
                     >
                       {approveLabel}
                     </button>
                     <button
                       formAction={rejectMissionAction}
-                      className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft"
+                      className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub text-ink-soft"
                     >
                       {rejectLabel}
                     </button>
                   </div>
                   <input
                     name="reason" maxLength={40} placeholder={reasonPlaceholder}
-                    className="min-h-touch w-full rounded-card border border-line-2 bg-surface px-2.5 text-[0.76em]"
+                    className="min-h-touch w-full rounded-card border border-line-2 bg-surface px-2.5 text-cap"
                   />
                   {/* 🔴 이 미션에서 사유 없이 돌려보내려 한 경우만 */}
                   {sp.needReason === p.id ? (
-                    <p className="text-[0.74em] leading-relaxed text-miss">{reasonRequired}</p>
+                    <p className="text-cap leading-relaxed text-miss">{reasonRequired}</p>
                   ) : null}
                 </form>
               </li>
@@ -165,7 +165,7 @@ export default async function ParentMissionsPage({
           </ul>
 
           {/* 🔴 기다림에 끝이 있다는 것을 부모도 알아야 한다 (FR-032) */}
-          <p className="mt-3 text-[0.72em] leading-relaxed text-ink-mute">{expireNotice}</p>
+          <p className="mt-3 text-cap leading-relaxed text-ink-mute">{expireNotice}</p>
         </>
       )}
     </Screen>

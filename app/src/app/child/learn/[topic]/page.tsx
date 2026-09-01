@@ -36,7 +36,7 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
             back={{ href: "/child/learn", label: "배우기" }}>
       {/* 🔴 오늘 몫을 다 했으면 먼저 말한다 — 목록만 회색이면 「고장났나」로 읽힌다 */}
       {readToday ? (
-        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-[0.82em] font-bold text-primary-d">
+        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-sub font-bold text-primary-d">
           {readDoneToday}
         </p>
       ) : null}
@@ -47,13 +47,13 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
             <>
               <span className={`text-[1.3em] ${l.locked ? "opacity-40 grayscale" : ""}`}>{l.emoji}</span>
               <span className="flex-1">
-                <b className={`block text-[0.88em] ${l.locked ? "text-ink-mute" : ""}`}>{l.title}</b>
-                <span className="text-[0.72em] text-ink-mute">
+                <b className={`block text-sub ${l.locked ? "text-ink-mute" : ""}`}>{l.title}</b>
+                <span className="text-cap text-ink-mute">
                   {i + 1}편{l.today ? ` · ${todayBadge}` : l.locked ? ` · ${lockedBadge(l.opensInDays)}` : ""}
                 </span>
               </span>
-              {l.read ? <span className="text-[0.76em] text-primary-d">✓ {readLabel}</span>
-                      : l.locked ? <span className="text-[0.9em]">🔒</span> : null}
+              {l.read ? <span className="text-cap text-primary-d">✓ {readLabel}</span>
+                      : l.locked ? <span className="text-body">🔒</span> : null}
             </>
           );
           /*
@@ -78,11 +78,11 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
           );
         })}
       </ol>
-      <p className="mt-1.5 text-center text-[0.72em] text-ink-mute">{dailyRule}</p>
+      <p className="mt-1.5 text-center text-cap text-ink-mute">{dailyRule}</p>
 
       {/* 🔴 퀴즈는 **읽은 다음**에 온다. 배우기 화면이 곧장 퀴즈로 뛰던 것이 이 화면의 오류였다 */}
       <Link href={`/child/quiz/${slug}?n=1`}
-            className={`mt-3 flex min-h-touch items-center justify-center rounded-card text-[0.9em] font-bold ${
+            className={`mt-3 flex min-h-touch items-center justify-center rounded-card text-body font-bold ${
               allRead ? "bg-primary text-white" : "border border-line-2 bg-surface text-ink-soft"}`}>
         {quizLabel} · {quizCorrect} / {quizTotal(slug)}개 맞힘
       </Link>
@@ -90,10 +90,10 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
       {/* 🔴 실천은 **한 화면에 모아 둔다** — 영역마다 흩어 놓으면 아이는
           네 군데를 돌아다녀야 하고, 그러면 오늘 무엇을 할지 못 고른다 */}
       <Link href="/child/practice"
-            className="mt-4 flex min-h-touch w-full items-center justify-center rounded-card border-2 border-primary bg-primary-bg text-[0.9em] font-bold text-primary-d">
+            className="mt-4 flex min-h-touch w-full items-center justify-center rounded-card border-2 border-primary bg-primary-bg text-body font-bold text-primary-d">
         ✋ {practiceCta}
       </Link>
-      <p className="mt-1 text-center text-[0.74em] text-ink-mute">{practiceHint}</p>
+      <p className="mt-1 text-center text-cap text-ink-mute">{practiceHint}</p>
 
     </Screen>
   );

@@ -37,18 +37,18 @@ export default async function ParentAlertsPage() {
               }`}
             >
               <div className="flex items-baseline justify-between gap-2">
-                <b className="text-[0.88em]">{n.title}</b>
-                <span className="shrink-0 text-[0.72em] text-ink-mute">{n.whenLabel}</span>
+                <b className="text-sub">{n.title}</b>
+                <span className="shrink-0 text-cap text-ink-mute">{n.whenLabel}</span>
               </div>
-              <p className="mt-0.5 text-[0.82em] leading-relaxed text-ink-soft">{n.body}</p>
+              <p className="mt-0.5 text-sub leading-relaxed text-ink-soft">{n.body}</p>
             </li>
           ))}
         </ul>
       )}
 
       {/* 🔴 폰으로 안 간다는 것을 말한다. 안 적으면 못 받은 줄 안다 */}
-      <p className="mt-3 text-[0.74em] leading-relaxed text-ink-mute">{inAppNotice}</p>
-      <p className="mt-1 text-[0.74em] leading-relaxed text-ink-mute">{readNotice}</p>
+      <p className="mt-3 text-cap leading-relaxed text-ink-mute">{inAppNotice}</p>
+      <p className="mt-1 text-cap leading-relaxed text-ink-mute">{readNotice}</p>
     </Screen>
   );
 }

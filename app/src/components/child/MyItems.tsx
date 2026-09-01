@@ -38,7 +38,7 @@ export function MyItems({
            「내 아이템」은 **가진 것을 보는 자리**이고, 옆에 사러 가는 길을 붙이면
            그 자리가 다시 상점 입구가 된다. 한 화면에 같은 문이 둘일 이유도 없다.
       */}
-      <h2 className="mt-3 text-[0.82em] font-bold">{title.replace("{n}", String(placedCount))}</h2>
+      <h2 className="mt-3 text-sub font-bold">{title.replace("{n}", String(placedCount))}</h2>
 
       {/*
         🔴 **일곱을 한 줄에 넣는다.** 좁은 폰에서 두 줄로 접히면 「작게 한 줄」이 아니게 된다.
@@ -59,7 +59,7 @@ export function MyItems({
                 <span className="text-[1.05em] leading-none">{c.emoji}</span>
                 {/* 🔴 **가진 개수만 적는다.** 예전엔 `3/12` 였다 — 「내 것」 옆에 붙는
                        분모는 가진 것을 세는 숫자가 아니라 **못 가진 것을 세는 숫자**다 */}
-                <span className={`text-[0.56em] leading-none tabular-nums ${
+                <span className={`text-micro leading-none tabular-nums ${
                   on ? "font-bold text-primary-d" : "text-ink-mute"}`}>{n}</span>
               </button>
             </li>
@@ -80,19 +80,19 @@ export function MyItems({
                     <span className="text-[1.6em]">{i.category === "wear" ? "🧢" : "📦"}</span>
                   )}
                 </div>
-                <span className="mt-1 block truncate text-[0.66em]">{i.name}</span>
+                <span className="mt-1 block truncate text-micro">{i.name}</span>
               </li>
             ))}
           </ul>
         ) : (
           /* 🔴 **빈 칸도 말한다.** 아무것도 안 나오면 아이는 「고장났나」로 읽는다.
                  다만 **사러 가라고 밀지 않는다** — 없다는 사실만 말하고 끝낸다 */
-          <p className="mt-1.5 rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-[0.74em] text-ink-mute">
+          <p className="mt-1.5 rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-cap text-ink-mute">
             {emptyCat}
           </p>
         )
       ) : (
-        <p className="mt-1 text-center text-[0.7em] text-ink-mute">{hint}</p>
+        <p className="mt-1 text-center text-cap text-ink-mute">{hint}</p>
       )}
     </>
   );

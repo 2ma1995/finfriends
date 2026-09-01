@@ -32,7 +32,7 @@ export default async function ChildMissionsPage({
     <Screen role="아이 화면" title="미션">
       {/* 🔴 사진이 올라갔는지 · 왜 안 됐는지 **말해 준다.** 조용히 넘기면 또 올린다 */}
       {photoMsg ? (
-        <p className={`mb-2 rounded-card border px-3 py-2 text-center text-[0.84em] font-bold ${
+        <p className={`mb-2 rounded-card border px-3 py-2 text-center text-sub font-bold ${
           sp.photo === "ok" ? "border-primary-l bg-primary-bg text-primary-d"
                             : "border-miss-line bg-miss-bg text-miss"}`}>
           {photoMsg}
@@ -40,20 +40,20 @@ export default async function ChildMissionsPage({
       ) : null}
 
       {/* 🔴 **미션과 실천이 아이 눈에 똑같다.** 이 화면이 무엇인지 먼저 말한다 */}
-      <p className="mb-2 text-[0.78em] leading-relaxed text-ink-mute">{intro}</p>
+      <p className="mb-2 text-sub leading-relaxed text-ink-mute">{intro}</p>
 
       {nothing ? <Empty emoji="🎯" {...empty} /> : null}
 
       {board.todo.length > 0 ? (
         <>
-          <h2 className="mb-1.5 text-[0.8em] font-bold">{sections.todo}</h2>
+          <h2 className="mb-1.5 text-sub font-bold">{sections.todo}</h2>
           <ul className="grid gap-1.5">{board.todo.map((m) => <MissionRow key={m.id} m={m} action="done" />)}</ul>
         </>
       ) : null}
 
       {board.waiting.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-[0.8em] font-bold">{sections.waiting}</h2>
+          <h2 className="mb-1.5 mt-4 text-sub font-bold">{sections.waiting}</h2>
           <ul className="grid gap-1.5">{board.waiting.map((m) => <MissionRow key={m.id} m={m} action="undo" />)}</ul>
         </>
       ) : null}
@@ -63,8 +63,8 @@ export default async function ChildMissionsPage({
         <Link href="/child/missions/past"
               className="mt-4 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
           <span className="text-[1.1em]">🗂</span>
-          <span className="flex-1 text-[0.84em] font-bold">{pastLink}</span>
-          <span className="text-[0.74em] tabular-nums text-ink-mute">{board.settled.length}건 ›</span>
+          <span className="flex-1 text-sub font-bold">{pastLink}</span>
+          <span className="text-cap tabular-nums text-ink-mute">{board.settled.length}건 ›</span>
         </Link>
       ) : null}
     </Screen>

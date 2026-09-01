@@ -47,35 +47,35 @@ export default async function ChildPassbookPage({
       {/* 🔴 **가진 돈 전체가 먼저다.** 「쓸 수 있는 돈」만 크게 보이면
           목표에 떼어 둔 돈이 없어진 것처럼 보인다 — 부모 화면과 숫자가 갈리던 원인이다 */}
       <div className="rounded-card border border-line bg-surface px-3 py-3 text-center">
-        <div className="text-[0.74em] text-ink-mute">{totalTitle}</div>
+        <div className="text-cap text-ink-mute">{totalTitle}</div>
         <b className="mt-0.5 block text-title tabular-nums">{won(p.total)}</b>
       </div>
       <div className={`mt-1.5 grid gap-1.5 ${p.locked > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
         <div className="rounded-card border border-line bg-surface px-2 py-2 text-center">
-          <div className="text-[0.68em] text-ink-mute">{balanceTitle}</div>
-          <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.balance)}</b>
+          <div className="text-micro text-ink-mute">{balanceTitle}</div>
+          <b className="mt-0.5 block text-body tabular-nums">{won(p.balance)}</b>
         </div>
         <div className="rounded-card border border-line bg-sand px-2 py-2 text-center">
-          <div className="text-[0.68em] text-ink-mute">{savedTitle}</div>
-          <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.savedWon)}</b>
+          <div className="text-micro text-ink-mute">{savedTitle}</div>
+          <b className="mt-0.5 block text-body tabular-nums">{won(p.savedWon)}</b>
         </div>
         {p.locked > 0 ? (
           <div className="rounded-card border border-primary-l bg-primary-bg px-2 py-2 text-center">
-            <div className="text-[0.68em] text-ink-mute">{savings.lockedTitle}</div>
-            <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.locked)}</b>
+            <div className="text-micro text-ink-mute">{savings.lockedTitle}</div>
+            <b className="mt-0.5 block text-body tabular-nums">{won(p.locked)}</b>
           </div>
         ) : null}
       </div>
       {p.savedWon > 0 ? (
-        <p className="mt-1 text-center text-[0.74em] text-ink-mute">{setAsideNotice}</p>
+        <p className="mt-1 text-center text-cap text-ink-mute">{setAsideNotice}</p>
       ) : null}
 
       {/* 🔴 카드가 언제 오는지 아이가 알아야 한다 (UX-006 배송 대기) */}
       <div className="mt-2 flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5">
         <span className="text-[1.5em]">{stage.emoji}</span>
         <span className="flex-1">
-          <b className="block text-[0.86em]">{stage.label}</b>
-          <span className="text-[0.74em] text-ink-mute">{stage.body}</span>
+          <b className="block text-sub">{stage.label}</b>
+          <span className="text-cap text-ink-mute">{stage.body}</span>
         </span>
       </div>
 
@@ -84,44 +84,44 @@ export default async function ChildPassbookPage({
       <Link href="/child/plan"
             className="mt-2 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
         <span className="text-[1.3em]">📝</span>
-        <span className="flex-1 text-[0.88em] font-bold">{planLink.label}</span>
-        <span className="text-[0.74em] text-ink-mute">{planLink.hint} ›</span>
+        <span className="flex-1 text-sub font-bold">{planLink.label}</span>
+        <span className="text-cap text-ink-mute">{planLink.hint} ›</span>
       </Link>
 
       {/* 🔴 「불리기」 실천을 여는 유일한 길 — SAVINGS_JOINED · SAVINGS_DONE (D25).
           은행 적금이 아니라 부모님과 하는 약속이다 (P-20 가입 중개 금지) */}
-      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{savings.title}</h2>
+      <h2 className="mb-1.5 mt-4 text-sub font-bold">{savings.title}</h2>
       {sp.error ? (
         <div className="mb-1.5"><Card tone="miss">
-          <p className="text-[0.86em]">{errors[sp.error] ?? errors.NOT_FOUND}</p>
+          <p className="text-sub">{errors[sp.error] ?? errors.NOT_FOUND}</p>
         </Card></div>
       ) : null}
       {sp.asked || sp.broke ? (
         <div className="mb-1.5"><Card tone="grow">
-          <p className="text-[0.86em]">{sp.asked ? savings.askedNotice : savings.brokeNotice}</p>
+          <p className="text-sub">{sp.asked ? savings.askedNotice : savings.brokeNotice}</p>
         </Card></div>
       ) : null}
 
       {/* 🔴 반려는 끝이 아니다. 「거절」을 쓰지 않고 다시 이야기할 자리를 연다 (AC-031-4) */}
       {open === null && closed[0]?.state === "REJECTED" ? (
         <div className="mb-1.5 rounded-card border border-miss-line bg-miss-bg p-3">
-          <b className="text-[0.88em] text-miss">{savings.talkAgain}</b>
+          <b className="text-sub text-miss">{savings.talkAgain}</b>
           {closed[0].rejectReason ? (
-            <p className="mt-1 text-[0.84em] leading-relaxed">{closed[0].rejectReason}</p>
+            <p className="mt-1 text-sub leading-relaxed">{closed[0].rejectReason}</p>
           ) : null}
-          <p className="mt-1 text-[0.8em] text-ink-soft">{savings.talkAgainBody}</p>
+          <p className="mt-1 text-sub text-ink-soft">{savings.talkAgainBody}</p>
         </div>
       ) : null}
 
       {open === null ? (
         <div className="rounded-card border border-line bg-surface p-3">
-          <p className="text-[0.86em] leading-relaxed">{savings.what}</p>
-          <p className="mt-1 text-[0.74em] text-ink-mute">{savings.notBank}</p>
+          <p className="text-sub leading-relaxed">{savings.what}</p>
+          <p className="mt-1 text-cap text-ink-mute">{savings.notBank}</p>
 
           {/* 🔴 이자율이 아직 없어도 신청할 수 있다. 막으면 새 집은 영영 신청을 못 한다 —
               이자를 정하는 자리가 「받아들이기」로 옮겨졌기 때문이다 */}
           {p.interestPct === null ? (
-            <p className="mt-2 text-[0.8em] text-ink-mute">{savings.rateLater}</p>
+            <p className="mt-2 text-sub text-ink-mute">{savings.rateLater}</p>
           ) : null}
           <SavingsForm
             action={requestSavingsAction}
@@ -148,17 +148,17 @@ export default async function ChildPassbookPage({
         <div className={`rounded-card border p-3 ${
           open.state === "REQUESTED" ? "border-star bg-star-bg" : "border-primary-l bg-primary-bg"}`}>
           <div className="flex items-baseline justify-between gap-2">
-            <b className="text-[0.9em]">{open.goal}</b>
-            <b className="shrink-0 tabular-nums text-[0.9em]">{won(open.amount)}</b>
+            <b className="text-body">{open.goal}</b>
+            <b className="shrink-0 tabular-nums text-body">{won(open.amount)}</b>
           </div>
-          <p className="mt-0.5 text-[0.74em] text-ink-mute">
+          <p className="mt-0.5 text-cap text-ink-mute">
             {open.kind === "INSTALLMENT"
               ? `${savings.kinds.INSTALLMENT.label} · 한 주 ${won(open.perPeriod ?? 0)}`
               : `${savings.kinds.DEPOSIT.label} · ${open.months}달`}
           </p>
           {/* 🔴 바란 것과 다르면 그 사실을 말한다. 조용히 넘기면 「왜 물어봤지」가 된다 */}
           {open.wantedPct !== null ? (
-            <p className={`mt-0.5 text-[0.74em] ${open.differs ? "text-star-d" : "text-primary-d"}`}>
+            <p className={`mt-0.5 text-cap ${open.differs ? "text-star-d" : "text-primary-d"}`}>
               {/* 🔴 바란 것도 받은 것도 **금액**으로 말한다. 아이는 퍼센트를 못 읽는다 */}
               {open.state === "REQUESTED"
                 ? savings.wantedShown(Math.floor((open.amount * open.wantedPct) / 100))
@@ -167,15 +167,15 @@ export default async function ChildPassbookPage({
           ) : null}
 
           {open.state === "REQUESTED" ? (
-            <p className="mt-1.5 text-[0.84em] text-ink-soft">
+            <p className="mt-1.5 text-sub text-ink-soft">
               {savings.waiting} · {savings.waitingBody}
             </p>
           ) : (
             <>
-              <p className="mt-1.5 text-[0.86em] font-bold text-primary-d">
+              <p className="mt-1.5 text-sub font-bold text-primary-d">
                 {open.matured ? savings.matured : savings.active(open.daysLeft ?? 0)}
               </p>
-              <p className="mt-0.5 text-[0.82em] text-star-d">
+              <p className="mt-0.5 text-sub text-star-d">
                 {open.interestWon > 0 ? savings.willGet(open.interestWon) : savings.noInterest}
               </p>
               {/* 🔴 적금은 아이가 매주 직접 넣는다. 자동이면 실천이 아니다 */}
@@ -185,20 +185,20 @@ export default async function ChildPassbookPage({
                     <div className="h-full rounded-full bg-primary-l"
                          style={{ width: `${(open.paidCount / (open.periods || 1)) * 100}%` }} />
                   </div>
-                  <p className="mt-1 text-[0.76em] text-ink-mute">
+                  <p className="mt-1 text-cap text-ink-mute">
                     {savings.progress(open.paidCount, open.periods ?? 0)} · {won(open.paidSoFar)} 모음
                   </p>
                   {open.fullyPaid ? (
-                    <p className="mt-1 text-[0.84em] font-bold text-primary-d">{savings.allPaid}</p>
+                    <p className="mt-1 text-sub font-bold text-primary-d">{savings.allPaid}</p>
                   ) : open.paidThisWeek ? (
-                    <p className="mt-1 text-[0.8em] text-ink-soft">{savings.paidThisWeek}</p>
+                    <p className="mt-1 text-sub text-ink-soft">{savings.paidThisWeek}</p>
                   ) : (
                     <form action={payInstallmentAction} className="mt-1.5">
                       <input type="hidden" name="planId" value={open.id} />
-                      <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
+                      <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
                         {savings.payLabel(open.perPeriod ?? 0)}
                       </button>
-                      <p className="mt-1 text-[0.72em] text-ink-mute">{savings.skipOk}</p>
+                      <p className="mt-1 text-cap text-ink-mute">{savings.skipOk}</p>
                     </form>
                   )}
                 </div>
@@ -208,8 +208,8 @@ export default async function ChildPassbookPage({
               {!open.matured ? (
                 <form action={breakSavingsAction} className="mt-2">
                   <input type="hidden" name="planId" value={open.id} />
-                  <p className="mb-1 text-[0.74em] text-miss">{savings.breakWarn}</p>
-                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.8em] text-ink-soft">
+                  <p className="mb-1 text-cap text-miss">{savings.breakWarn}</p>
+                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub text-ink-soft">
                     {savings.breakLabel}
                   </button>
                 </form>
@@ -224,8 +224,8 @@ export default async function ChildPassbookPage({
         <Link href="/child/allowance/savings"
               className="mt-1.5 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
           <span className="text-[1.1em]">🐖</span>
-          <span className="flex-1 text-[0.84em]">{savings.pastLink}</span>
-          <span className="text-[0.74em] tabular-nums text-ink-mute">{closed.length}건 ›</span>
+          <span className="flex-1 text-sub">{savings.pastLink}</span>
+          <span className="text-cap tabular-nums text-ink-mute">{closed.length}건 ›</span>
         </Link>
       ) : null}
 
@@ -235,9 +235,9 @@ export default async function ChildPassbookPage({
         🔴 **여기서 돈을 넣지 않는다.** 넣는 자리는 「갖고 싶은 것」 화면 하나다 —
            두 군데서 넣으면 한도와 별 판정이 두 경로로 갈린다.
       */}
-      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{wishTitle}</h2>
+      <h2 className="mb-1.5 mt-4 text-sub font-bold">{wishTitle}</h2>
       {wish.wishes.length === 0 ? (
-        <p className="rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-[0.76em] text-ink-mute">
+        <p className="rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-cap text-ink-mute">
           {wishEmpty}
         </p>
       ) : (
@@ -247,8 +247,8 @@ export default async function ChildPassbookPage({
               <Link href="/child/wishlist"
                     className="block rounded-card border border-line bg-surface px-3 py-2">
                 <span className="flex items-baseline justify-between gap-2">
-                  <b className="truncate text-[0.88em]">{w.name}</b>
-                  <span className="shrink-0 text-[0.72em] text-ink-mute">{wishRank(w.rank)}</span>
+                  <b className="truncate text-sub">{w.name}</b>
+                  <span className="shrink-0 text-cap text-ink-mute">{wishRank(w.rank)}</span>
                 </span>
 
                 {/* 🔴 넣은 게 **0%로 보이면 안 된다.** 1,000/300,000 은 0% 로 내려가고
@@ -260,8 +260,8 @@ export default async function ChildPassbookPage({
 
                 {/* 🔴 아이 화면에 `%` 를 쓰지 않는다 (AC-031-5). 남은 것을 **금액**으로 말한다 */}
                 <span className="mt-1 flex items-baseline justify-between gap-2">
-                  <b className="text-[0.84em] tabular-nums text-primary-d">{won(w.savedAmount)}</b>
-                  <span className="text-[0.74em] text-ink-mute">
+                  <b className="text-sub tabular-nums text-primary-d">{won(w.savedAmount)}</b>
+                  <span className="text-cap text-ink-mute">
                     {w.remaining > 0 ? remainingLabel(w.remaining) : reachedLabel}
                   </span>
                 </span>
@@ -276,13 +276,13 @@ export default async function ChildPassbookPage({
       <Link href="/child/allowance/history"
             className="mt-4 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
         <span className="text-[1.1em]">📒</span>
-        <span className="flex-1 text-[0.84em] font-bold">{historyTitle}</span>
-        <span className="text-[0.74em] tabular-nums text-ink-mute">
+        <span className="flex-1 text-sub font-bold">{historyTitle}</span>
+        <span className="text-cap tabular-nums text-ink-mute">
           {p.history.length > 0 ? `${p.history.length}건 ›` : "›"}
         </span>
       </Link>
 
-      <div className="mt-3"><Card tone="grow"><p className="text-[0.86em] leading-relaxed">{notice}</p></Card></div>
+      <div className="mt-3"><Card tone="grow"><p className="text-sub leading-relaxed">{notice}</p></Card></div>
     </Screen>
   );
 }

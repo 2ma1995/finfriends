@@ -28,13 +28,13 @@ export default async function ChildLearnPage() {
             <>
               <span className="text-[1.4em]">{t.icon}</span>
               <span className="flex-1">
-                <b className="block text-[0.9em]">{t.label}</b>
-                <span className="text-[0.74em] text-ink-mute">
+                <b className="block text-body">{t.label}</b>
+                <span className="text-cap text-ink-mute">
                   {progressLabel(t.completed, t.total, t.quizCorrect)}
                   {!t.practiceOpen ? ` · ${practiceSoonLabel}` : ""}
                 </span>
               </span>
-              <span className="text-[0.8em] text-primary-d">
+              <span className="text-sub text-primary-d">
                 {t.completed >= t.total ? doneLabel : t.completed > 0 ? continueLabel : startLabel}
               </span>
             </>
@@ -48,7 +48,7 @@ export default async function ChildLearnPage() {
         })}
       </ul>
 
-      <div className="mt-3"><Card tone="grow"><p className="text-[0.86em] leading-relaxed">{notice}</p></Card></div>
+      <div className="mt-3"><Card tone="grow"><p className="text-sub leading-relaxed">{notice}</p></Card></div>
     </Screen>
   );
 }

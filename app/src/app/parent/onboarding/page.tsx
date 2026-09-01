@@ -31,7 +31,7 @@ export default async function ParentOnboardingPage({
     <Screen role="부모 화면" title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/parent/tree", label: "성장 나무" }}>
       {/* 🔴 적었을 때만 말한다. 매번 띄우면 무시하게 된다 */}
       {sp.planned ? (
-        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-[0.84em] font-bold text-primary-d">
+        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-sub font-bold text-primary-d">
           {plannedNotice}
         </p>
       ) : null}
@@ -44,20 +44,20 @@ export default async function ParentOnboardingPage({
                 : s.state === "done" ? "border-line bg-surface"
                 : "border-dashed border-line-2 bg-transparent"}`}>
             <div className="flex items-baseline gap-2">
-              <span className={`text-[0.78em] tabular-nums ${s.state === "done" ? "text-primary-d" : "text-ink-mute"}`}>
+              <span className={`text-sub tabular-nums ${s.state === "done" ? "text-primary-d" : "text-ink-mute"}`}>
                 {s.state === "done" ? "✓" : s.n}
               </span>
-              <b className={`text-[0.9em] ${s.state === "todo" ? "text-ink-mute" : ""}`}>{s.title}</b>
+              <b className={`text-body ${s.state === "todo" ? "text-ink-mute" : ""}`}>{s.title}</b>
               {/* 화면이 없는 단계는 그렇다고 적는다. 눌러도 안 되는 것을 눌러 보게 하지 않는다 */}
               {!s.href ? (
-                <span className="text-[0.72em] text-ink-mute">준비 중</span>
+                <span className="text-cap text-ink-mute">준비 중</span>
               ) : s.state === "done" ? (
-                <Link href={s.href} className="ml-auto text-[0.72em] text-ink-mute underline underline-offset-2">
+                <Link href={s.href} className="ml-auto text-cap text-ink-mute underline underline-offset-2">
                   보기
                 </Link>
               ) : null}
             </div>
-            <p className={`mt-0.5 pl-5 text-[0.8em] ${s.state === "todo" ? "text-ink-mute" : "text-ink-soft"}`}>{s.body}</p>
+            <p className={`mt-0.5 pl-5 text-sub ${s.state === "todo" ? "text-ink-mute" : "text-ink-soft"}`}>{s.body}</p>
           </li>
         ))}
       </ol>
@@ -70,20 +70,20 @@ export default async function ParentOnboardingPage({
       {current?.href ? (
         <Link
           href={current.href}
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           {current.n}단계 이어서 하기
         </Link>
       ) : ready ? (
         <Link
           href="/parent/tree"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           성장 나무 보기
         </Link>
       ) : null}
 
-      <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">
+      <p className="mt-2 text-center text-cap leading-relaxed text-ink-soft">
         {allDone ? allDoneNotice : ready ? readyNotice : reassurance}
       </p>
     </Screen>

@@ -49,10 +49,10 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
 
       <div className="rounded-card border border-line bg-surface px-4 py-5">
         <div className="text-center text-[2.6em] leading-none">{lesson.emoji}</div>
-        <h2 className="ff-serif mt-2 text-center text-[1.15em] font-bold leading-snug">{lesson.title}</h2>
+        <h2 className="ff-serif mt-2 text-center text-title font-bold leading-snug">{lesson.title}</h2>
         <div className="mt-3 grid gap-2">
           {lesson.body.map((p) => (
-            <p key={p} className="text-[0.95em] leading-relaxed text-ink-soft">{p}</p>
+            <p key={p} className="text-body leading-relaxed text-ink-soft">{p}</p>
           ))}
         </div>
       </div>
@@ -60,14 +60,14 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
       {/* 🔴 읽고 끝나면 그냥 글이다. 오늘 해볼 것 한 줄로 닫는다 */}
       <div className="mt-2">
         <Card tone="grow">
-          <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{tryTitle}</h2>
-          <p className="mt-1 text-[0.92em] font-bold leading-relaxed">{lesson.tryIt}</p>
+          <h2 className="text-cap tracking-[0.03em] text-primary-d">{tryTitle}</h2>
+          <p className="mt-1 text-body font-bold leading-relaxed">{lesson.tryIt}</p>
         </Card>
       </div>
 
       <form action={finishLessonAction} className="mt-3">
         <input type="hidden" name="lessonId" value={lesson.id} />
-        <button className="min-h-touch w-full rounded-card bg-primary text-[0.92em] font-bold text-white">
+        <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
           {finishLabel}
         </button>
       </form>

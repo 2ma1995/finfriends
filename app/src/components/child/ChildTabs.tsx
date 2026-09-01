@@ -57,10 +57,10 @@ export function ChildTabs({ todoCount = 0 }: { todoCount?: number }) {
                     className={`relative grid min-h-[68px] place-items-center gap-1 py-3 ${
                       on ? "text-primary-d" : "text-ink-mute"}`}>
                 <span className="text-[1.6em] leading-none">{t.emoji}</span>
-                <span className={`text-[0.7em] leading-none ${on ? "font-bold" : ""}`}>{t.label}</span>
+                <span className={`text-cap leading-none ${on ? "font-bold" : ""}`}>{t.label}</span>
                 {/* 할 게 남았다는 표시 — 숫자를 크게 쓰지 않는다. 재촉이 아니라 안내다 */}
                 {badge ? (
-                  <span className="absolute right-[20%] top-2 grid h-4 min-w-4 place-items-center rounded-full bg-star px-1 text-[0.56em] font-bold tabular-nums text-ink">
+                  <span className="absolute right-[20%] top-2 grid h-4 min-w-4 place-items-center rounded-full bg-star px-1 text-micro font-bold tabular-nums text-ink">
                     {todoCount}
                   </span>
                 ) : null}

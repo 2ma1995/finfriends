@@ -44,13 +44,13 @@ export default async function BankHistoryPage() {
           {history.map((h) => (
             <li key={h.id} className="rounded-card border border-line bg-surface px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className="flex-1 text-[0.84em]">{h.memo}</span>
-                <span className="shrink-0 text-[0.72em] text-ink-mute">{h.whenLabel}</span>
-                <b className={`shrink-0 tabular-nums text-[0.84em] ${h.delta > 0 ? "text-primary-d" : "text-ink-soft"}`}>
+                <span className="flex-1 text-sub">{h.memo}</span>
+                <span className="shrink-0 text-cap text-ink-mute">{h.whenLabel}</span>
+                <b className={`shrink-0 tabular-nums text-sub ${h.delta > 0 ? "text-primary-d" : "text-ink-soft"}`}>
                   {h.delta > 0 ? "+" : ""}{won(h.delta)}
                 </b>
               </div>
-              <div className="mt-1 flex flex-wrap gap-x-2 text-[0.72em] text-ink-mute">
+              <div className="mt-1 flex flex-wrap gap-x-2 text-cap text-ink-mute">
                 {/* 🔴 누가 적은 줄인지 말한다. 섞이면 누가 무엇을 했는지 모른다 */}
                 {h.byGuardian ? <span>{byGuardianBadge}</span> : null}
                 {/* 🔴 목표로 옮긴 것은 **쓴 게 아니다.** 같은 「나감」으로 보이면 그렇게 읽힌다 */}
@@ -63,11 +63,11 @@ export default async function BankHistoryPage() {
         </ul>
       )}
 
-      <p className="mt-3 text-[0.74em] leading-relaxed text-ink-mute">{notice}</p>
+      <p className="mt-3 text-cap leading-relaxed text-ink-mute">{notice}</p>
 
       <Link
         href="/parent/bank/adjust"
-        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-line-2 bg-surface text-[0.86em] text-ink-soft"
+        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-line-2 bg-surface text-sub text-ink-soft"
       >
         {adjustLink}
       </Link>

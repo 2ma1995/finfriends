@@ -53,19 +53,19 @@ export default async function ParentSavingsPage({
             back={{ href: "/parent/bank", label: "아이 통장" }}>
       {sp.error ? (
         <div className="mb-2"><Card tone="miss">
-          <p className="text-[0.88em]">{errors[sp.error] ?? errors.NOT_FOUND}</p>
+          <p className="text-sub">{errors[sp.error] ?? errors.NOT_FOUND}</p>
         </Card></div>
       ) : null}
       {sp.accepted || sp.rejected || sp.done ? (
-        <div className="mb-2"><Card tone="grow"><p className="text-[0.88em]">
+        <div className="mb-2"><Card tone="grow"><p className="text-sub">
           {sp.accepted ? acceptedNotice : sp.rejected ? rejectedNotice : doneNotice}
         </p></Card></div>
       ) : null}
 
       {/* 🔴 무엇을 승인하는 것인지 분명히 말한다 — 실제 금융상품이 아니다 */}
       <Card>
-        <b className="text-[0.82em]">{notice.title}</b>
-        <p className="mt-1 text-[0.86em] leading-relaxed text-ink-soft">{notice.body}</p>
+        <b className="text-sub">{notice.title}</b>
+        <p className="mt-1 text-sub leading-relaxed text-ink-soft">{notice.body}</p>
       </Card>
 
       {requested.length === 0 && active.length === 0 ? (
@@ -74,20 +74,20 @@ export default async function ParentSavingsPage({
 
       {requested.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{requestedTitle}</h2>
+          <h2 className="mb-1.5 mt-4 text-sub font-bold">{requestedTitle}</h2>
           <ul className="grid gap-2">
             {requested.map((s) => (
               <li key={s.id} className="rounded-card border border-star bg-star-bg p-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <b className="text-[0.92em]">{s.goal}</b>
-                  <b className="shrink-0 tabular-nums text-[0.92em]">{won(s.amount)}</b>
+                  <b className="text-body">{s.goal}</b>
+                  <b className="shrink-0 tabular-nums text-body">{won(s.amount)}</b>
                 </div>
-                <div className="mt-0.5 text-[0.74em] text-ink-mute">
+                <div className="mt-0.5 text-cap text-ink-mute">
                   {s.months}달 · {houseLabel(s.interestPct)}
                 </div>
                 {/* 🔴 아이가 더 바랐다는 사실을 조용히 넘기지 않는다 */}
                 {s.wantedPct !== null ? (
-                  <p className={`mt-1 text-[0.8em] ${s.differs ? "text-star-d" : "text-ink-soft"}`}>
+                  <p className={`mt-1 text-sub ${s.differs ? "text-star-d" : "text-ink-soft"}`}>
                     {wantedLabel(s.wantedPct)}
                     {s.wantedPct > s.interestPct ? ` · ${wantedMore}` : ""}
                   </p>
@@ -96,13 +96,13 @@ export default async function ParentSavingsPage({
                 <form action={acceptSavingsAction} className="mt-2 grid gap-1.5">
                   <input type="hidden" name="planId" value={s.id} />
                   <label className="flex items-center gap-2">
-                    <span className="text-[0.76em] text-ink-mute">{pctLabel}</span>
+                    <span className="text-cap text-ink-mute">{pctLabel}</span>
                     <input name="pct" type="number" inputMode="numeric" min={0} max={MAX_PCT} step={1}
                            defaultValue={s.interestPct}
-                           className="min-h-touch w-20 rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
-                    <span className="text-[0.8em]">%</span>
+                           className="min-h-touch w-20 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
+                    <span className="text-sub">%</span>
                   </label>
-                  <p className="text-[0.74em] text-ink-mute">{interestPreview(s.interestWon)}</p>
+                  <p className="text-cap text-ink-mute">{interestPreview(s.interestWon)}</p>
                   {/*
                     🔴 아이는 「한 주에 500원」을 보고 부모는 연 환산을 본다 (FR-031).
                        숫자 하나만 보면 후한지 박한지 알 수 없어 견줄 기준을 함께 둔다.
@@ -110,21 +110,21 @@ export default async function ParentSavingsPage({
                   {(() => {
                     const a = annualPct(s.interestPct, s.months);
                     return a === null ? (
-                      <p className="text-[0.74em] text-ink-mute">{annualUnknown}</p>
+                      <p className="text-cap text-ink-mute">{annualUnknown}</p>
                     ) : (
                       <div className="rounded-card border border-line bg-surface px-2.5 py-1.5">
-                        <div className="flex items-baseline justify-between gap-2 text-[0.78em]">
+                        <div className="flex items-baseline justify-between gap-2 text-sub">
                           <span className="text-ink-mute">{annualLabel}</span>
                           <b className="tabular-nums">약 {a}%</b>
                         </div>
-                        <p className="mt-0.5 text-[0.7em] leading-relaxed text-ink-mute">{benchmark}</p>
-                        <p className="mt-0.5 text-[0.7em] leading-relaxed text-ink-mute">{annualNote}</p>
+                        <p className="mt-0.5 text-cap leading-relaxed text-ink-mute">{benchmark}</p>
+                        <p className="mt-0.5 text-cap leading-relaxed text-ink-mute">{annualNote}</p>
                       </div>
                     );
                   })()}
                   {/* 🔴 이 숫자가 이 한 건에만 쓰이는 게 아니라는 것을 말한다 (D28-b) */}
-                  <p className="text-[0.74em] leading-relaxed text-ink-mute">{pctCarryNote}</p>
-                  <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
+                  <p className="text-cap leading-relaxed text-ink-mute">{pctCarryNote}</p>
+                  <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
                     {acceptLabel}
                   </button>
                 </form>
@@ -132,8 +132,8 @@ export default async function ParentSavingsPage({
                 <form action={rejectSavingsAction} className="mt-1.5 grid gap-1">
                   <input type="hidden" name="planId" value={s.id} />
                   <input name="reason" maxLength={40} placeholder={reasonPlaceholder}
-                         className="min-h-touch w-full rounded-card border border-line-2 bg-surface px-2 text-[0.76em]" />
-                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.8em] text-ink-soft">
+                         className="min-h-touch w-full rounded-card border border-line-2 bg-surface px-2 text-cap" />
+                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub text-ink-soft">
                     {rejectLabel}
                   </button>
                 </form>
@@ -145,25 +145,25 @@ export default async function ParentSavingsPage({
 
       {active.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{activeTitle}</h2>
+          <h2 className="mb-1.5 mt-4 text-sub font-bold">{activeTitle}</h2>
           <ul className="grid gap-2">
             {active.map((s) => (
               <li key={s.id} className="rounded-card border border-primary-l bg-primary-bg p-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <b className="text-[0.92em]">{s.goal}</b>
-                  <b className="shrink-0 tabular-nums text-[0.92em]">{won(s.amount)}</b>
+                  <b className="text-body">{s.goal}</b>
+                  <b className="shrink-0 tabular-nums text-body">{won(s.amount)}</b>
                 </div>
-                <div className="mt-0.5 text-[0.74em] text-ink-mute">
+                <div className="mt-0.5 text-cap text-ink-mute">
                   {s.months}달 · 이자 {s.interestPct}% · {s.matured ? maturedLabel : daysLeft(s.daysLeft ?? 0)}
                 </div>
-                <p className="mt-1 text-[0.8em] text-star-d">{interestPreview(s.interestWon)}</p>
+                <p className="mt-1 text-sub text-star-d">{interestPreview(s.interestWon)}</p>
 
                 {/* 🔴 만기 전에는 버튼을 안 보인다. 서버도 다시 막는다 */}
                 {s.matured ? (
                   <form action={completeSavingsAction} className="mt-2">
                     <input type="hidden" name="planId" value={s.id} />
-                    <p className="mb-1 text-[0.76em] text-ink-mute">{completeNotice}</p>
-                    <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
+                    <p className="mb-1 text-cap text-ink-mute">{completeNotice}</p>
+                    <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
                       {completeLabel}
                     </button>
                   </form>

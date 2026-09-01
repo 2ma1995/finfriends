@@ -37,31 +37,33 @@ export function TodayList({
 
   return (
     <>
-      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{title}</h2>
+      <h2 className="mb-2 mt-6 text-title font-bold leading-none">{title}</h2>
 
       {nothing ? (
-        <p className="rounded-card border border-dashed border-line-2 px-3 py-3 text-center text-[0.8em] text-ink-mute">
+        <p className="rounded-card border border-dashed border-line-2 px-3 py-3 text-center text-sub text-ink-mute">
           {allDone}
         </p>
       ) : null}
 
-      <ul className="grid gap-1.5">
+      <ul className="grid gap-1">
         {/* 🔴 **미션은 카드다.** 무엇을 하면 되는지가 제목으로 보여야 간다 */}
         {shown.map((m) => (
           <li key={m.id}>
-            <Link href="/child/missions"
-                  className="block rounded-card border border-primary bg-surface px-3 py-2.5">
-              <span className="flex items-baseline justify-between gap-2">
-                <b className="truncate text-[0.9em]">🎯 {m.title}</b>
-                <span className="shrink-0 text-[0.76em]">
-                  {m.payoutWon > 0 ? (
-                    <b className="text-primary-d">{won(m.payoutWon)}</b>
-                  ) : null}
-                  <span className="text-star-d">{m.payoutWon > 0 ? " · " : ""}⭐ {m.reward}</span>
-                </span>
-              </span>
-              <span className="mt-0.5 block text-[0.72em] text-ink-mute">
+            {/*
+              🔴 **제일 큰 것이 오늘 할 일이다.** 예전엔 미션 제목이 본문과 같은 크기라
+                 화면에서 무엇이 급한지 안 보였고, 구분은 **테두리 하나**뿐이었다 —
+                 그런데 테두리는 **모든 것에 있었다.** 선을 걷고 크기와 여백으로 세운다.
+            */}
+            <Link href="/child/missions" className="block rounded-card bg-primary-bg px-4 py-3.5">
+              <span className="block text-cap font-bold text-primary-d">
                 {m.icon} {m.topicLabel}
+              </span>
+              <b className="mt-1 block truncate text-title leading-tight">{m.title}</b>
+              <span className="mt-1.5 block text-sub">
+                {m.payoutWon > 0 ? (
+                  <b className="text-primary-d">{won(m.payoutWon)}</b>
+                ) : null}
+                <span className="text-star-d">{m.payoutWon > 0 ? " · " : ""}⭐ {m.reward}</span>
               </span>
             </Link>
           </li>
@@ -70,7 +72,7 @@ export function TodayList({
         {rest > 0 ? (
           <li>
             <Link href="/child/missions"
-                  className="flex min-h-touch items-center justify-center rounded-card border border-dashed border-line-2 text-[0.78em] text-ink-soft">
+                  className="flex min-h-touch items-center justify-center rounded-card text-sub text-ink-soft">
               {missionMore.replace("{n}", String(rest))}
             </Link>
           </li>
@@ -79,11 +81,13 @@ export function TodayList({
         {/* 🔴 **남은 것만** 줄로 남는다. 없으면 아예 안 그린다 */}
         {items.map((t) => (
           <li key={t.href}>
+            {/* 🔴 **선을 긋지 않는다.** 68개 상자가 다 같은 무게였다 —
+                   묶는 것은 여백이고, 배경은 누를 수 있다는 신호만 준다 */}
             <Link href={t.href}
-                  className="flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3 text-[0.9em]">
+                  className="flex min-h-touch items-center gap-2.5 rounded-card bg-surface px-3.5 text-body">
               <span className="text-[1.2em]">{t.emoji}</span>
               <span className="flex-1">{t.label}</span>
-              {t.note ? <span className="text-[0.72em] text-ink-mute">{t.note}</span> : null}
+              {t.note ? <span className="text-cap text-ink-mute">{t.note}</span> : null}
             </Link>
           </li>
         ))}

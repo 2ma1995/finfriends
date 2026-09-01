@@ -23,12 +23,12 @@ import {
 function PhotoField({ required }: { required: boolean }) {
   return (
     <label className="grid gap-1">
-      <span className="text-[0.72em] text-ink-mute">{required ? photoLabel : photoLabelOptional}</span>
+      <span className="text-cap text-ink-mute">{required ? photoLabel : photoLabelOptional}</span>
       {/* 🔴 `required` 는 **거드는 것**이다. 막는 것은 서버다 — 폼은 주소만 알면 던진다 (§6.6) */}
       <input type="file" name="photo" accept="image/*" required={required}
-             className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-[0.72em]" />
-      <span className="text-[0.7em] text-ink-mute">{required ? photoWhy : photoWhyOptional}</span>
-      <span className="text-[0.7em] text-ink-mute">{photoNotice}</span>
+             className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-cap" />
+      <span className="text-cap text-ink-mute">{required ? photoWhy : photoWhyOptional}</span>
+      <span className="text-cap text-ink-mute">{photoNotice}</span>
     </label>
   );
 }
@@ -58,20 +58,20 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
            **네 영역이 섞인 목록에서 무엇이 무엇인지 알 수 없었다.**
       */}
       <div className="flex flex-wrap items-center gap-1">
-        <span className="rounded-full border border-line-2 bg-canvas px-1.5 py-0.5 text-[0.66em] font-bold">
+        <span className="rounded-full border border-line-2 bg-canvas px-1.5 py-0.5 text-micro font-bold">
           {m.icon} {m.topicLabel}
         </span>
         {/* 🔴 「내가 배워서 한 것」과 「시킨 것」은 아이에게 다른 일이다 */}
-        <span className={`rounded-full px-1.5 py-0.5 text-[0.66em] ${
+        <span className={`rounded-full px-1.5 py-0.5 text-micro ${
           m.fromLesson ? "bg-primary-bg text-primary-d" : "bg-star-bg text-star-d"}`}>
           {m.fromLesson ? `📚 ${source.lesson}` : `🎯 ${source.parent}`}
         </span>
-        {m.whenLabel ? <span className="text-[0.66em] text-ink-mute">{m.whenLabel}</span> : null}
+        {m.whenLabel ? <span className="text-micro text-ink-mute">{m.whenLabel}</span> : null}
       </div>
 
       <div className="mt-1 flex items-baseline justify-between gap-2">
-        <b className="text-[0.9em]">{m.title}</b>
-        <span className="shrink-0 text-[0.78em]">
+        <b className="text-body">{m.title}</b>
+        <span className="shrink-0 text-sub">
           {/* 🔴 금액이 걸린 미션은 **용돈이 생긴다.** 별만 보이면 「벌기」가 안 보인다 */}
           {m.payoutWon > 0 ? (
             <b className="text-primary-d">{m.payoutWon.toLocaleString("ko-KR")}원</b>
@@ -82,26 +82,26 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
 
       {/* 🔴 「기다리는 중」을 「안 했다」와 구별해 말한다 (AC-6.2) */}
       {m.bucket === "WAITING" ? (
-        <p className="mt-1.5 text-[0.78em] text-ink-soft">{waitingNotice}</p>
+        <p className="mt-1.5 text-sub text-ink-soft">{waitingNotice}</p>
       ) : null}
       {/* 🔴 「거절」이 아니라 **「못 봤다」**로 말한다 (AC-032-3) */}
       {m.bucket === "EXPIRED" ? (
-        <p className="mt-1.5 text-[0.78em] leading-relaxed text-ink-soft">
+        <p className="mt-1.5 text-sub leading-relaxed text-ink-soft">
           <b className="block">⏳ {expiredTitle}</b>
           {expiredBody}
         </p>
       ) : null}
       {m.bucket === "REJECTED" ? (
-        <p className="mt-1.5 text-[0.78em] text-miss">
+        <p className="mt-1.5 text-sub text-miss">
           {rejectedPrefix}{m.rejectReason ? ` — ${m.rejectReason}` : ""}
         </p>
       ) : null}
       {/* 🔴 **「부모님이 확인했어요」가 아니다.** 부모는 못 봤다 — 별은 같아도 근거가 다르다 */}
       {m.autoDone ? (
-        <p className="mt-1.5 text-[0.78em] text-primary-d">⏳ {autoDoneNotice}</p>
+        <p className="mt-1.5 text-sub text-primary-d">⏳ {autoDoneNotice}</p>
       ) : null}
       {m.backfilled ? (
-        <p className="mt-1.5 text-[0.78em] text-primary-d">{backfilledNotice}</p>
+        <p className="mt-1.5 text-sub text-primary-d">{backfilledNotice}</p>
       ) : null}
 
       {action === "done" ? (
@@ -114,11 +114,11 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
             🔴 **왜 없는지도 말한다.** 어떤 칸엔 있고 어떤 칸엔 없으면 「왜 다르지」가 된다.
           */}
           {rule === "NONE" ? (
-            <p className="text-[0.72em] leading-relaxed text-ink-mute">{noPhotoWhy[m.topic]}</p>
+            <p className="text-cap leading-relaxed text-ink-mute">{noPhotoWhy[m.topic]}</p>
           ) : (
             <PhotoField required={rule === "REQUIRED"} />
           )}
-          <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
+          <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
             {doneLabel}
           </button>
         </form>
@@ -132,10 +132,10 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
         <form action={attachMissionPhoto} className="mt-2 grid gap-1.5">
           <input type="hidden" name="missionId" value={m.id} />
           {m.hasPhoto ? (
-            <p className="text-[0.76em] font-bold text-primary-d">{photoAttached}</p>
+            <p className="text-cap font-bold text-primary-d">{photoAttached}</p>
           ) : null}
           <PhotoField required={false} />
-          <button className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-[0.8em] font-bold text-primary-d">
+          <button className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-sub font-bold text-primary-d">
             {m.hasPhoto ? photoReplace : photoLater}
           </button>
         </form>
@@ -144,7 +144,7 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
       {action === "undo" ? (
         <form action={undoMissionDone} className="mt-2">
           <input type="hidden" name="missionId" value={m.id} />
-          <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.8em] text-ink-soft">
+          <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub text-ink-soft">
             {undoLabel}
           </button>
         </form>

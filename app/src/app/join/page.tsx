@@ -28,7 +28,7 @@ export default async function JoinPage({
         />
         <Link
           href="/login"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           로그인하기
         </Link>
@@ -59,10 +59,10 @@ export default async function JoinPage({
       back={{ href: "/parent/invite", label: "자녀 초대" }}
     >
       <section>
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">등록하면 이렇게 됩니다</h2>
+        <h2 className="text-cap tracking-[0.06em] text-ink-mute">등록하면 이렇게 됩니다</h2>
         <ul className="mt-1.5 grid gap-1">
           {whatHappens(child.displayName).map((line) => (
-            <li key={line} className="rounded-card border border-line bg-surface px-3 py-2 text-[0.84em] leading-relaxed text-ink-soft">
+            <li key={line} className="rounded-card border border-line bg-surface px-3 py-2 text-sub leading-relaxed text-ink-soft">
               {line}
             </li>
           ))}
@@ -71,13 +71,13 @@ export default async function JoinPage({
 
       <div className="mt-2.5">
         <Card>
-          <h2 className="text-[0.76em] tracking-[0.03em] text-ink-mute">받지 않는 것</h2>
-          <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{notCollected.join(" · ")}</p>
+          <h2 className="text-cap tracking-[0.03em] text-ink-mute">받지 않는 것</h2>
+          <p className="mt-1 text-sub leading-relaxed text-ink-soft">{notCollected.join(" · ")}</p>
         </Card>
       </div>
 
       {error ? (
-        <p className="mt-2.5 rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+        <p className="mt-2.5 rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-sub leading-relaxed text-miss">
           {error}
         </p>
       ) : null}
@@ -87,7 +87,7 @@ export default async function JoinPage({
           <input type="hidden" name="childId" value={child.id} />
           <button
             type="submit"
-            className="mt-3 min-h-touch w-full rounded-card bg-primary px-3 text-[0.88em] font-bold text-white"
+            className="mt-3 min-h-touch w-full rounded-card bg-primary px-3 text-sub font-bold text-white"
           >
             이 기기를 {child.displayName}의 화면으로 등록하기
           </button>
@@ -95,13 +95,13 @@ export default async function JoinPage({
       ) : (
         <Link
           href="/consent"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-miss-line bg-miss-bg px-3 text-center text-[0.88em] font-bold text-miss"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-miss-line bg-miss-bg px-3 text-center text-sub font-bold text-miss"
         >
           동의를 먼저 마쳐야 등록할 수 있어요
         </Link>
       )}
 
-      <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">{parentExitNotice}</p>
+      <p className="mt-2 text-center text-cap leading-relaxed text-ink-soft">{parentExitNotice}</p>
     </Screen>
   );
 }

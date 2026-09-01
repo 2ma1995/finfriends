@@ -28,7 +28,7 @@ export default async function ParentCardPage() {
         />
         <Link
           href="/parent/child/new"
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-[0.9em] font-bold text-white"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
         >
           아이 프로필 만들기
         </Link>
@@ -48,7 +48,7 @@ export default async function ParentCardPage() {
       back={{ href: "/parent/mypage", label: "내 정보" }}
     >
       {/* 🔴 맨 위에 둔다. 시연에서 「이미 되는 기능」으로 오해되면 제휴 협상 전에 약속이 생긴다 */}
-      <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-[0.82em] leading-relaxed text-miss">
+      <p className="rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-sub leading-relaxed text-miss">
         {mockBanner}
       </p>
 
@@ -62,15 +62,15 @@ export default async function ParentCardPage() {
               : "linear-gradient(135deg, var(--ff-line-2), var(--ff-line))",
           }}
         >
-          <span className={`block text-[0.7em] tracking-[0.14em] ${card.active ? "text-white/70" : "text-ink-mute"}`}>
+          <span className={`block text-cap tracking-[0.14em] ${card.active ? "text-white/70" : "text-ink-mute"}`}>
             FINFRIENDS
           </span>
           <b
-            className={`mt-3 block text-[0.98em] tabular-nums tracking-[0.06em] ${card.active ? "text-white" : "text-ink-soft"}`}
+            className={`mt-3 block text-body tabular-nums tracking-[0.06em] ${card.active ? "text-white" : "text-ink-soft"}`}
           >
             {card.maskedNumber}
           </b>
-          <span className={`mt-2 block text-[0.74em] ${card.active ? "text-white/80" : "text-ink-mute"}`}>
+          <span className={`mt-2 block text-cap ${card.active ? "text-white/80" : "text-ink-mute"}`}>
             {card.active ? `${child.displayName} · ${card.issuedLabel ?? ""} 등록` : "아직 사용할 수 없어요"}
           </span>
         </div>
@@ -93,12 +93,12 @@ export default async function ParentCardPage() {
               }`}
             >
               <div className="flex items-baseline gap-2">
-                <span className={`text-[0.78em] tabular-nums ${done ? "text-primary-d" : "text-ink-mute"}`}>
+                <span className={`text-sub tabular-nums ${done ? "text-primary-d" : "text-ink-mute"}`}>
                   {done ? "✓" : i + 1}
                 </span>
-                <b className={`text-[0.9em] ${!done && !current ? "text-ink-mute" : ""}`}>{s.title}</b>
+                <b className={`text-body ${!done && !current ? "text-ink-mute" : ""}`}>{s.title}</b>
               </div>
-              <p className={`mt-0.5 pl-5 text-[0.8em] leading-relaxed ${!done && !current ? "text-ink-mute" : "text-ink-soft"}`}>
+              <p className={`mt-0.5 pl-5 text-sub leading-relaxed ${!done && !current ? "text-ink-mute" : "text-ink-soft"}`}>
                 {s.body}
               </p>
             </li>
@@ -114,13 +114,13 @@ export default async function ParentCardPage() {
         <form action={advanceMockCardAction} className="mt-3">
           <button
             type="submit"
-            className="min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white"
+            className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white"
           >
             {nextStep.action}
           </button>
         </form>
       ) : (
-        <p className="mt-3 rounded-card border border-primary-l/50 bg-primary-bg px-3 py-2 text-center text-[0.84em] text-primary-d">
+        <p className="mt-3 rounded-card border border-primary-l/50 bg-primary-bg px-3 py-2 text-center text-sub text-primary-d">
           카드를 쓸 수 있어요. 아이가 결제하면 소비 내역에 쌓입니다.
         </p>
       )}
@@ -129,8 +129,8 @@ export default async function ParentCardPage() {
       {card.status !== null && !card.active ? (
         <div className="mt-2.5">
           <Card tone="grow">
-            <h2 className="text-[0.76em] tracking-[0.03em] text-primary-d">{whileWaiting.title}</h2>
-            <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{whileWaiting.body}</p>
+            <h2 className="text-cap tracking-[0.03em] text-primary-d">{whileWaiting.title}</h2>
+            <p className="mt-1 text-sub leading-relaxed text-ink-soft">{whileWaiting.body}</p>
           </Card>
         </div>
       ) : null}
@@ -139,7 +139,7 @@ export default async function ParentCardPage() {
         <form action={resetMockCardAction} className="mt-4 border-t border-line pt-4">
           <button
             type="submit"
-            className="min-h-touch w-full rounded-card border border-line-2 text-[0.82em] text-ink-soft"
+            className="min-h-touch w-full rounded-card border border-line-2 text-sub text-ink-soft"
           >
             처음부터 다시 (시연용)
           </button>
