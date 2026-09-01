@@ -7,6 +7,7 @@ import { getBank } from "@/modules/bank";
 import { MOVED_CODES, getHistory } from "@/modules/allowance";
 import { reverseEntryAction, setInterestAction, topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
+import { listForGuardian } from "@/modules/savings";
 import {
   cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
   historyTitle, interestNotice, missionNotice, moneyNotice, movedBadge, reversedBadge,
@@ -54,10 +55,13 @@ export default async function ParentBankPage({
 
   const sp = await searchParams;
   // 🔴 잔액과 기록은 **같은 원장**에서 온다. 두 곳에서 읽으면 다시 갈린다
-  const [view, history] = await Promise.all([
+  const [view, history, savings] = await Promise.all([
     getBank(guardian.guardianId, child.id, child.displayName),
     getHistory(child.id, 10),
+    listForGuardian(guardian.guardianId),
   ]);
+  // 🔴 만기가 된 것도 「할 일」이다 — 부모가 눌러야 아이에게 원금과 이자가 간다
+  const savingsRequested = savings.requested.length + savings.active.filter((a) => a.matured).length;
 
   return (
     <Screen role="부모 화면" title="아이 통장" sub={child.displayName}>
@@ -234,6 +238,22 @@ export default async function ParentBankPage({
       </section>
 
       {/* ── 미션 관리 — SRS 는 이것도 통장 안에 뒀다 ── */}
+      {/* 🔴 「불리기」 실천을 여는 자리 — 아이가 신청하면 여기로 온다 (D25) */}
+      <section className="mt-4">
+        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">우리 집 적금</h2>
+        <div className="mt-1.5 grid gap-1">
+          <Link
+            href="/parent/bank/savings"
+            className="flex min-h-touch items-center justify-between rounded-card border border-line bg-surface px-3 text-[0.86em]"
+          >
+            <span>적금 신청과 만기</span>
+            <b className={savingsRequested > 0 ? "text-miss" : "text-ink-mute"}>
+              {savingsRequested > 0 ? `${savingsRequested}건 →` : "→"}
+            </b>
+          </Link>
+        </div>
+      </section>
+
       <section className="mt-4">
         <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">미션 관리</h2>
         <div className="mt-1.5 grid gap-1">

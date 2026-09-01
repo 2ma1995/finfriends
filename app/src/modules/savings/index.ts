@@ -221,3 +221,25 @@ export async function breakEarly(childId: string, planId: string): Promise<Savin
   });
   return { ok: true };
 }
+
+/** 보호자 화면이 읽는 목록 — 신청 대기와 진행 중을 함께 준다 */
+export async function listForGuardian(guardianId: string) {
+  const rows = await prisma.savingsPlan.findMany({
+    where: { guardianId, state: { in: ["REQUESTED", "ACTIVE"] } },
+    orderBy: [{ state: "asc" }, { requestedAt: "asc" }],
+    select: SELECT,
+  });
+  const views = rows.map(toView);
+  return {
+    requested: views.filter((v) => v.state === "REQUESTED"),
+    active: views.filter((v) => v.state === "ACTIVE"),
+  };
+}
+
+/** 지금 우리 집 이자 — 받아들이기 폼의 기본값 */
+export async function houseRate(guardianId: string) {
+  const g = await prisma.guardianAccount.findUnique({
+    where: { id: guardianId }, select: { savingsInterestPct: true },
+  });
+  return g?.savingsInterestPct ?? null;
+}

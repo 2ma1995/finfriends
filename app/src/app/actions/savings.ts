@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentChild } from "@/lib/session/current-child";
 import { breakEarly, request } from "@/modules/savings";
+import { revalidateMoney } from "@/lib/revalidate/money";
 
 /**
  * 우리 집 적금 — 아이 쪽. 어긋남 대장 D25.
@@ -18,8 +18,7 @@ async function child() {
 }
 
 function back(q: string) {
-  revalidatePath("/child/allowance");
-  revalidatePath("/child/home");
+  revalidateMoney();
   redirect(q ? `/child/allowance?${q}` : "/child/allowance");
 }
 

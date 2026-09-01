@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireGuardian } from "@/lib/session/guardian-session";
+import { revalidateMoney } from "@/lib/revalidate/money";
 import { findChild } from "@/modules/consent";
 import { reverseEntry } from "@/modules/allowance";
 import { setInterestPct, topUpAllowance } from "@/modules/bank";
@@ -11,25 +12,6 @@ import { setInterestPct, topUpAllowance } from "@/modules/bank";
  * 아이 통장(보호자용) 동작 — 어긋남 대장 D21.
  * 🔴 첫 줄에서 인가를 확인한다 (§6.6). Server Action 은 공개 엔드포인트와 동등하다.
  */
-
-/**
- * 돈이 바뀌면 다시 그려야 하는 화면 전부.
- *
- * 🔴 **한 곳에 모아 둔다.** 이 목록을 액션마다 손으로 적었더니 `/child/home` 이 빠졌다 —
- *    아이 홈의 돈 HUD 가 나중에 생겼는데 목록은 그 전에 쓴 것이었다.
- *    그래서 부모가 충전해도 **아이 첫 화면의 숫자는 그대로**였다.
- *    화면을 새로 만들 때 여기에 한 줄 더한다.
- */
-const MONEY_PATHS = [
-  "/parent/bank",
-  "/child/home",      // 돈 HUD
-  "/child/welcome",   // 첫 진입에서도 잔액을 보여준다
-  "/child/allowance", // 아이 통장
-  "/child/wishlist",  // 목표에 넣을 수 있는 금액이 바뀐다
-  "/child/plan",      // 계획 세울 때 쓸 수 있는 돈이 바뀐다
-] as const;
-
-const revalidateMoney = () => MONEY_PATHS.forEach((p) => revalidatePath(p));
 
 /**
  * 용돈 넣기 — 🔴 **용돈 원장에 적는다.** 시연용 컬럼을 올리던 것을 바꿨다.
