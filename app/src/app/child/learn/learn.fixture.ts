@@ -2,10 +2,17 @@
 // 여기 남은 것은 문구뿐이다.
 
 export const notice = "퀴즈만으로는 자라지 않습니다. 배운 걸 한 번 해봐야 나무가 자라요.";
-/** 🔴 배우는 건 열려 있다. 「곧 열려요」는 **실천**에만 붙는다 (AC-2.4) */
-export const practiceSoonLabel = "실천은 곧 열려요";
+/**
+ * 🔴 **「곧 열려요」가 거짓이 됐다.** 불리기 실천은 이제 **저금**으로 열려 있다
+ *    (`D53` — 가입 ⭐1 · 완주 ⭐10 이 실천으로 쌓인다).
+ *    안 열린 것이 아니라 **다른 길로 하는 것**이다. 그렇게 말한다.
+ *
+ * 🔴 `isPracticeOpen` 은 그대로 둔다 — 그건 「미션형 실천이 열렸는가」이지
+ *    「영역이 열렸는가」가 아니다. 불리기를 「해봤어요」로 올리면 안 되는 건 맞다.
+ */
+export const practiceSoonLabel = "실천은 저금으로 해요";
 export const practiceSoonBody =
-  "불리기는 배우는 것부터 해요. 「해봤어요」는 저금통이 준비되면 열려요.";
+  "불리기는 「해봤어요」가 없어요. 저금을 시작하면 그게 실천이에요.";
 export const startLabel = "시작하기";
 export const continueLabel = "이어보기";
 export const doneLabel = "다 봤어요";

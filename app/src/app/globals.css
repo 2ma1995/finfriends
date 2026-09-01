@@ -158,6 +158,24 @@
   --ff-frame: 390px;   /* 모바일 폭 1종 — 명세 §7.2 */
   --ff-touch: 44px;    /* 아동 터치 타깃 하한 */
   /* 🔴 **Pretendard 를 앞에 세운다.** 뒤는 못 받았을 때 떨어질 자리다 */
+  /*
+   * 🔴 **글자 크기는 두 모드가 같다** (사용자 결정).
+   *
+   *    한동안 보호자가 아이보다 작았다(15 vs 18). 명세의 「아동은 큰 글씨」를
+   *    따른 것인데, **부모도 같은 폰에서 같은 눈으로 본다** — 작을 이유가 없다.
+   *    모드가 가르는 것은 이제 **색 · 모서리 · 여백 · 모션**이지 글자 크기가 아니다.
+   *
+   * 🔴 **여기 있어야 한다.** 로그인·가입·동의·기기 등록·잠금 해제는 `ModeFrame`
+   *    밖이라 `[data-mode]` 가 안 붙는다. 모드 안에만 두면 그 다섯 화면은
+   *    `text-title` 이 **값이 없어 통째로 안 먹는다** — 실제로 그랬다.
+   */
+  --ff-text-hero:  32px;
+  --ff-text-title: 26px;
+  --ff-text-body:  18px;
+  --ff-text-sub:   15px;
+  --ff-text-cap:   13px;
+  --ff-text-micro: 11px;
+
   --ff-sans: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   /*
    * 🔴 **명조도 Pretendard 로 보낸다** (사용자 결정).
@@ -191,13 +209,6 @@
   --ff-star-bg-2: #F7EAD2;
   --ff-star-glow: transparent;
   --ff-radius: 13px;
-  /* 보호자 — 증거를 읽는 화면이다. 아이보다 작고 촘촘하다 */
-  --ff-text-hero:  24px;
-  --ff-text-title: 20px;
-  --ff-text-body:  15px;
-  --ff-text-sub:   13.5px;
-  --ff-text-cap:   12px;
-  --ff-text-micro: 10.5px;
   --ff-space: 14px;
   --ff-motion: 150ms ease;
   /* Clean 은 페이드만. 스케일·바운스 금지 — 컴포넌트를 고치지 않고 토큰으로 가른다 */
@@ -227,13 +238,6 @@
   --ff-star-bg-2: #FFEDC2;
   --ff-star-glow: #FFE9A8;
   --ff-radius: 20px;
-  /* 아이 — 🔴 **제목과 본문의 차이를 크게 벌린다.** 아이는 크기로 먼저 읽는다 */
-  --ff-text-hero:  32px;
-  --ff-text-title: 26px;
-  --ff-text-body:  18px;
-  --ff-text-sub:   15px;
-  --ff-text-cap:   13px;
-  --ff-text-micro: 11px;
   --ff-space: 20px;
   --ff-motion: 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --ff-star-anim: ff-star-pop;
@@ -280,8 +284,7 @@
   --color-star-bg-2: var(--ff-star-bg-2);
 
   --radius-card: var(--ff-radius);
-  --text-body: var(--ff-text-body);
-  --text-title: var(--ff-text-title);
+  /* 🔴 `--text-*` 는 위에서 여섯 단을 한 번에 잇는다. 여기 또 적으면 둘이 갈린다 */
 
   --spacing-gap: var(--ff-space);
   --spacing-frame: var(--ff-frame);

@@ -171,7 +171,19 @@ export async function getTreeView(childId: string, childName: string): Promise<T
         : null,
       // 🔴 무엇이 모자라서 안 올랐는가 (AC-030-2). 다 채웠으면 null
       blockedBy: blockedBy(conditions),
-      locked: topic === "GROW",
+      /**
+       * 🔴 **더는 잠기지 않는다.** 예전엔 불리기를 통째로 `locked` 로 두어
+       *    「곧 열려요」만 보이고 **단계 · 다음 단계 · 막힌 조건이 전부 안 나왔다** —
+       *    부모가 그 칸에서 읽을 글자가 하나도 없었다.
+       *
+       *    잠갔던 이유는 「실천 경로가 없다」였는데, **이제 저금이 그 경로다**
+       *    (`D53` — 가입 ⭐1 · 완주 ⭐10 이 실천으로 쌓인다). 실천이 실제로 쌓이는데
+       *    화면이 「곧 열려요」라고 하면 **거짓말**이다.
+       *
+       * 🔴 실천 «화면»에서 불리기가 미션이 아니라 저금으로 가는 것은 그대로다
+       *    (`isPracticeOpen`). 그건 「어떻게 하는가」이고 이건 「자라는가」다.
+       */
+      locked: false,
     };
   });
 
