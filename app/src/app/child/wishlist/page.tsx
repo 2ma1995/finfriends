@@ -41,7 +41,7 @@ export default async function ChildWishlistPage({
             back={{ href: "/child/home", label: "내 방" }}>
       {/* 🔴 별이 아니라 용돈이다. 여기서 떼어 목표에 넣는다 (D18) */}
       <a href="/child/allowance"
-         className="mb-2 block rounded-card border border-line bg-sand px-3 py-2 text-center">
+         className="mb-3 block rounded-card bg-sand px-3 py-2.5 text-center">
         <b className="text-sub">{walletLabel(allowance)}</b>
         {allowance === 0 ? <p className="mt-0.5 text-cap text-ink-mute">{walletEmpty}</p> : null}
       </a>
@@ -58,9 +58,11 @@ export default async function ChildWishlistPage({
       ) : null}
 
       {wishes.length === 0 ? <Empty emoji="🎁" {...empty} /> : (
+        /* 🔴 **담는 상자에는 선을 안 두른다.** 배경만으로 묶인다 —
+              선은 「다 모았다」·「넘겼다」 같은 상태를 말할 때만 쓴다 */
         <ul className="grid gap-2">
           {wishes.map((w, i) => (
-            <li key={w.id} className="rounded-card border border-line bg-surface p-3">
+            <li key={w.id} className="rounded-card bg-surface p-3.5">
               <div className="flex items-baseline justify-between gap-2">
                 <b className="text-body">{w.name}</b>
                 <b className="shrink-0 tabular-nums text-sub text-ink-mute">{won(w.targetAmount)}</b>
@@ -129,8 +131,8 @@ export default async function ChildWishlistPage({
 
       {/* 🔴 이 폼이 없어서 화면이 읽기 전용이었다. 학습은 「여기 적어 두세요」라고 안내하는데 적을 데가 없었다 */}
       {!full ? (
-        <div className="mt-3 rounded-card border border-line bg-surface p-3">
-          <h2 className="text-sub font-bold">{addTitle}</h2>
+        <div className="mt-4 rounded-card bg-surface p-3.5">
+          <h2 className="mb-2 mt-7 text-title font-bold leading-none">{addTitle}</h2>
           <form action={addWishAction} className="mt-2 grid gap-2">
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{nameLabel}</span>

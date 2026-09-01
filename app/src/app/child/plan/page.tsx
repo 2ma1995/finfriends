@@ -51,9 +51,10 @@ export default async function ChildPlanListPage({
         </Card></div>
       ) : null}
 
+      {/* 🔴 **누르는 것이라 배경을 깐다.** 테두리는 상태를 말할 때만 쓴다 */}
       <Link href="/child/allowance"
-            className="mb-2 flex min-h-touch items-center justify-center gap-1 rounded-card border border-line bg-sand px-3 text-center">
-        <b className="text-sub">쓸 수 있는 용돈 {won(allowance)}</b>
+            className="mb-3 flex min-h-touch items-center justify-center gap-1.5 rounded-card bg-sand px-3 text-center">
+        <b className="text-body">쓸 수 있는 용돈 {won(allowance)}</b>
         <span className="text-cap text-ink-mute">· 내 통장 →</span>
       </Link>
 
@@ -67,7 +68,7 @@ export default async function ChildPlanListPage({
       {/* 🔴 아직 안 맞춰본 것이 위다. 이게 이 화면의 존재 이유다 */}
       {todo.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-sub font-bold">{sections.todo}</h2>
+          <h2 className="mb-2 mt-7 text-title font-bold leading-none">{sections.todo}</h2>
           <p className="mb-1.5 text-cap text-ink-mute">{hint}</p>
           <ul className="grid gap-2">
             {todo.map((c) => (
@@ -153,13 +154,15 @@ export default async function ChildPlanListPage({
 
       {done.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-sub font-bold">{sections.done}</h2>
+          <h2 className="mb-2 mt-7 text-title font-bold leading-none">{sections.done}</h2>
           <ul className="grid gap-1.5">
             {done.map((c) => (
               <li key={c.id}>
+                {/* 🔴 **지킨 것에는 테두리를 안 두른다.** 선은 「넘겼다」를 말할 때만 쓴다 —
+                    둘 다 두르면 어느 쪽이 다른 일인지 눈에 안 들어온다 */}
                 <Link href={`/child/retro/${c.recordId}`}
-                      className={`flex min-h-touch items-center gap-2 rounded-card border px-3 py-2 ${
-                        c.match === "MET" ? "border-line bg-surface" : "border-miss-line bg-miss-bg"}`}>
+                      className={`flex min-h-touch items-center gap-2.5 rounded-card px-3.5 py-2 ${
+                        c.match === "MET" ? "bg-surface" : "border border-miss-line bg-miss-bg"}`}>
                   <span className="flex-1">
                     <b className="block text-sub">{c.icon} {c.where}</b>
                     <span className="text-cap text-ink-mute">{won(c.limitAmount)} · {c.whenLabel}</span>

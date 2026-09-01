@@ -36,8 +36,10 @@ export default async function ChildHistoryPage() {
         <ul className="grid gap-1">
           {p.history.map((h) => (
             <li key={h.id}
-                className={`flex items-center gap-2 rounded-card border px-3 py-2 ${
-                  h.code === "ADJUST" ? "border-star bg-star-bg" : "border-line bg-surface"}`}>
+                /* 🔴 **선은 「고쳤다」에만 남긴다.** 보통 기록까지 두르면
+                      부모가 손댄 줄이 눈에 안 들어온다 */
+                className={`flex items-center gap-2.5 rounded-card px-3.5 py-2.5 ${
+                  h.code === "ADJUST" ? "border border-star bg-star-bg" : "bg-surface"}`}>
               <span className="flex-1">
                 <b className="block text-sub">{h.memo}</b>
                 <span className="text-cap text-ink-mute">
@@ -53,7 +55,7 @@ export default async function ChildHistoryPage() {
         </ul>
       )}
 
-      <div className="mt-3 rounded-card border border-line bg-surface px-3 py-2.5">
+      <div className="mt-4 rounded-card bg-surface px-3.5 py-3">
         <p className="text-sub leading-relaxed">{notice}</p>
       </div>
     </Screen>

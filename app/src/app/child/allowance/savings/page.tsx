@@ -35,7 +35,7 @@ export default async function ChildClosedSavingsPage() {
       ) : (
         <ul className="grid gap-1">
           {closed.map((c) => (
-            <li key={c.id} className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
+            <li key={c.id} className="flex items-center gap-2.5 rounded-card bg-surface px-3.5 py-2.5">
               <span className="flex-1 text-sub">{c.goal}</span>
               <span className="text-cap text-ink-mute">
                 {c.state === "DONE" ? savings.doneBadge
