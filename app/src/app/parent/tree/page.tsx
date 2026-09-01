@@ -9,6 +9,7 @@ import { countUnread } from "@/modules/mission";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
   alertsLabel, cycleNotice, emptyState, engineNotice, quarantineNotice, stageNotice,
+  stallNotice,
 } from "./tree.fixture";
 
 // GRW-003 · UX-002 · REQ-FUNC-001 — 보호자가 여는 첫 화면
@@ -42,6 +43,16 @@ function TreeCard({ t }: { t: TreeSlotView }) {
         <div className="text-[0.66em] text-ink-mute">{t.nextStageLabel}</div>
       ) : null}
       <ul className="mt-2 grid gap-1 text-left">{t.conditions.map((c) => <Gauge key={c.label} c={c} />)}</ul>
+      {/*
+        🔴 **무엇이 모자라서 안 올랐는지 말한다** (`AC-030-2`).
+           게이지만 보여주면 부모는 세 숫자를 읽고 **스스로 비교해야** 한다 —
+           그건 「증거를 제시하고 판단을 돕는다」가 아니다.
+
+        🔴 잠긴 칸에는 안 적는다. 열리지도 않은 것에 「남았어요」는 말이 안 된다.
+      */}
+      {!t.locked && t.blockedBy ? (
+        <p className="mt-1.5 text-left text-[0.66em] leading-relaxed text-ink-soft">{t.blockedBy}</p>
+      ) : null}
     </div>
   );
 }
@@ -144,6 +155,17 @@ export default async function ParentTreePage() {
       {view.quarantinedStars > 0 ? (
         <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.76em] leading-relaxed text-ink-soft">
           {quarantineNotice(view.quarantinedStars)}
+        </p>
+      ) : null}
+
+      {/*
+        🔴 정체가 있으면 말한다 — 다만 **다그치지 않는다.**
+           「14일째 그대로」만 있으면 부모는 아이를 재촉한다.
+           무엇이 남았는지가 카드마다 적혀 있으니 거기를 가리킨다.
+      */}
+      {view.slots.some((s) => s.stalledDays !== null) ? (
+        <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.78em] leading-relaxed text-ink-soft">
+          {stallNotice}
         </p>
       ) : null}
 

@@ -14,8 +14,8 @@ import { readFileSync } from "node:fs";
  *   npm run verify:logic
  */
 import {
-  PRACTICE_BY_TOPIC, STAGE_EMOJI, STAGE_LABEL, STAGE_LADDER,
-  nextRule, practiceNeeded, stageFor, subjectParticle, topRule,
+  PRACTICE_BY_TOPIC, STAGE_EMOJI, STAGE_LABEL, STAGE_LADDER, STALL_DAYS,
+  blockedBy, nextRule, practiceNeeded, stageFor, subjectParticle, topRule,
 } from "@/contracts/growth";
 import { TOPUP_AMOUNTS } from "@/contracts/bank";
 import { MAX_PCT, WANTED_CHOICES } from "@/modules/savings";
@@ -52,6 +52,48 @@ check("새싹은 실천 0", practiceNeeded("EARN", 0) === 0);
 check("최고 단계에서 nextRule 은 null", nextRule("EARN", 3) === null);
 check("topRule 이 마지막 조건을 준다", topRule("EARN").learn === STAGE_LADDER[2].learn);
 check("네 영역 모두 조건표가 있다", Object.keys(PRACTICE_BY_TOPIC).length === 4);
+
+// ── 정체 판정 · 원인 문구 (GRW-002 · AC-030-2) ──
+check("정체 기준이 14일이다", STALL_DAYS === 14, "한 달 주기의 절반");
+
+/**
+ * 🔴 **모자란 것을 전부 말한다** (`ACE-3.1`). 하나만 말하면 그것을 채운 부모가
+ *    「또 안 올랐다」를 겪는다.
+ */
+const short2 = blockedBy([
+  { label: "학습", current: 2, required: 5 },
+  { label: "퀴즈", current: 1, required: 4 },
+  { label: "미션 실천", current: 2, required: 2 },
+]);
+check("🔴 모자란 것을 전부 말한다", /학습 3편/.test(short2!) && /퀴즈 3개/.test(short2!), short2 ?? "");
+check("🔴 채운 것도 말한다", /충족/.test(short2!), "모자란 것만 적으면 아무것도 안 한 줄 안다");
+/**
+ * 🔴 **받침을 코드가 고른다.** 「미션 실천**는** 충족」이 나왔다 —
+ *    라벨이 영역마다 다르다(미션 실천 · 계획 지키기 · 모으기 실천).
+ */
+check("🔴 충족 문구의 조사가 맞다", /미션 실천은 충족/.test(short2!), short2 ?? "");
+check("  받침 없는 라벨에는 「는」",
+  /계획 지키기는 충족/.test(blockedBy([
+    { label: "학습", current: 1, required: 5 },
+    { label: "계획 지키기", current: 2, required: 2 },
+  ])!));
+
+const oneShort = blockedBy([
+  { label: "학습", current: 5, required: 5 },
+  { label: "퀴즈", current: 4, required: 4 },
+  { label: "미션 실천", current: 1, required: 2 },
+]);
+check("한 가지만 모자라면 그것만", /실천 1회 남았어요/.test(oneShort!) && /학습·퀴즈는 충족/.test(oneShort!),
+  oneShort ?? "");
+
+check("다 채웠으면 원인 문구가 없다",
+  blockedBy([{ label: "학습", current: 5, required: 5 }]) === null,
+  "🔴 채운 사람에게 「남았어요」를 보이면 안 된다");
+
+check("단위가 조건마다 다르다",
+  /학습 1편/.test(blockedBy([{ label: "학습", current: 4, required: 5 }])!)
+  && /퀴즈 1개/.test(blockedBy([{ label: "퀴즈", current: 3, required: 4 }])!),
+  "「학습 1개」가 아니라 「학습 1편」이다");
 
 // ── 조사 (lib/korean) ──
 check("받침 있으면 「이」", iParticle("서연").endsWith("이"));

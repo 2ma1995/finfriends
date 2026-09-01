@@ -1,4 +1,4 @@
-import { josa } from "@/lib/korean";
+import { eun, josa } from "@/lib/korean";
 import type { Topic } from "@/contracts/learning";
 
 /**
@@ -94,6 +94,42 @@ export function topRule(topic: Topic) {
  */
 export const subjectParticle = (word: string) => josa(word, "이", "가");
 
+/**
+ * 🔴 **정체 기준 — 주기 시작 후 이만큼 지나고도 한 칸도 안 올랐으면 정체다** (`GRW-002`).
+ *
+ *    용어표가 「주기 시작 후 14일 이상 미상승」으로 정의한다.
+ *    한 달 주기의 절반이다 — 그 전에 말하면 아직 할 시간이 있는데 재촉하는 셈이고,
+ *    그 뒤에 말하면 손쓸 시간이 없다.
+ */
+export const STALL_DAYS = 14;
+
+/**
+ * 무엇이 모자라서 안 올랐는가 — `AC-030-2`.
+ *
+ * 🔴 **모자란 것을 전부 말한다** (`ACE-3.1`). 하나만 말하면 그것을 채운 부모가
+ *    「또 안 올랐다」를 겪는다.
+ * 🔴 **채운 것도 말한다.** 모자란 것만 적으면 부모는 아이가 아무것도 안 한 줄 안다 —
+ *    「학습·퀴즈는 충족」이 그 자리다.
+ */
+export function blockedBy(conditions: readonly Condition[]): string | null {
+  const short = conditions.filter((c) => c.current < c.required);
+  if (short.length === 0) return null;
+
+  const need = short.map((c) => `${c.label} ${c.required - c.current}${unitOf(c.label)} 남았어요`);
+  const done = conditions.filter((c) => c.current >= c.required).map((c) => c.label);
+  if (done.length === 0) return need.join(" · ");
+  // 🔴 「미션 실천는 충족」이 나왔다. 받침을 코드가 골라야 한다 — 라벨이 영역마다 다르다
+  const joined = done.join("·");
+  return `${need.join(" · ")} · ${eun(joined)} 충족`;
+}
+
+/** 조건마다 세는 단위가 다르다 — 「학습 2개」가 아니라 「학습 2편」이다 */
+function unitOf(label: string) {
+  if (label === "학습") return "편";
+  if (label === "퀴즈") return "개";
+  return "회";
+}
+
 export type Condition = {
   readonly label: string;
   readonly current: number;
@@ -109,8 +145,22 @@ export type TreeSlotView = {
   /** 「나무가 되기까지」처럼 다음 목표를 알려준다. 최고 단계면 null */
   readonly nextStageLabel: string | null;
   readonly conditions: readonly Condition[];
-  /** 14일 이상 그대로면 정체. 판정 엔진(GRW-002)이 없으면 null 이다 */
+  /**
+   * 🔴 **정체 — 주기 시작 후 14일 이상 미상승** (`GRW-002` · 용어표 §2).
+   *    아직 아니면 `null` 이다. **0을 쓰지 않는다** —
+   *    0은 「정체 아님」이 아니라 「오늘부터 정체」로 읽힌다.
+   */
   readonly stalledDays: number | null;
+  /**
+   * 🔴 **무엇이 모자라서 안 올랐는가** (`AC-030-2`).
+   *
+   *    「실천 1회가 남았어요 · 학습·퀴즈는 충족」처럼 **조건 단위로** 말한다.
+   *    게이지만 보여주면 부모는 세 숫자를 읽고 **스스로 비교해야** 한다 —
+   *    그건 「증거를 제시하고 판단을 돕는다」가 아니다.
+   *
+   *    다 채웠거나 최고 단계면 `null` 이다.
+   */
+  readonly blockedBy: string | null;
   /** 🔴 불리기는 실천 경로가 닫혀 있다 (F15 · P-20) */
   readonly locked: boolean;
 };

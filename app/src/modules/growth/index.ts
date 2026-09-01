@@ -5,7 +5,8 @@ import { countWaiting } from "@/modules/mission";
 import { reconcileStars } from "@/modules/star-ledger";
 import { TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
-  STAGE_EMOJI, STAGE_LABEL, nextRule, stageFor, subjectParticle, topRule,
+  STAGE_EMOJI, STAGE_LABEL, STALL_DAYS, blockedBy, nextRule, stageFor,
+  subjectParticle, topRule,
   type ForestView, type Stage, type TreeSlotView, type TreeView,
 } from "@/contracts/growth";
 
@@ -19,8 +20,8 @@ import {
  *    `tree_states.stage` 를 올려 주는 사람이 없기 때문이다 — 저장값을 읽으면
  *    조건을 다 채워도 영원히 새싹이다. 실제로 그랬다.
  *
- * 🔴 **정체 판정(GRW-002)은 아직 없다.** `stalledDays` 는 항상 null 이다 —
- *    **없는 판정을 있는 척하지 않는다.**
+ * 🔴 **정체 판정이 있다** (`GRW-002` · 어긋남 대장 D55).
+ *    주기 시작 후 `STALL_DAYS`(14일) 이상 지났고 **한 칸도 안 올랐으면** 정체다.
  *
  * 🔴 **주기 전환과 월말 스냅샷은 있다** — `rollCycleIfNeeded` (어긋남 대장 D39).
  *    `pg_cron` 이 없어 화면을 열 때 부른다.
@@ -72,7 +73,7 @@ export async function getTreeView(childId: string, childName: string): Promise<T
   const [states, progress, practices, pendingApprovals] = await Promise.all([
     prisma.treeState.findMany({
       where: { childId },
-      select: { slot: true, stage: true, practiceCount: true, stallDays: true },
+      select: { slot: true, stage: true, practiceCount: true, stallDays: true, cycleStartedAt: true },
     }),
     getTopicProgress(childId),
     /**
@@ -96,6 +97,17 @@ export async function getTreeView(childId: string, childName: string): Promise<T
     // 🔴 미션 표를 직접 보지 않는다. mission 모듈의 공개 함수를 부른다 (스킬 301 §5)
     countWaiting(childId),
   ]);
+
+  /**
+   * 🔴 주기가 시작된 지 며칠인가 — 정체 판정의 분모다.
+   *    `cycle_started_at` 은 **날짜 컬럼**이라 UTC 자정으로 저장된다.
+   *    같은 방식으로 오늘을 만들어야 시간대 차이만큼 어긋나지 않는다.
+   */
+  const todayUtc = Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+  const cycleStart = states.reduce(
+    (min, s) => (s.cycleStartedAt < min ? s.cycleStartedAt : min), states[0].cycleStartedAt,
+  );
+  const daysInCycle = Math.max(0, Math.floor((todayUtc - cycleStart.getTime()) / 864e5));
 
   const stateBy = new Map(states.map((s) => [s.slot as Topic, s]));
   const progressBy = new Map(progress.map((p) => [p.topic, p]));
@@ -125,6 +137,12 @@ export async function getTreeView(childId: string, childName: string): Promise<T
     const next = nextRule(topic, stage);
     const top = topRule(topic);
 
+    const conditions = [
+      { label: "학습", current: learn, required: next?.learn ?? top.learn },
+      { label: "퀴즈", current: quiz, required: next?.quiz ?? top.quiz },
+      { label: PRACTICE_LABEL[topic], current: practiceCount, required: next?.practice ?? top.practice },
+    ];
+
     return {
       topic,
       label: TOPIC_LABEL[topic],
@@ -135,13 +153,24 @@ export async function getTreeView(childId: string, childName: string): Promise<T
         ? `${STAGE_LABEL[next.stage]}${subjectParticle(STAGE_LABEL[next.stage])} 되기까지`
         : null,
       // 게이지는 **다음 단계 조건**을 향한다. 최고 단계면 마지막 조건을 그대로 둔다
-      conditions: [
-        { label: "학습", current: learn, required: next?.learn ?? top.learn },
-        { label: "퀴즈", current: quiz, required: next?.quiz ?? top.quiz },
-        { label: PRACTICE_LABEL[topic], current: practiceCount, required: next?.practice ?? top.practice },
-      ],
-      // 🔴 GRW-002 가 없다. 판정하지 않은 것을 정체로 표시하지 않는다
-      stalledDays: null,
+      conditions,
+      /**
+       * 🔴 **정체 — 주기 시작 후 14일 이상 미상승** (`GRW-002`).
+       *
+       *    나무는 주기마다 비워지므로(`AC-030-3`) **이번 주기에 한 칸도 안 올랐다**는 것이
+       *    곧 `stage === 0` 이다. 마지막 승급 시각을 따로 저장할 필요가 없다.
+       *
+       * 🔴 **아직 14일이 안 됐으면 `null` 이다. 0을 쓰지 않는다** —
+       *    0은 「정체 아님」이 아니라 「오늘부터 정체」로 읽힌다.
+       *
+       * 🔴 **불리기는 정체로 세지 않는다.** 실천 경로가 적금 하나뿐이라
+       *    한 달에 한 번 있는 일을 못 했다고 「멈췄다」고 말하면 부모가 아이를 재촉한다.
+       */
+      stalledDays: stage === 0 && topic !== "GROW" && daysInCycle >= STALL_DAYS
+        ? daysInCycle
+        : null,
+      // 🔴 무엇이 모자라서 안 올랐는가 (AC-030-2). 다 채웠으면 null
+      blockedBy: blockedBy(conditions),
       locked: topic === "GROW",
     };
   });
