@@ -37,14 +37,21 @@ const g = await prisma.guardianAccount.findUnique({
   where: { id: c.guardianId }, select: { consentCompleted: true },
 });
 
+// 🔴 **24시간 · 1회용 초대 코드**다 (FR-002). 기기 토큰은 링크를 열 때 발급된다.
+//    한 번 쓰면 죽으므로 확인할 때마다 이 스크립트를 다시 돌린다.
+//    새로 만들면 **앞의 링크는 죽는다** — 여러 장이 돌아다니면 어느 게 유효한지 모른다
 const token = randomBytes(32).toString("base64url");
-await prisma.deviceSession.create({
-  data: { guardianId: c.guardianId, childId: c.id, deviceRef: randomBytes(12).toString("hex"),
-          mode: "CHILD", tokenHash: h(token), expiresAt: new Date(Date.now() + 180 * 864e5) },
+await prisma.childInvite.updateMany({
+  where: { guardianId: c.guardianId, childId: c.id, usedAt: null },
+  data: { usedAt: new Date() },
+});
+await prisma.childInvite.create({
+  data: { guardianId: c.guardianId, childId: c.id,
+          tokenHash: h(token), expiresAt: new Date(Date.now() + 24 * 3600 * 1000) },
 });
 
 console.log(`  아이  ${c.displayName}  (${c.id})`);
 if (!g?.consentCompleted) console.log("  ⚠ 보호자 동의가 없어 아이 화면이 「동의가 필요해요」로 막힌다");
-console.log("\n  이 주소를 브라우저에 붙여넣으면 됩니다:");
+console.log("\n  이 주소를 브라우저에 붙여넣으면 됩니다 (24시간 · 한 번만 열립니다):");
 console.log(`  http://localhost:${port}/child/enter?t=${token}`);
 await prisma.$disconnect();

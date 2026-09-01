@@ -1,35 +1,38 @@
 import Link from "next/link";
 import { Screen, Card } from "@/components/shared/Screen";
+import { backHome, enterFailed, guardianArea } from "./locked.fixture";
 
-// 아동 모드에서 보호자 경로를 두드렸을 때 — 어긋남 대장 D5
+// 아동 모드에서 보호자 경로를 두드렸을 때(D5) · 초대 링크 실패(FR-002 · AC-002-2)
 export const metadata = { title: "잠긴 화면 · 핀프렌즈" };
 
 export default async function ChildLockedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; reason?: string }>;
 }) {
-  const from = (await searchParams).from ?? "";
+  const sp = await searchParams;
+  // 🔴 초대 실패는 「어른 화면」과 다른 일이다. 같은 말을 하면 아이가 뭘 해야 할지 모른다
+  const failed = sp.reason ? enterFailed[sp.reason] ?? enterFailed.NOT_FOUND : null;
+  const view = failed ?? guardianArea;
 
   return (
-    <Screen role="아이 화면" title="여긴 어른 화면이에요" back={{ href: "/child/home", label: "내 방" }}>
+    <Screen role="아이 화면" title={view.title} back={{ href: "/child/home", label: "내 방" }}>
       <Card tone="grow">
         <p className="text-[0.9em] leading-relaxed">
-          <span className="block">이 화면은 보호자가 여는 곳이에요.</span>
-          <span className="block">부모님께 보여 달라고 해 보세요.</span>
+          {view.body.map((line) => <span key={line} className="block">{line}</span>)}
         </p>
       </Card>
 
-      {/* 아이 탓으로 읽히지 않게 — 막혔다가 아니라 「여긴 어른 화면」이다 (AC-3.2 와 같은 규율) */}
+      {/* 아이 탓으로 읽히지 않게 — 막혔다가 아니라 「여긴 어른 화면」이다 */}
       <Link href="/child/home"
             className="mt-3 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
-        내 방으로 돌아가기
+        {backHome}
       </Link>
 
-      {from ? (
+      {sp.from ? (
         <p className="mt-3 text-center text-[0.7em] text-ink-mute">
           {/* 🔴 실제 서비스에서는 안 보인다. 지금은 무엇이 막혔는지 확인하려고 남겨 둔다 */}
-          막힌 경로 <code>{from}</code>
+          막힌 경로 <code>{sp.from}</code>
         </p>
       ) : null}
     </Screen>
