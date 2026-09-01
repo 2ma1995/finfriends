@@ -191,13 +191,17 @@ export default async function ParentBankPage({
         </section>
       ) : null}
 
-      {/* ── 이자율 설정 · 부모가 직접 주는 이자 (§9 A3) ── */}
+      {/*
+        ── 이자율 설정 · 부모가 직접 주는 이자 (§9 A3) ──
+        🔴 이 화면에는 **이자가 두 개** 있다 — 여기(모으기 목표)와 「우리 집 적금」.
+           제목이 둘 다 「이자율」이면 보호자는 어느 쪽을 정하는지 모른다. 실제로 못 알아봤다.
+      */}
       <section className="mt-4">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">이자율</h2>
+        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{interestNotice.title}</h2>
         <div className="mt-1.5">
           <Card tone={view.interestPct !== null ? "grow" : "surface"}>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[0.8em] text-ink-mute">지금 이자율</span>
+              <span className="text-[0.8em] text-ink-mute">{interestNotice.current}</span>
               <b className="text-[1.1em] tabular-nums">
                 {view.interestPct === null ? "아직 없어요" : `${view.interestPct}%`}
               </b>
@@ -232,6 +236,8 @@ export default async function ParentBankPage({
             ) : null}
 
             <p className="mt-2 text-[0.8em] leading-relaxed text-ink-soft">{interestNotice.body}</p>
+            {/* 🔴 적금 이자와 헷갈리지 않게 그 자리에서 가른다 */}
+            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-mute">{interestNotice.vsSavings}</p>
             <p className="mt-1 text-[0.78em] leading-relaxed text-miss">{interestNotice.todo}</p>
           </Card>
         </div>

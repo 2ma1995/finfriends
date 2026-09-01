@@ -96,6 +96,12 @@ export type SpendSummaryView = {
    *    `SpendingLedgerView` 이고 화면 이름도 「내역」이다 (어긋남 대장 D26).
    */
   readonly records: readonly SpendRecordView[];
+  /**
+   * 🔴 **지난달 건별 내역.** 달이 바뀌면 어제 쓴 것이 이번 달 목록에서 빠진다.
+   *    그때 화면이 「소비 내역이 없어요 · 카드를 연결하면 모입니다」라고 말하면
+   *    보호자는 **기록이 안 된 줄 안다** — 매달 1일마다 고장 난 것처럼 보였다.
+   */
+  readonly prevRecords: readonly SpendRecordView[];
 };
 
 /**

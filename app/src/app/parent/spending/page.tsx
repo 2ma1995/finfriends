@@ -5,7 +5,8 @@ import { findChild } from "@/modules/consent";
 import { getSpendSummary } from "@/modules/plan";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
-  emptyState, noPrevNotice, notice, noPlanNotice, recordsNotice, recordsTitle, seedNotice,
+  emptyState, monthEmpty, noPrevNotice, notice, noPlanNotice, prevRecordsTitle,
+  recordsNotice, recordsTitle, seedNotice,
 } from "./spending.fixture";
 
 // PLN-005 — 소비 내역. 전월 대비 증감액을 맨 위에 둔다
@@ -41,9 +42,32 @@ export default async function ParentSpendingPage() {
   const view = await getSpendSummary(child.id);
 
   if (view.recordCount === 0) {
+    /**
+     * 🔴 **한 번도 없는 것과, 이번 달만 없는 것은 다르다.**
+     *    구별하지 않으면 매달 1일에 「기록이 안 됐다」로 읽힌다 — 실제로 그랬다.
+     */
+    const e = view.prevRecords.length > 0 ? monthEmpty : emptyState;
     return (
       <Screen role="부모 화면" title="소비 내역" sub={`${view.monthLabel} · ${child.displayName}`}>
-        <Empty emoji={emptyState.emoji} title={emptyState.title} body={emptyState.body} hint={emptyState.hint} />
+        <Empty emoji={e.emoji} title={e.title} body={e.body} hint={e.hint} />
+        {view.prevRecords.length > 0 ? (
+          <>
+            <h2 className="mb-1.5 mt-4 text-[0.74em] tracking-[0.06em] text-ink-mute">{prevRecordsTitle}</h2>
+            <ul className="grid gap-1">
+              {view.prevRecords.map((r) => (
+                <li key={r.id} className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
+                  <span aria-hidden className="shrink-0 text-[1.1em]">{r.icon}</span>
+                  <span className="min-w-0 flex-1">
+                    <b className="block truncate text-[0.86em] font-medium">{r.categoryLabel}</b>
+                    <span className="block text-[0.74em] text-ink-mute">{r.dayLabel} · {r.planNote}</span>
+                  </span>
+                  <b className="shrink-0 tabular-nums text-[0.88em]">{won(r.amount)}</b>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1.5 text-[0.72em] leading-relaxed text-ink-mute">{recordsNotice}</p>
+          </>
+        ) : null}
       </Screen>
     );
   }
