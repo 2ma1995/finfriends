@@ -156,7 +156,14 @@ export async function request(
     if ((await getBalance(childId)) < total) return { ok: false, reason: "NOT_ENOUGH" };
   }
 
-  // 🔴 신청 시점 이자율을 박아 둔다. 뒤에 부모가 바꿔도 이 약속은 그대로다
+  /**
+   * 🔴 신청 시점 이자율을 박아 둔다. 뒤에 부모가 바꿔도 이 약속은 그대로다.
+   *
+   * 🔴 **아직 정해진 이자율이 없어도 신청은 된다.** 예전엔 없으면 화면이 신청을
+   *    막았는데, 이자율을 정하는 칸이 통장에서 없어지면서 **새 집은 영영 신청을
+   *    못 하는 잠금**이 됐다 — 신청이 없으니 승인도 없고, 승인이 없으니 기본값도 안 생긴다.
+   *    0 으로 시작하고 **보호자가 받아들일 때 정한다.**
+   */
   const guardian = await prisma.guardianAccount.findUnique({
     where: { id: guardianId }, select: { savingsInterestPct: true },
   });
@@ -208,6 +215,17 @@ export async function accept(
   else matures.setMonth(matures.getMonth() + p.months);
 
   const finalPct = Number.isFinite(pct) && pct! >= 0 && pct! <= MAX_PCT ? Math.floor(pct!) : undefined;
+
+  /**
+   * 🔴 **이 값이 그 집의 기본 이자율이 된다.** 통장의 이자율 설정 칸을 없앴기 때문에
+   *    (같은 값을 두 곳에서 정하면 갈린다) 여기가 유일한 갱신 지점이다.
+   *    안 남기면 다음 신청도 0% 로 올라오고 아이 화면에 「우리 집 이자 0%」가 뜬다.
+   */
+  if (finalPct !== undefined) {
+    await prisma.guardianAccount.update({
+      where: { id: guardianId }, data: { savingsInterestPct: finalPct },
+    });
+  }
   await prisma.savingsPlan.update({
     where: { id: p.id },
     data: { state: "ACTIVE", startedAt: now, maturesAt: matures,

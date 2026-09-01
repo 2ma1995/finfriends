@@ -110,10 +110,12 @@ export default async function ChildPassbookPage({
           <p className="text-[0.86em] leading-relaxed">{savings.what}</p>
           <p className="mt-1 text-[0.74em] text-ink-mute">{savings.notBank}</p>
 
+          {/* 🔴 이자율이 아직 없어도 신청할 수 있다. 막으면 새 집은 영영 신청을 못 한다 —
+              이자를 정하는 자리가 「받아들이기」로 옮겨졌기 때문이다 */}
           {p.interestPct === null ? (
-            <p className="mt-2 text-[0.82em] text-ink-mute">{savings.noRate}</p>
-          ) : (
-            <form action={requestSavingsAction} className="mt-2 grid gap-2">
+            <p className="mt-2 text-[0.8em] text-ink-mute">{savings.rateLater}</p>
+          ) : null}
+          <form action={requestSavingsAction} className="mt-2 grid gap-2">
               <label className="grid gap-1">
                 <span className="text-[0.72em] text-ink-mute">{savings.goalLabel}</span>
                 <input name="goal" required maxLength={30} placeholder={savings.goalPlaceholder}
@@ -177,13 +179,15 @@ export default async function ChildPassbookPage({
               {/* 🔴 「선택」이 아니라 「제안」이다. 정하는 사람을 **누르기 전에** 말한다 */}
               <div className="grid gap-1">
                 <span className="text-[0.72em] text-ink-mute">{savings.wantLabel}</span>
-                <p className="text-[0.72em] text-ink-mute">{savings.wantNotice(p.interestPct)}</p>
+                <p className="text-[0.72em] text-ink-mute">
+                  {p.interestPct === null ? savings.wantNoRate : savings.wantNotice(p.interestPct)}
+                </p>
                 <ul className="mt-0.5 grid grid-cols-4 gap-1">
                   {WANTED_CHOICES.map((w) => (
                     <li key={w}>
                       <label className="block cursor-pointer">
                         <input type="radio" name="wantedPct" value={w}
-                               defaultChecked={w === p.interestPct} className="peer sr-only" />
+                               defaultChecked={w === (p.interestPct ?? 5)} className="peer sr-only" />
                         <span className="grid min-h-touch place-items-center rounded-card border border-line bg-surface text-[0.8em] peer-checked:border-primary peer-checked:bg-primary-bg peer-checked:font-bold">
                           {w}%
                         </span>
@@ -198,8 +202,7 @@ export default async function ChildPassbookPage({
                       className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white disabled:opacity-40">
                 {savings.ask}
               </button>
-            </form>
-          )}
+          </form>
         </div>
       ) : (
         <div className={`rounded-card border p-3 ${
