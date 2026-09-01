@@ -264,6 +264,22 @@ check("🔴 푸시 본문에 이름·금액을 넣지 않는다",
   !/sendToGuardian\([\s\S]{0,300}?(childName|payoutWon|displayName)/.test(mission),
   "푸시는 잠금화면에 뜬다 — 폰을 든 사람은 누구나 읽는다");
 
+/**
+ * 🔴 **`web-push` 를 파일 맨 위에서 불러오지 않는다** (D60).
+ *
+ *    처음엔 정적 `import` 였다. 임포트 사슬이
+ *    `child/layout.tsx` → `modules/mission` → `lib/push` 라서,
+ *    `npm install` 안 한 워크트리에서 **모든 화면이 `Module not found` 로 죽었다.**
+ *    푸시는 부모 알림 하나인데 아이가 앱을 못 쓰게 된다.
+ *
+ *    아이가 「했어요」를 누르면 부모 알림이 생기므로 **사슬 자체는 맞다.**
+ *    고칠 것은 「없을 때 죽는 것」이다.
+ */
+check("🔴 web-push 를 늦게 불러온다", !/^import .*from "web-push"/m.test(push),
+  "맨 위에서 불러오면 설치 안 된 워크트리의 아이 화면이 전부 죽는다");
+check("  없으면 푸시만 빠진다", /catch \{[\s\S]{0,200}?lib = null/.test(push),
+  "패키지가 없어도 알림함은 그대로 돌아야 한다");
+
 /** 🔴 키가 없어도 앱이 돌아야 한다 — 새 팀원의 `.env` 에는 VAPID 키가 없다 */
 check("🔴 키 없음을 오류로 만들지 않는다", typeof pushEnabled() === "boolean",
   "키가 없으면 푸시만 빠지고 알림함은 그대로 돌아야 한다");

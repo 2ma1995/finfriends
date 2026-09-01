@@ -3150,6 +3150,62 @@ Math.floor((now.getTime() - at.getTime()) / 864e5)
 사본이 다시 생기면 그날 걸린다.
 
 
+---
+
+## D60 🔴 푸시 하나 때문에 **아이 화면 전체가 죽었다** — 다른 워크트리에서
+
+| | |
+| --- | --- |
+| 증상 | 사용자 화면: `Module not found: Can't resolve 'web-push'` · **모든 화면** |
+| 사슬 | `child/layout.tsx` → `modules/mission/index.ts` → `lib/push/index.ts` |
+| 원인 | D56 에서 `lib/push` 맨 위에 `import webpush from "web-push"` 를 뒀다 |
+
+두 세션이 **서로 다른 워크트리**에서 같은 저장소를 본다. 커밋을 올릴 때
+`package.json` 은 따라가지만 **`node_modules` 는 따라가지 않는다.**
+저쪽이 리베이스만 하고 `npm install` 을 안 한 상태에서, 그쪽 서버의
+**모든 화면이 죽었다** (`:4600` → 500).
+
+### 왜 아이 화면까지 죽는가 — 사슬은 맞다
+
+아이가 「했어요」를 누르면 **부모 알림이 생긴다**(`notifyOnce`).
+그래서 `modules/mission` 이 `lib/push` 를 부르는 것은 **설계상 맞다** —
+계층을 나눠서 피할 수 있는 문제가 아니다.
+
+문제는 **없을 때 죽는 것**이었다. 같은 파일에 이미 이렇게 적어 뒀는데:
+
+> 🔴 **키 없음이 오류가 아니다.** 새로 받아 온 팀원은 `.env` 에 VAPID 키가 없다.
+> 그때 앱이 죽으면 안 된다. 푸시만 조용히 빠지고 알림함은 그대로 돈다.
+
+**키에는 그 규칙을 적용했고 패키지에는 안 했다.** 정적 `import` 는
+모듈을 불러오는 순간 없으면 던진다 — 내가 쓴 규칙이 닿지 않는 자리였다.
+
+### 고친 방법 — 늦게 불러온다
+
+```
+type WebPush = typeof import("web-push");
+let lib: WebPush | null | undefined;
+async function push() {
+  if (lib !== undefined) return lib;
+  try { … lib = wp; } catch { lib = null; }   // 없으면 푸시만 빠진다
+  return lib;
+}
+```
+
+패키지를 실제로 **숨겨 놓고** 확인했다 — `node_modules/web-push` 를 옮긴 뒤
+아이 화면·로그인·부모 화면이 전부 200 이고 본문이 정상으로 나왔다.
+그 다음 되돌리고, 저쪽 워크트리에 `npm install` 했다(`:4600` → 200 복구).
+
+### 배운 것 — 의존성을 심을 때 **누가 그 모듈을 끌고 오는지** 먼저 본다
+
+`gate:origin` 은 이걸 못 잡는다. 그 게이트는 「아이 화면이 **부모 전용 코드**를
+부르는가」를 보고, `modules/mission` 은 **둘이 함께 쓰는 모듈**이라 정당하다.
+잡아야 할 것은 「없을 때 죽는 임포트」이고, 그건 검사로 넣었다 —
+`verify_logic` 이 `lib/push` 에 정적 `import "web-push"` 가 없는지 본다.
+
+🔴 **워크트리 규칙** — `package.json` 이 바뀐 커밋을 올리면 **저쪽에 알린다.**
+리베이스만으로는 안 되고 `npm install` 이 필요하다.
+
+
 ```
 tools/tasks_data.py 를 고치고 재생성해야 하는 것 — D2 · D3 · D5 · D6 · D8 · D10 · D11 · D13 · D14 · D15 · D16 · D17 · D18 · D23
 🔴 기준 문서 교체 — D30. tools/tasks_data.py 를 **새 SRS 로 다시 뽑는다**. 아래 항목의 절 번호가 전부 어긋나 있다

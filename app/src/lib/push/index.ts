@@ -1,5 +1,4 @@
 import "server-only";
-import webpush from "web-push";
 import { prisma } from "@/db";
 
 /**
@@ -29,6 +28,35 @@ import { prisma } from "@/db";
  * `REQ-TEC-007` 은 **UI 라이브러리**만 제한하므로 이 의존성은 제약 밖이다.
  */
 
+/**
+ * 🔴 **`web-push` 를 늦게 불러온다** (어긋남 대장 D60).
+ *
+ *    처음엔 파일 맨 위에서 `import` 했다. 그러자 **아이 화면이 전부 죽었다** —
+ *    임포트 사슬이 `child/layout.tsx` → `modules/mission` → `lib/push` 였고,
+ *    다른 워크트리는 `npm install` 을 안 한 상태라 `Module not found` 가
+ *    **모든 화면**에 떴다. 푸시는 부모 알림 하나인데 아이가 앱을 못 쓰게 된다.
+ *
+ *    아이가 「했어요」를 누르면 부모 알림이 생기므로(`notifyOnce`) **사슬 자체는 맞다.**
+ *    고칠 것은 사슬이 아니라 **없을 때 죽는 것**이다 — 키가 없어도 조용히 빠지게
+ *    만들어 뒀는데, 패키지가 없을 때는 그렇게 안 돼 있었다. 같은 규칙을 적용한다.
+ */
+type WebPush = typeof import("web-push");
+let lib: WebPush | null | undefined;
+
+async function push(): Promise<WebPush | null> {
+  if (lib !== undefined) return lib;
+  try {
+    const m = await import("web-push");
+    const wp = ((m as { default?: WebPush }).default ?? m) as WebPush;
+    wp.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
+    lib = wp;
+  } catch {
+    // 설치 안 됨 — 푸시만 빠지고 알림함은 그대로 돈다
+    lib = null;
+  }
+  return lib;
+}
+
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY ?? "";
 const SUBJECT = process.env.VAPID_SUBJECT ?? "mailto:noreply@finfriends.local";
@@ -43,8 +71,6 @@ const SUBJECT = process.env.VAPID_SUBJECT ?? "mailto:noreply@finfriends.local";
 export function pushEnabled(): boolean {
   return PUBLIC_KEY.length > 0 && PRIVATE_KEY.length > 0;
 }
-
-if (pushEnabled()) webpush.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
 
 export type PushPayload = {
   title: string;
@@ -68,6 +94,8 @@ export async function sendToGuardian(
   payload: PushPayload,
 ): Promise<{ sent: number; dropped: number }> {
   if (!pushEnabled()) return { sent: 0, dropped: 0 };
+  const webpush = await push();
+  if (!webpush) return { sent: 0, dropped: 0 };
 
   let subs;
   try {
