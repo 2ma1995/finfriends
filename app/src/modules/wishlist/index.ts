@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
+
 import { MILESTONES, type Milestone, type WishlistView, type WishView } from "@/contracts/wishlist";
 
 /**

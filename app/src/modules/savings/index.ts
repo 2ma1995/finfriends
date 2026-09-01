@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { getBalance, record as recordAllowance } from "@/modules/allowance";
+import { eul, i } from "@/lib/korean";
 
 /**
  * 우리 집 적금 — 어긋남 대장 D25.
@@ -286,7 +287,7 @@ export async function complete(guardianId: string, planId: string): Promise<Savi
   const interest = interestOf(principal, p.interestPct);
   await recordAllowance(
     p.childId, principal + interest, "SAVINGS_RELEASE",
-    interest > 0 ? `${p.goal}이 끝났어요 (이자 ${interest.toLocaleString("ko-KR")}원)` : `${p.goal}이 끝났어요`,
+    interest > 0 ? `${i(p.goal)} 끝났어요 (이자 ${interest.toLocaleString("ko-KR")}원)` : `${i(p.goal)} 끝났어요`,
     `savings-release:${p.id}`,
   );
   await prisma.savingsPlan.update({
@@ -314,7 +315,7 @@ export async function breakEarly(childId: string, planId: string): Promise<Savin
   // 넣은 만큼만 돌아온다 — 이자는 없다
   const principal = p.kind === "INSTALLMENT" ? p.paidCount * (p.perPeriod ?? 0) : p.amount;
   await recordAllowance(
-    childId, principal, "SAVINGS_RELEASE", `${p.goal}을 중간에 깼어요 (이자 없음)`,
+    childId, principal, "SAVINGS_RELEASE", `${eul(p.goal)} 중간에 깼어요 (이자 없음)`,
     `savings-release:${p.id}`,
   );
   await prisma.savingsPlan.update({
