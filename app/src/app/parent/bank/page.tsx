@@ -1,21 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
-import { INTEREST_CHOICES, TOPUP_AMOUNTS } from "@/contracts/bank";
+import { TOPUP_AMOUNTS } from "@/contracts/bank";
 import { findChild } from "@/modules/consent";
 import { getBank } from "@/modules/bank";
 import { MOVED_CODES, getHistory } from "@/modules/allowance";
-import { reverseEntryAction, setInterestAction, topUpMockAction } from "@/app/actions/parent-bank";
+import { reverseEntryAction, topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { listForGuardian } from "@/modules/savings";
 import {
   cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
-  historyTitle, interestNotice, missionNotice, moneyNotice, movedBadge, reversedBadge,
+  historyTitle, missionNotice, moneyNotice, movedBadge, reversedBadge,
   savedNotice, shortNotice, starSeparation, topUpErrors, topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
- * 아이 통장(보호자용) — SRS §3 · 충전 · 미션 관리 · 이자율 설정 · 어긋남 대장 D18 · D21.
+ * 아이 통장(보호자용) — SRS §3 · 잔액 · 충전 · 기록 · 미션 관리 · 적금 · D18 · D21.
+ *
+ * 🔴 **이자율 설정 칸이 여기 없다.** §3 이 「이자율 설정」을 이 화면에 적어 뒀지만,
+ *    이자율은 **적금을 승인하는 자리에서 건마다 정한다**(`/parent/bank/savings` 의 입력란).
+ *    두 곳에 두면 통장에서 바꿔도 이미 올라온 신청은 안 바뀌어서 **바꾼 줄 아는 부모**가 생긴다
+ *    — 신청 시점에 이자율이 그 약속에 박히기 때문이다 (어긋남 대장 D28).
  *
  * 🔴 **용돈 화면은 여기 하나다.** `/parent/allowance` 를 여기로 합쳤다 —
  *    화면이 둘이면 잔액도 둘이 되고, 실제로 그렇게 갈렸다.
@@ -95,8 +100,9 @@ export default async function ParentBankPage({
 
       {/*
         ── 아이가 가진 돈 ──
-        🔴 세 갈래를 **이자 카드 밖**에 둔다. 이자는 부가 기능인데 그 안에 원금을 두면
-           이자율을 안 정한 부모에게는 목표에 묶인 돈이 화면 어디에도 없다. 그랬다.
+        🔴 **부분의 합이 항상 위 숫자와 같아야 한다.** 한동안 목표에 묶인 돈을
+           이자 카드 안에만 뒀는데, 이자율을 안 정한 부모에게는 그 돈이 화면 어디에도
+           없었다 — 20,000원을 줬는데 10,500원만 떴다.
       */}
       <div className="mt-2.5 rounded-card border border-line-2 bg-sand p-3">
         <div className="text-center">
@@ -190,48 +196,6 @@ export default async function ParentBankPage({
           </ul>
         </section>
       ) : null}
-
-      {/*
-        ── 이자율 설정 · 부모가 직접 주는 이자 (§9 A3) ──
-        🔴 이자는 **하나뿐**이다 — 「우리 집 적금」에 붙는 이자.
-           한동안 「모으기 목표에 주는 이자」를 따로 계산해 보여줬는데, 근거가 요구사항이
-           아니라 [검증 대기] 가정(A3)이었고 지급 경로도 0건이었다 (D28).
-      */}
-      <section className="mt-4">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{interestNotice.title}</h2>
-        <div className="mt-1.5">
-          <Card tone={view.interestPct !== null ? "grow" : "surface"}>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[0.8em] text-ink-mute">{interestNotice.current}</span>
-              <b className="text-[1.1em] tabular-nums">
-                {view.interestPct === null ? "아직 없어요" : `${view.interestPct}%`}
-              </b>
-            </div>
-
-            <div className="mt-2 grid grid-cols-5 gap-1">
-              {INTEREST_CHOICES.map((pct) => (
-                <form key={pct} action={setInterestAction}>
-                  <input type="hidden" name="pct" value={pct} />
-                  <button
-                    type="submit"
-                    className={`min-h-touch w-full rounded-card border text-[0.82em] tabular-nums ${
-                      view.interestPct === pct
-                        ? "border-primary-l bg-primary-bg font-bold text-primary-d"
-                        : "border-line-2 bg-surface text-ink-soft"
-                    }`}
-                  >
-                    {pct}%
-                  </button>
-                </form>
-              ))}
-            </div>
-
-            <p className="mt-2 text-[0.8em] leading-relaxed text-ink-soft">{interestNotice.body}</p>
-            {/* 🔴 약속한 뒤에 바꿔도 이미 걸린 약속은 안 바뀐다 */}
-            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-mute">{interestNotice.frozen}</p>
-          </Card>
-        </div>
-      </section>
 
       {/* ── 미션 관리 — SRS 는 이것도 통장 안에 뒀다 ── */}
       {/* 🔴 「불리기」 실천을 여는 자리 — 아이가 신청하면 여기로 온다 (D25) */}

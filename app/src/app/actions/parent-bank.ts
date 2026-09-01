@@ -1,12 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireGuardian } from "@/lib/session/guardian-session";
 import { revalidateMoney } from "@/lib/revalidate/money";
 import { findChild } from "@/modules/consent";
 import { reverseEntry } from "@/modules/allowance";
-import { setInterestPct, topUpAllowance } from "@/modules/bank";
+import { topUpAllowance } from "@/modules/bank";
 
 /**
  * 아이 통장(보호자용) 동작 — 어긋남 대장 D21.
@@ -57,12 +56,4 @@ export async function reverseEntryAction(formData: FormData) {
   if (!r.ok) redirect(`/parent/bank?fix=${r.reason}`);
   // 🔴 얼마가 왜 안 돌아왔는지 그대로 말한다
   redirect(`/parent/bank?fixed=${r.reversed}${r.short > 0 ? `&short=${r.short}` : ""}`);
-}
-
-/** 이자율 설정 — 저장까지만. 지급 주기가 D6 미결이라 자동 지급은 없다 */
-export async function setInterestAction(formData: FormData) {
-  const g = await requireGuardian();
-  const pct = Number.parseInt(String(formData.get("pct") ?? ""), 10);
-  if (Number.isFinite(pct)) await setInterestPct(g.guardianId, pct);
-  revalidatePath("/parent/bank");
 }

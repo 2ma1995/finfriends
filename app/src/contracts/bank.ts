@@ -23,14 +23,6 @@
  */
 export const TOPUP_AMOUNTS = [5000, 10000, 30000] as const;
 
-/**
- * 「우리 집 이자율」 후보(%). 🔴 **적금 약속에 붙는 이자**다 —
- * 아이가 「우리 집 적금」을 신청하면 이 값이 그 건에 박혀 만기에 지급된다.
- *
- * 🔴 외부 예적금(F15 · REQ-FUNC-014)이 **아니다.** 그쪽은 금융상품 가입 중개라
- *    P-20 법률 검토 대기다. 이것은 부모가 자기 돈으로 주는 약속이다.
- */
-export const INTEREST_CHOICES = [0, 1, 3, 5, 10] as const;
 
 export type BankView = {
   readonly childName: string | null;
@@ -51,16 +43,6 @@ export type BankView = {
   readonly lockedWon: number;
   /** 카드가 사용 중이어야 아이가 이 돈을 실제로 쓸 수 있다 */
   readonly cardActive: boolean;
-  /**
-   * 🔴 **「우리 집 이자율」이다.** 아이가 「우리 집 적금」을 신청하면 이 값이
-   *    그 약속에 박히고 만기에 실제로 지급된다 (`modules/savings.request`).
-   *
-   * 🔴 한동안 이것을 **「모으기 목표에 주는 이자」**로 표시했다. 근거가 `§10.1` 가정
-   *    `A3` 였는데 **그것은 요구사항이 아니라 [검증 대기] 가정**이다.
-   *    위시리스트의 실제 보상은 `REQ-FUNC-012` 의 **30 · 70 · 100% 각 ⭐1** 이고
-   *    이자는 어디에도 없다 (어긋남 대장 D28).
-   */
-  readonly interestPct: number | null;
   /** 승인을 기다리는 미션 수 — 통장이 미션 관리의 입구다 */
   readonly waitingMissions: number;
   readonly openMissions: number;

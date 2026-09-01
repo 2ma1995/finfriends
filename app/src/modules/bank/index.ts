@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "@/db";
 import { countWaiting } from "@/modules/mission";
 import { getWalletTotals, topUp } from "@/modules/allowance";
-import { INTEREST_CHOICES, TOPUP_AMOUNTS, type BankView } from "@/contracts/bank";
+import { TOPUP_AMOUNTS, type BankView } from "@/contracts/bank";
 
 /**
  * 아이 통장(보호자용) — SRS §3 · 어긋남 대장 D21.
@@ -35,7 +35,7 @@ export async function getBank(
   const [guardian, wallet, waiting, open] = await Promise.all([
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
-      select: { savingsInterestPct: true, mockCardStatus: true },
+      select: { mockCardStatus: true },
     }),
     /**
      * 🔴 **여기서 따로 세지 않는다.** 한동안 원장 합은 allowance 에서 읽고
@@ -51,7 +51,6 @@ export async function getBank(
       : Promise.resolve(0),
   ]);
 
-  const pct = guardian?.savingsInterestPct ?? null;
 
   return {
     childName,
@@ -60,7 +59,6 @@ export async function getBank(
     setAsideWon: wallet.setAside,
     lockedWon: wallet.locked,
     cardActive: guardian?.mockCardStatus === "ACTIVE",
-    interestPct: pct,
     waitingMissions: waiting,
     openMissions: open,
   };
@@ -81,16 +79,4 @@ export async function topUpAllowance(childId: string, amount: number) {
   }
   // memo 를 비우면 원장이 「용돈을 받았어요」로 적는다 — 아이가 그대로 읽는 문장이다
   return topUp(childId, amount, "", `topup:${randomUUID()}`);
-}
-
-/**
- * 이자율 설정. 저장까지만 하고 지급은 하지 않는다 — 주기가 D6 미결이다.
- * 🔴 이것은 **돈이 아니라 설정**이므로 원장이 아니라 보호자 계정에 둔다.
- */
-export async function setInterestPct(guardianId: string, pct: number) {
-  if (!INTEREST_CHOICES.includes(pct as (typeof INTEREST_CHOICES)[number])) return;
-  await prisma.guardianAccount.update({
-    where: { id: guardianId },
-    data: { savingsInterestPct: pct },
-  });
 }
