@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Screen, Card } from "@/components/shared/Screen";
-import { backHome, enterFailed, guardianArea } from "./locked.fixture";
+import { backHome, enterFailed, guardianArea, guardianLink } from "./locked.fixture";
 
 // 아동 모드에서 보호자 경로를 두드렸을 때(D5) · 초대 링크 실패(FR-002 · AC-002-2)
 export const metadata = { title: "잠긴 화면 · 핀프렌즈" };
@@ -27,6 +27,13 @@ export default async function ChildLockedPage({
       <Link href="/child/home"
             className="mt-3 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
         {backHome}
+      </Link>
+
+      {/* 🔴 아이가 눌러서 오는 자리다. 「너는 못 들어와」가 아니라 「어른이 쓰는 자리」로 말한다.
+          PIN 이 없는 집이면 `/unlock` 이 정하는 법을 안내한다 — 죽은 길로 끝나지 않는다 */}
+      <Link href="/unlock"
+            className="mt-2 block min-h-touch rounded-card border border-line bg-surface text-center text-[0.82em] leading-[44px] text-ink-soft">
+        {guardianLink}
       </Link>
 
       {sp.from ? (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { guardianLanding } from "@/lib/session/landing";
 import { Screen, Card } from "@/components/shared/Screen";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,8 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; email?: string }>;
 }) {
   // 이미 들어와 있는 사람을 로그인 화면에 붙잡아 두지 않는다
-  if (await currentGuardian()) redirect("/parent/onboarding");
+  const already = await currentGuardian();
+  if (already) redirect(await guardianLanding(already.guardianId));
 
   const { error, email } = await searchParams;
 

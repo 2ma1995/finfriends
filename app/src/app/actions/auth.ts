@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { guardianLanding } from "@/lib/session/landing";
 import {
   GUARDIAN_COOKIE, createGuardian, signIn, closeSession, type AuthResult,
 } from "@/lib/session/guardian-session";
@@ -94,7 +95,8 @@ export async function signInAction(formData: FormData) {
 
   await setSessionCookie(result.token, result.expiresAt);
   await clearChildMode();
-  redirect("/parent/onboarding");
+  // 🔴 다 끝낸 사람은 나무로 간다 — 할 일 목록은 할 일이 남은 사람의 것이다 (D43)
+  redirect(await guardianLanding(result.guardianId));
 }
 
 export async function signOutAction() {

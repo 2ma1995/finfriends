@@ -31,3 +31,11 @@ export const enterFailed: Record<string, { title: string; body: string[] }> = {
 };
 
 export const backHome = "내 방으로 돌아가기";
+
+/**
+ * 어른이 쓰는 자리로 가는 길 — `/unlock` (어긋남 대장 D42).
+ *
+ * 🔴 **「PIN」도 「잠금」도 안 쓴다.** 아이가 보는 화면이다 —
+ *    아이를 밀어내는 말이 아니라 **묻는 형태**로 둔다.
+ */
+export const guardianLink = "부모님이신가요?";
