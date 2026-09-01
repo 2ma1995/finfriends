@@ -2,14 +2,36 @@ import { Screen, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
 import type { MissionView } from "@/contracts/mission";
-import { markMissionDone, undoMissionDone } from "@/app/actions/mission";
+import { attachMissionPhoto, markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
-  backfilledNotice, consentRequired, doneLabel, empty, intro, noDevice, photoLabel,
-  photoNotice, rejectedPrefix, sections, source, undoLabel, waitingNotice,
+  backfilledNotice, consentRequired, doneLabel, empty, intro, noDevice, photoAttached,
+  photoLabel, photoLater, photoNotice, photoReplace, photoResult, rejectedPrefix,
+  sections, source, undoLabel, waitingNotice,
 } from "./missions.fixture";
 
 // PRC-001 — 미션. 🔴 아이가 하는 일은 「했어요」 하나뿐이다. 승인은 보호자가 한다
 export const metadata = { title: "미션 · 핀프렌즈" };
+
+/**
+ * 사진 고르는 칸 — 🔴 **`accept` 를 `image/*` 로 둔다.**
+ *
+ * 예전엔 `image/jpeg,image/png,image/webp` 였다. 서버가 받는 형식을 그대로 적은 것인데,
+ * **iOS 사파리는 MIME 을 하나하나 적으면 「사진 찍기」를 안 띄운다** — 파일 고르기만 나온다.
+ * 그래서 아이 폰에서는 **찍을 수가 없었다.** 형식 검사는 서버가 이미 한다(`PHOTO_MIME`).
+ *
+ * 🔴 `capture` 는 여전히 안 넣는다 — 강제 촬영은 요구가 아니고,
+ *    이미 찍어 둔 사진도 고를 수 있어야 한다.
+ */
+function PhotoField({ label }: { label: string }) {
+  return (
+    <label className="grid gap-1">
+      <span className="text-[0.72em] text-ink-mute">{label}</span>
+      <input type="file" name="photo" accept="image/*"
+             className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-[0.72em]" />
+      <span className="text-[0.7em] text-ink-mute">{photoNotice}</span>
+    </label>
+  );
+}
 
 function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
   /**
@@ -71,19 +93,30 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
         <form action={markMissionDone} className="mt-2 grid gap-1.5">
           <input type="hidden" name="missionId" value={m.id} />
           {/* 🔴 사진은 선택이다. 필수로 하면 찍을 수 없는 실천은 아예 못 올린다 */}
-          <label className="grid gap-1">
-            <span className="text-[0.72em] text-ink-mute">{photoLabel}</span>
-            {/* 🔴 `capture` 를 넣지 않는다 — 강제 촬영은 요구가 아니다.
-                이미 찍어 둔 사진도 고를 수 있어야 한다 */}
-            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
-                   className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-[0.72em]" />
-            <span className="text-[0.7em] text-ink-mute">{photoNotice}</span>
-          </label>
+          <PhotoField label={photoLabel} />
           <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
             {doneLabel}
           </button>
         </form>
       ) : null}
+      {/*
+        🔴 **완료 뒤에도 사진을 붙일 수 있어야 한다.** 아이는 **하고 나서** 찍는다 —
+           누르기 전에 찍어 두라는 건 어른의 순서다. 예전엔 이 길이 아예 없었다.
+        🔴 이미 붙였으면 그렇다고 **말해 준다.** 안 그러면 「올라갔나?」 싶어 또 올린다.
+      */}
+      {action === "undo" ? (
+        <form action={attachMissionPhoto} className="mt-2 grid gap-1.5">
+          <input type="hidden" name="missionId" value={m.id} />
+          {m.hasPhoto ? (
+            <p className="text-[0.76em] font-bold text-primary-d">{photoAttached}</p>
+          ) : null}
+          <PhotoField label={m.hasPhoto ? photoReplace : photoLater} />
+          <button className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-[0.8em] font-bold text-primary-d">
+            {m.hasPhoto ? photoReplace : photoLater}
+          </button>
+        </form>
+      ) : null}
+
       {action === "undo" ? (
         <form action={undoMissionDone} className="mt-2">
           <input type="hidden" name="missionId" value={m.id} />
@@ -96,7 +129,11 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
   );
 }
 
-export default async function ChildMissionsPage() {
+export default async function ChildMissionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ photo?: string }>;
+}) {
   const access = await currentChild();
   if (!access.ok) {
     return (
@@ -106,11 +143,21 @@ export default async function ChildMissionsPage() {
     );
   }
 
-  const board = await getMissionBoard(access.childId);
+  const [board, sp] = await Promise.all([getMissionBoard(access.childId), searchParams]);
+  const photoMsg = sp.photo ? photoResult[sp.photo] ?? photoResult.NOT_FOUND : null;
   const nothing = board.todo.length + board.waiting.length + board.settled.length === 0;
 
   return (
     <Screen role="아이 화면" title="미션">
+      {/* 🔴 사진이 올라갔는지 · 왜 안 됐는지 **말해 준다.** 조용히 넘기면 또 올린다 */}
+      {photoMsg ? (
+        <p className={`mb-2 rounded-card border px-3 py-2 text-center text-[0.84em] font-bold ${
+          sp.photo === "ok" ? "border-primary-l bg-primary-bg text-primary-d"
+                            : "border-miss-line bg-miss-bg text-miss"}`}>
+          {photoMsg}
+        </p>
+      ) : null}
+
       {/* 🔴 **미션과 실천이 아이 눈에 똑같다.** 이 화면이 무엇인지 먼저 말한다 */}
       <p className="mb-2 text-[0.78em] leading-relaxed text-ink-mute">{intro}</p>
 

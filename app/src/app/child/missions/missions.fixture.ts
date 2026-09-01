@@ -26,6 +26,24 @@ export const doneLabel = "했어요";
  */
 export const photoLabel = "사진 보여주기 (안 해도 돼요)";
 export const photoNotice = "부모님만 보시고 바로 지워져요.";
+
+/**
+ * 🔴 **완료 뒤에도 붙일 수 있어야 한다.** 예전엔 사진칸이 「했어요」 버튼과 같은 폼에만
+ *    있어서, 한 번 누르고 나면 붙일 방법이 **아예 없었다.**
+ *    아이는 **하고 나서** 찍는다 — 누르기 전에 찍어 두라는 건 어른의 순서다.
+ */
+export const photoLater = "사진 나중에 보여주기";
+export const photoAttached = "📷 사진을 보여줬어요";
+export const photoReplace = "다른 사진으로 바꾸기";
+
+/** 🔴 실패를 조용히 넘기지 않는다. 「올라갔겠지」로 넘어가면 안 된다 */
+export const photoResult: Record<string, string> = {
+  ok: "사진을 보여줬어요. 부모님이 보시면 바로 지워져요.",
+  BAD_MIME: "이 사진은 못 올려요. 사진으로 다시 찍어 볼래요?",
+  TOO_LARGE: "사진이 너무 커요. 조금 작게 찍어 볼래요?",
+  EMPTY: "사진이 비어 있어요. 다시 골라 볼래요?",
+  NOT_FOUND: "이 미션에는 지금 사진을 붙일 수 없어요.",
+};
 export const undoLabel = "아니에요";
 
 /** 🔴 「승인 대기」를 「미실천」과 구별해 말한다 (AC-6.2) */

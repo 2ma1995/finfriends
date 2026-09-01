@@ -56,7 +56,7 @@ function toView(r: {
   id: string; title: string; topic: string; reward: number; payoutWon: number;
   state: string; doneAt: Date | null; decidedAt: Date | null; rejectReason: string | null;
   sourceId?: string | null;
-}): MissionView {
+}, withPhoto = new Set<string>()): MissionView {
   const topic = r.topic as Topic;
   const bucket = bucketOf(r.state, r.doneAt);
   return {
@@ -67,7 +67,15 @@ function toView(r: {
     rejectReason: r.rejectReason,
     backfilled: r.state === "BACKFILLED",
     fromLesson: r.sourceId != null,
-    hasPhoto: false,
+    /**
+     * 🔴 **늘 `false` 로 박혀 있었다.** 아이가 사진을 올렸는지 화면이 알 길이 없어서
+     *    「올라갔나?」 싶으면 다시 올리는 것 말고는 확인할 방법이 없었다.
+     *
+     * 🔴 **조인이 아니라 따로 센다.** `mission_photos` 는 `mission_id` 만 갖고
+     *    Prisma 관계가 없다 — 관계를 걸면 FK 가 생기고 마이그레이션이 필요하다.
+     *    `bytes` 를 절대 안 읽는 것도 중요하다. 목록에 사진 원본이 딸려 오면 안 된다.
+     */
+    hasPhoto: withPhoto.has(r.id),
   };
 }
 
@@ -93,7 +101,14 @@ export async function getMissionBoard(childId: string): Promise<MissionBoardView
     },
   });
 
-  const views = rows.map(toView);
+  // 🔴 id 만 가져온다 — `bytes` 를 목록에서 읽으면 사진 원본이 통째로 딸려 온다
+  const shots = await prisma.missionPhoto.findMany({
+    where: { missionId: { in: rows.map((r) => r.id) } },
+    select: { missionId: true },
+  });
+  const withPhoto = new Set(shots.map((s) => s.missionId));
+
+  const views = rows.map((r) => toView(r, withPhoto));
   return {
     todo: views.filter((v) => v.bucket === "TODO"),
     waiting: views.filter((v) => v.bucket === "WAITING"),
@@ -148,7 +163,7 @@ export async function listPendingForGuardian(guardianId: string) {
       state: true, doneAt: true, decidedAt: true, rejectReason: true, sourceId: true,
     },
   });
-  return rows.map(toView);
+  return rows.map((r) => toView(r));
 }
 
 /**
@@ -325,7 +340,7 @@ export async function listOpenForGuardian(guardianId: string) {
       state: true, doneAt: true, decidedAt: true, rejectReason: true,
     },
   });
-  return rows.map(toView);
+  return rows.map((r) => toView(r));
 }
 
 /** 이 편의 실천을 지금 어디까지 왔나 — 학습 화면이 읽는다 */
