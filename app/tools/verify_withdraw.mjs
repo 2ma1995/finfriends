@@ -95,6 +95,42 @@ try {
   check("인증 사용자가 사라졌다", (await prisma.devAuthUser.findUnique({ where: { id: user.id } })) === null, "고아 인증 사용자를 남기지 않는다");
 
   user = null;
+  /**
+   * 🔴 **고아가 남지 않는가 — 상시 불변식.**
+   *
+   *    「떠남」이 그렇게 남았다. 검증의 `catch` 가 `dev_auth.users` 만 지우고
+   *    보호자·아이·활동 기록은 남겼다 — **이메일이 없으니 접두사로 못 찾는데
+   *    나무·숲 집계에는 잡힌다.**
+   *
+   *    실제 탈퇴(`withdrawAccount`)는 삭제 전부가 **한 트랜잭션**이라 실패하면
+   *    아무것도 안 지워진다 — 그 경로로는 고아가 생기지 않는다.
+   *    그래도 여기서 **매번 센다.** 어디서 새든 이 검사에 걸린다.
+   *
+   * 🔴 `dev-guardian`(시드)은 뺀다. 그것도 `dev_auth` 행이 없지만 일부러 그렇게 만든 것이다.
+   */
+  const authIds = new Set(
+    (await prisma.devAuthUser.findMany({ select: { id: true } })).map((u) => u.id),
+  );
+  const orphanGuardians = (await prisma.guardianAccount.findMany({ select: { id: true, authRef: true } }))
+    .filter((g) => g.authRef !== "dev-guardian" && !authIds.has(g.authRef));
+  check("🔴 고아 보호자 0건", orphanGuardians.length === 0,
+    orphanGuardians.length ? `${orphanGuardians.length}건 — npm run db:cleanup 으로 거둔다` : "인증 사용자 없는 보호자가 없다");
+
+  const guardianIds = new Set(
+    (await prisma.guardianAccount.findMany({ select: { id: true } })).map((g) => g.id),
+  );
+  const orphanChildren = (await prisma.childAccount.findMany({ select: { id: true, guardianId: true } }))
+    .filter((c) => !guardianIds.has(c.guardianId));
+  check("🔴 고아 아이 0건", orphanChildren.length === 0, "보호자 없는 아이가 없다");
+
+  const childIdsAll = new Set(
+    (await prisma.childAccount.findMany({ select: { id: true } })).map((c) => c.id),
+  );
+  const orphanStars = (await prisma.starLedgerEntry.findMany({ select: { childId: true } }))
+    .filter((s) => !childIdsAll.has(s.childId));
+  check("🔴 주인 없는 별 원장 0건", orphanStars.length === 0,
+    "아이가 지워졌는데 별이 남으면 숲 집계가 부풀려진다");
+
   check("정리 완료", true);
 } catch (e) {
   console.error("\n예외:", e.message); failed++;

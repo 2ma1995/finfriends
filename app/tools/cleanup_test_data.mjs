@@ -18,8 +18,14 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:55432/finfriends" }) });
 const APPLY = process.argv.includes("--yes");
 
-/** 검증 스크립트가 쓰는 이메일 접두사 — 이것만 지운다 */
-const PREFIXES = ["loop-", "bye-", "bank-", "cyc-", "lock-", "child-", "consent-", "verify-"];
+/**
+ * 검증 스크립트가 쓰는 이메일 접두사 — **이것만** 지운다.
+ *
+ * 🔴 **접두사만으로는 못 잡는 것이 있다.** 도메인이 다르면(`@x.local` 등)
+ *    이 목록에 안 걸린다. 그래서 아래 **고아 보호자** 판정이 두 번째 그물이다.
+ *    새 검증 스크립트를 만들면 `verify-` 로 시작하는 이메일을 쓴다.
+ */
+const PREFIXES = ["loop-", "bye-", "bank-", "cyc-", "lock-", "child-", "consent-", "verify-", "erase-check-"];
 
 const users = await prisma.devAuthUser.findMany({
   where: { OR: PREFIXES.map((p) => ({ email: { startsWith: p } })) },

@@ -58,8 +58,18 @@ if (prev) {
 const g = await prisma.guardianAccount.create({
   data: { authRef: "dev-guardian", consentCompleted: true, consentAt: new Date(), childModePinHash: h("1234") },
 });
+/**
+ * 🔴 **이름이 「(시드)테스트」다.** 전에는 「서연」이었다.
+ *
+ *    사람 이름을 쓰니 실제 가입 계정과 구별이 안 됐다 — 사용자가 두 번 물었다
+ *    (「서연이가 누구야」 · 「서연은 없어도 되는 거 아니야」).
+ *    보고서에도 화면에도 섞여 나오는데, **로그인할 수 없는 계정**이다
+ *    (`dev-guardian` 은 이메일도 비밀번호도 없다).
+ *
+ *    이름 앞에 「(시드)」를 붙이면 **어디서 보든 가짜인 줄 안다.**
+ */
 const c = await prisma.childAccount.create({
-  data: { guardianId: g.id, displayName: "서연", birthYear: 2017, state: "ACTIVE" },
+  data: { guardianId: g.id, displayName: "(시드)테스트", birthYear: 2017, state: "ACTIVE" },
 });
 await prisma.treeState.createMany({
   data: ["EARN", "SPEND", "SAVE", "GROW"].map((slot) => ({ childId: c.id, slot, cycleStartedAt: new Date() })),
