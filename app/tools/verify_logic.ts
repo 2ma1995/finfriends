@@ -203,13 +203,15 @@ check("🔴 탈퇴가 트랜잭션이다", /\$transaction\(\[/.test(src("modules
  */
 {
   const now = new Date(Date.UTC(2026, 8, 1, 10, 0));
-  check("🔴 부모용은 시각이 붙는다", exactWhen(new Date(Date.UTC(2026, 8, 1, 5, 32)), now) === "오늘 14:32",
-    "「오늘」만 있으면 되돌릴 줄을 고를 수 없다");
-  check("  KST 로 읽는다", exactWhen(new Date(Date.UTC(2026, 8, 1, 15, 5)), new Date(Date.UTC(2026, 8, 1, 16, 0))) === "오늘 00:05",
+  check("🔴 부모용은 날짜와 시각을 적는다", exactWhen(new Date(Date.UTC(2026, 8, 1, 5, 32)), now) === "9월 1일 14:32",
+    "「오늘」은 줄이 전부 같은 날일 때 모든 줄에 붙어 자리만 먹는다");
+  check("  같은 날이어도 「오늘」이라고 하지 않는다",
+    !exactWhen(new Date(Date.UTC(2026, 8, 1, 5, 32)), now).includes("오늘"),
+    "사용자가 두 번 지적한 자리다 — 30줄이 전부 「오늘」로 시작했다");
+  check("  KST 로 읽는다", exactWhen(new Date(Date.UTC(2026, 8, 1, 15, 5)), new Date(Date.UTC(2026, 8, 2, 16, 0))) === "9월 2일 00:05",
     "서버가 UTC 로 돌면 9시간 어긋난다 — Vercel 이 UTC 다");
-  check("  해가 다르면 해를 적는다", exactWhen(new Date(Date.UTC(2025, 8, 1, 5, 32)), now) === "2025년 9월 1일",
+  check("  해가 다르면 해를 적는다", exactWhen(new Date(Date.UTC(2025, 8, 1, 5, 32)), now) === "2025년 9월 1일 14:32",
     "안 적으면 작년 9월과 올해 9월이 같아 보인다");
-  check("  올해면 해를 안 적는다", exactWhen(new Date(Date.UTC(2026, 4, 1, 5, 32)), now) === "5월 1일 14:32");
 }
 
 /** 🔴 사본이 다시 생기지 않게 — 모듈이 자기 계산을 갖고 있으면 안 된다 */
@@ -223,6 +225,26 @@ for (const m of ["allowance", "card", "star-ledger", "mission", "plan"]) {
 check("🔴 원장 목록의 기본은 상대말이다",
   /when: "relative" \| "exact" = "relative"/.test(src("modules/allowance/index.ts")),
   "기본을 exact 로 두면 아이 화면(getPassbook)에 시각이 나간다");
+
+/**
+ * 🔴 **되돌리기는 `TOPUP` 만이다** (사용자 요청).
+ *
+ *    전에는 서버가 `ADJUST` 도 받았다. 그래서 「부모님이 고쳤어요」를 **또 되돌릴 수** 있었고
+ *    아이 통장이 「받았다 → 취소 → 취소취소」로 읽혔다.
+ *
+ *    🔴 그리고 **화면과 서버가 어긋나 있었다** — 화면은 「부모가 적은 것」을 보이고
+ *    서버는 `TOPUP`·`ADJUST` 둘을 받았다. 판정을 모듈 한 곳(`reversible`)으로 모았다.
+ */
+const allowance = src("modules/allowance/index.ts");
+check("🔴 되돌리기는 TOPUP 만 받는다", /if \(e\.code !== "TOPUP"\) return \{ ok: false, reason: "NOT_ALLOWED" \}/.test(allowance),
+  "상쇄의 상쇄는 아무도 못 읽는다 — 잘못 되돌렸으면 용돈을 다시 넣는다");
+check("  판정이 모듈에 있다", /reversible: r\.code === "TOPUP" && !undone\.has\(r\.id\)/.test(allowance),
+  "화면이 조건을 다시 조립하면 서버와 어긋난다 — 실제로 어긋나 있었다");
+check("  화면은 그 판정을 그대로 쓴다",
+  /history\.filter\(\(h\) => h\.reversible\)/.test(src("app/parent/bank/adjust/page.tsx")),
+  "화면이 byGuardian 으로 다시 걸러서 상쇄 줄이 목록에 남았다");
+check("  이미 되돌린 것은 멱등키가 막는다", /adjust:\$\{e\.id\}/.test(allowance),
+  "두 번 누르면 두 번 상쇄된다");
 
 /**
  * 🔴 **금액 버튼이 바로 넣지 않는다** (사용자 요청). 누르는 순간 적히면

@@ -26,6 +26,13 @@ export type AllowanceEntryView = {
   readonly code: string;
   /** 보호자가 적은 줄인가 — 되돌릴 수 있는 것은 이것뿐이다 */
   readonly byGuardian: boolean;
+  /**
+   * 🔴 **되돌릴 수 있는가 — 판정을 여기서 한다.** 화면이 조건을 다시 조립하면
+   *    서버(`reverseEntry`)와 어긋난다. 실제로 어긋나 있었다 —
+   *    화면은 「부모가 적은 것」을 보였고 서버는 `ADJUST` 도 받아 줘서
+   *    **상쇄 줄을 또 되돌릴 수 있었다.**
+   */
+  readonly reversible: boolean;
   readonly reversed: boolean;
 };
 
@@ -78,6 +85,7 @@ export async function getHistory(
     whenLabel: when === "exact" ? exactWhen(r.createdAt) : relativeWhen(r.createdAt),
     code: r.code,
     byGuardian: r.code === "TOPUP" || r.code === "ADJUST",
+    reversible: r.code === "TOPUP" && !undone.has(r.id),
     reversed: undone.has(r.id),
   }));
 }
@@ -154,7 +162,17 @@ export async function reverseEntry(childId: string, entryId: string, reason: str
     select: { id: true, delta: true, code: true, memo: true },
   });
   if (!e) return { ok: false, reason: "NOT_FOUND" };
-  if (e.code !== "TOPUP" && e.code !== "ADJUST") return { ok: false, reason: "NOT_ALLOWED" };
+  /**
+   * 🔴 **`TOPUP` 만 되돌린다** (2026-09-01 사용자 요청).
+   *
+   *    전에는 `ADJUST` 도 받았다. 그래서 「부모님이 고쳤어요」를 **또 되돌릴 수** 있었고,
+   *    아이 통장이 「받았다 → 취소 → 취소취소」로 읽혔다. 상쇄의 상쇄는 아무도 못 읽는다.
+   *
+   *    잘못 되돌렸으면 **용돈을 다시 넣는다.** 그게 아이 통장에 바르게 읽히는 방법이다.
+   *
+   *    🔴 화면이 버튼을 안 보여도 여기서 막는다 — Server Action 은 공개 엔드포인트다 (§6.6 ②).
+   */
+  if (e.code !== "TOPUP") return { ok: false, reason: "NOT_ALLOWED" };
 
   const key = `adjust:${e.id}`;
   const already = await prisma.allowanceEntry.findUnique({ where: { idempotencyKey: key }, select: { id: true } });

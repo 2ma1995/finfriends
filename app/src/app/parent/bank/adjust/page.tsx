@@ -33,8 +33,11 @@ export default async function BankAdjustPage({
 
   const [sp, child] = await Promise.all([searchParams, findChild(guardian.guardianId)]);
   const history = child ? await getHistory(child.id, 50, "exact") : [];
-  // 🔴 되돌릴 수 있는 것만. 보호자가 적었고 아직 안 되돌린 줄이다
-  const fixable = history.filter((h) => h.byGuardian && !h.reversed);
+  /**
+   * 🔴 **조건을 여기서 조립하지 않는다.** 모듈이 `reversible` 로 판정한다 —
+   *    화면이 다시 조립하면 서버(`reverseEntry`)와 어긋난다. 실제로 어긋나 있었다.
+   */
+  const fixable = history.filter((h) => h.reversible);
 
   return (
     <Screen role="부모 화면" title={title} sub={child ? `${child.displayName} · ${sub}` : sub}
@@ -84,7 +87,7 @@ export default async function BankAdjustPage({
       )}
 
       {/* 이미 되돌린 것 — 왜 목록에 없는지 알 수 있게 */}
-      {history.some((h) => h.byGuardian && h.reversed) ? (
+      {history.some((h) => h.reversed) ? (
         <p className="mt-2 text-cap text-ink-mute">{reversedBadge} — 되돌린 기록은 「기록」에 남아 있어요.</p>
       ) : null}
 
