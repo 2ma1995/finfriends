@@ -7,6 +7,10 @@
  * 🔴 **잔액은 용돈 원장의 합이다** — 컬럼에 따로 저장하지 않는다 (인계 문서 규칙 ①).
  *    보호자가 넣은 그 줄을 아이 화면이 그대로 읽는다. 두 곳에 두면 숫자가 갈린다.
  *
+ * 🔴 **「잔액」은 한 숫자가 아니다.** 목표에 떼어 둔 돈은 쓴 게 아니라 묶인 것이고,
+ *    원장 합에는 잡히지 않는다. 실제 통장의 「출금가능금액」과 「잔액」이 다른 것과 같다.
+ *    세는 것은 `modules/allowance.getWalletTotals` **하나뿐**이다 — 각자 세면 또 갈린다.
+ *
  * 🔴 **앱이 돈을 보관하지 않는다** (D18). 원장은 「얼마 줬다」는 기록이고 실제 돈은
  *    현금이나 부모 카드로 앱 밖에서 오간다. 실제 충전은 `requestTopUp`(§6.1 진입점 9번)이
  *    제휴사 API 를 부르며, 착수 조건 D1(수수료율 · SLA)이 미확정이다.
@@ -27,13 +31,19 @@ export const INTEREST_CHOICES = [0, 1, 3, 5, 10] as const;
 
 export type BankView = {
   readonly childName: string | null;
-  /** 🔴 원장(`activity.allowance_ledger`)의 합이다. 저장된 컬럼이 아니다 */
-  readonly balanceWon: number;
+  /**
+   * 🔴 **아이가 가진 돈 전체** = 쓸 수 있는 돈 + 목표에 넣어 둔 돈.
+   *    원장 합만 보여주면 목표에 떼어 둔 돈이 **사라진 것처럼** 보인다 —
+   *    실제로 20,000원을 준 뒤 화면에 10,500원만 떴다.
+   */
+  readonly totalWon: number;
+  /** 지금 바로 쓸 수 있는 돈 — 원장(`activity.allowance_ledger`)의 합이다 */
+  readonly freeWon: number;
+  /** 🔴 목표에 묶인 돈. **쓴 게 아니다.** 이자가 붙는 대상이기도 하다 */
+  readonly setAsideWon: number;
   /** 카드가 사용 중이어야 아이가 이 돈을 실제로 쓸 수 있다 */
   readonly cardActive: boolean;
   readonly interestPct: number | null;
-  /** 아이가 모으기 목표에 넣어 둔 금액 합계 — 이자의 대상이다 */
-  readonly savedWon: number;
   /**
    * 이자율을 적용하면 얼마인가. 🔴 **지급 주기가 D6 미결**이라
    * 「한 번 줄 때」 기준으로만 보여주고 자동 지급은 하지 않는다.

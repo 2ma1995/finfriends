@@ -4,13 +4,13 @@ import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { INTEREST_CHOICES, TOPUP_AMOUNTS } from "@/contracts/bank";
 import { findChild } from "@/modules/consent";
 import { getBank } from "@/modules/bank";
-import { getHistory } from "@/modules/allowance";
+import { MOVED_CODES, getHistory } from "@/modules/allowance";
 import { reverseEntryAction, setInterestAction, topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
-  balanceLabel, cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
-  historyTitle, interestNotice, missionNotice, moneyNotice, reversedBadge, savedNotice,
-  shortNotice, starSeparation, topUpErrors, topUpTitle,
+  cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
+  historyTitle, interestNotice, missionNotice, moneyNotice, movedBadge, reversedBadge,
+  savedNotice, shortNotice, starSeparation, topUpErrors, topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
@@ -89,10 +89,30 @@ export default async function ParentBankPage({
         <p className="mt-2 text-[0.8em] leading-relaxed text-ink-mute">{starSeparation}</p>
       </Card>
 
-      {/* ── 잔액과 충전 ── */}
-      <div className="mt-2.5 rounded-card border border-line-2 bg-sand p-3 text-center">
-        <span className="block text-[0.72em] text-ink-mute">{balanceLabel}</span>
-        <b className="text-[1.6em] tabular-nums">{won(view.balanceWon)}</b>
+      {/*
+        ── 아이가 가진 돈 ──
+        🔴 세 갈래를 **이자 카드 밖**에 둔다. 이자는 부가 기능인데 그 안에 원금을 두면
+           이자율을 안 정한 부모에게는 목표에 묶인 돈이 화면 어디에도 없다. 그랬다.
+      */}
+      <div className="mt-2.5 rounded-card border border-line-2 bg-sand p-3">
+        <div className="text-center">
+          <span className="block text-[0.72em] text-ink-mute">{walletLabels.total(child.displayName)}</span>
+          <b className="text-[1.6em] tabular-nums">{won(view.totalWon)}</b>
+        </div>
+        <div className="mt-2 grid gap-1 border-t border-line pt-2">
+          <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
+            <span className="text-ink-mute">{walletLabels.free}</span>
+            <b className="tabular-nums">{won(view.freeWon)}</b>
+          </div>
+          <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
+            <span className="text-ink-mute">{walletLabels.setAside}</span>
+            <b className="tabular-nums">{won(view.setAsideWon)}</b>
+          </div>
+          {/* 🔴 숫자만 보면 「어디 갔지」가 된다 */}
+          {view.setAsideWon > 0 ? (
+            <p className="text-[0.76em] leading-relaxed text-ink-mute">{walletLabels.setAsideNote}</p>
+          ) : null}
+        </div>
       </div>
 
       <section className="mt-2.5">
@@ -134,6 +154,10 @@ export default async function ParentBankPage({
                     {h.delta > 0 ? "+" : ""}{won(h.delta)}
                   </b>
                 </div>
+                {/* 🔴 목표로 옮긴 것은 **쓴 게 아니다.** 같은 「나감」으로 보이면 그렇게 읽힌다 */}
+                {MOVED_CODES.includes(h.code) ? (
+                  <p className="mt-1 text-[0.72em] text-ink-mute">{movedBadge}</p>
+                ) : null}
                 {/* 🔴 보호자가 적은 줄만 되돌린다. 아이가 적은 것은 아이 쪽에서 되돌린다 */}
                 {h.byGuardian && !h.reversed ? (
                   <form action={reverseEntryAction} className="mt-1.5 flex gap-1.5">
@@ -184,11 +208,8 @@ export default async function ParentBankPage({
 
             {view.interestPct !== null ? (
               <div className="mt-2 rounded-card border border-line bg-surface px-3 py-2">
+                {/* 🔴 「모은 돈」은 위 세 갈래에 이미 있다. 여기 또 두면 두 자리를 맞춰야 한다 */}
                 <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
-                  <span className="text-ink-mute">{child.displayName}이 모은 돈</span>
-                  <b className="tabular-nums">{won(view.savedWon)}</b>
-                </div>
-                <div className="mt-1 flex items-baseline justify-between gap-2 text-[0.82em]">
                   <span className="text-ink-mute">한 번 줄 때 이자</span>
                   <b className="tabular-nums text-primary-d">{won(view.interestWon)}</b>
                 </div>

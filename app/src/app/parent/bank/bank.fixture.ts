@@ -26,7 +26,19 @@ export const starSeparation = "별과 용돈은 서로 바꿀 수 없습니다. 
 /** 카드가 사용 중이 아니면 아이가 이 돈을 실제로 쓸 곳이 없다 */
 export const cardNeeded = "카드를 등록하면 아이가 이 돈을 실제로 쓸 수 있어요.";
 
-export const balanceLabel = "지금 남은 용돈";
+/**
+ * 🔴 **세 갈래를 한 자리에 보여준다.** 「쓸 수 있는 돈」만 크게 두면
+ *    목표에 묶인 돈이 사라진 것처럼 보인다 — 20,000원을 줬는데 10,500원만 떴다.
+ *    이 세 줄은 **이자 카드 밖**에 있어야 한다. 이자는 부가 기능인데
+ *    그 안에 원금을 두면, 이자율을 안 정한 부모에게는 원금이 아예 안 보인다.
+ */
+export const walletLabels = {
+  total: (name: string) => `${name}이 가진 돈`,
+  free: "지금 쓸 수 있는 돈",
+  setAside: "목표에 넣어 둔 돈",
+  /** 🔴 숫자만 보면 「어디 갔지」가 된다. 쓴 게 아니라는 것을 그 자리에서 말한다 */
+  setAsideNote: "쓴 게 아니라 목표에 묶어 둔 돈이에요.",
+};
 export const topUpTitle = "용돈 넣기";
 export const savedNotice = "적어뒀어요. 아이 화면에 바로 보입니다.";
 
@@ -39,6 +51,8 @@ export const topUpErrors: Record<string, string> = {
 // ── 기록과 되돌리기 ──────────────────────────────────────────
 
 export const historyTitle = "최근 기록";
+/** 🔴 목표로 옮긴 줄에 붙인다. 「나감」으로 보이면 부모도 쓴 걸로 읽는다 */
+export const movedBadge = "목표로 옮김";
 /** 🔴 줄을 고치는 게 아니라 반대 줄을 적는다는 사실을 보호자에게 말한다 */
 export const fixNotice = "고치면 기록이 지워지지 않고, 되돌리는 줄이 한 줄 더 적힙니다.";
 export const fixLabel = "고치기";
@@ -51,7 +65,12 @@ export const shortNotice = (n: number) =>
 export const fixErrors: Record<string, string> = {
   NOT_ALLOWED: "아이가 적은 기록은 부모님이 지울 수 없어요. 아이 화면에서 되돌릴 수 있어요.",
   ALREADY: "이미 되돌린 기록이에요.",
-  NOTHING: "지금 남은 용돈이 없어서 되돌릴 게 없어요.",
+  /**
+   * 🔴 「남은 용돈이 없다」고 하면 안 된다 — 목표에 8,000원이 묶여 있으면
+   *    부모 눈에는 돈이 있다. 그리고 아이가 목표를 지우면(`WISH_RELEASE`)
+   *    그 돈은 다시 쓸 수 있게 되므로 **「지금은」**이라고 말한다.
+   */
+  NOTHING: "목표에 넣어 둔 돈은 지금 되돌릴 수 없어요.",
   NOT_FOUND: "찾을 수 없어요.",
 };
 

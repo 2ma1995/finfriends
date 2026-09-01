@@ -23,6 +23,16 @@ const check = (n, ok, d = "") => { console.log(`${ok ? "  OK  " : "  실패"} ${
 const balance = async (childId) =>
   (await prisma.allowanceEntry.aggregate({ where: { childId }, _sum: { delta: true } }))._sum.delta ?? 0;
 
+/** modules/allowance.getWalletTotals — 쓸 수 있는 돈 · 목표에 묶인 돈 · 가진 돈 전체 */
+async function wallet(childId) {
+  const [free, saved] = await Promise.all([
+    balance(childId),
+    prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } }),
+  ]);
+  const setAside = saved._sum.savedAmount ?? 0;
+  return { free, setAside, total: free + setAside };
+}
+
 /** modules/allowance.record — 합이 잔액이고, 0 밑으로 내려가지 않는다 */
 async function record(childId, delta, code, memo, key) {
   return prisma.$transaction(async (tx) => {
@@ -85,9 +95,20 @@ try {
   const again = await record(c.id, 5000, "TOPUP", "", key);
   check("같은 키가 두 번 와도 한 줄", again.ok && again.duplicated === true && (await balance(c.id)) === 20000);
 
-  // 아이가 쓴다 — 아이 쪽 경로
+  // 아이가 목표에 넣는다 — 🔴 쓴 게 아니라 묶인 것이다
+  await prisma.wishlist.create({ data: { childId: c.id, name: "물감 세트", targetAmount: 30000, savedAmount: 15000, rank: 1 } });
   await record(c.id, -15000, "WISH_SET_ASIDE", "목표에 넣었어요", `wish:${randomUUID()}`);
-  check("아이가 쓰면 부모 화면 잔액도 준다", (await balance(c.id)) === 5000, "같은 원장이다");
+  check("목표에 넣으면 쓸 수 있는 돈이 준다", (await balance(c.id)) === 5000, "같은 원장이다");
+
+  /**
+   * 🔴 **「잔액」이 한 숫자가 아니다.** 원장 합만 보여주면 목표에 묶인 돈이
+   *    사라진 것처럼 보인다 — 20,000원을 준 뒤 화면에 5,000원만 뜬다.
+   *    세는 곳은 `modules/allowance.getWalletTotals` 하나여야 한다.
+   */
+  const totals = await wallet(c.id);
+  check("쓸 수 있는 돈 = 원장 합", totals.free === 5000);
+  check("목표에 넣어 둔 돈이 따로 잡힌다", totals.setAside === 15000, "🔴 쓴 게 아니라 묶인 것이다");
+  check("🔴 가진 돈 전체는 줄지 않았다", totals.total === 20000, "부모가 준 20,000원 그대로");
 
   // 🔴 0 밑으로 내려가지 않는다 (규칙 ③)
   const over = await record(c.id, -9999999, "PLAN_SPEND", "너무 큼", `over:${randomUUID()}`);
@@ -120,6 +141,7 @@ try {
   check("🔴 용돈이 별을 만들지 않는다", stars === 0, "별↔저금통 전환 경로 0건");
 
   await prisma.allowanceEntry.deleteMany({ where: { childId: c.id } });
+  await prisma.wishlist.deleteMany({ where: { childId: c.id } });
   await prisma.childAccount.deleteMany({ where: { guardianId: g.id } });
   await prisma.guardianAccount.delete({ where: { id: g.id } });
   await prisma.devAuthUser.delete({ where: { id: user.id } });
@@ -131,6 +153,7 @@ try {
     if (g) {
       const kids = await prisma.childAccount.findMany({ where: { guardianId: g.id }, select: { id: true } });
       await prisma.allowanceEntry.deleteMany({ where: { childId: { in: kids.map(k => k.id) } } });
+      await prisma.wishlist.deleteMany({ where: { childId: { in: kids.map(k => k.id) } } });
       await prisma.childAccount.deleteMany({ where: { guardianId: g.id } });
       await prisma.guardianAccount.delete({ where: { id: g.id } });
     }

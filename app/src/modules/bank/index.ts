@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/db";
 import { countWaiting } from "@/modules/mission";
-import { getBalance, topUp } from "@/modules/allowance";
+import { getWalletTotals, topUp } from "@/modules/allowance";
 import { INTEREST_CHOICES, TOPUP_AMOUNTS, type BankView } from "@/contracts/bank";
 
 /**
@@ -28,31 +28,33 @@ export async function getBank(
   childId: string | null,
   childName: string | null,
 ): Promise<BankView> {
-  const [guardian, balanceWon, saved, waiting, open] = await Promise.all([
+  const [guardian, wallet, waiting, open] = await Promise.all([
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
       select: { savingsInterestPct: true, mockCardStatus: true },
     }),
-    // 🔴 컬럼이 아니라 원장의 합이다
-    childId ? getBalance(childId) : Promise.resolve(0),
-    childId
-      ? prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } })
-      : Promise.resolve({ _sum: { savedAmount: 0 } }),
+    /**
+     * 🔴 **여기서 따로 세지 않는다.** 한동안 원장 합은 allowance 에서 읽고
+     *    목표에 떼어 둔 돈은 이 파일에서 따로 집계했다 — 그래서 부모 화면과
+     *    아이 화면의 「가진 돈」이 또 갈렸다. 세는 곳은 `getWalletTotals` 하나다.
+     */
+    childId ? getWalletTotals(childId) : Promise.resolve({ free: 0, setAside: 0, total: 0 }),
     childId ? countWaiting(childId) : Promise.resolve(0),
     childId
       ? prisma.mission.count({ where: { childId, state: "PENDING", doneAt: null } })
       : Promise.resolve(0),
   ]);
 
-  const savedWon = saved._sum.savedAmount ?? 0;
+  const savedWon = wallet.setAside;
   const pct = guardian?.savingsInterestPct ?? null;
 
   return {
     childName,
-    balanceWon,
+    totalWon: wallet.total,
+    freeWon: wallet.free,
+    setAsideWon: wallet.setAside,
     cardActive: guardian?.mockCardStatus === "ACTIVE",
     interestPct: pct,
-    savedWon,
     // 🔴 한 번 줄 때 기준. 주기가 정해지지 않았으므로 자동으로 주지 않는다
     interestWon: pct === null ? 0 : Math.floor((savedWon * pct) / 100),
     waitingMissions: waiting,
