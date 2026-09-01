@@ -81,14 +81,23 @@ export default async function ChildPassbookPage({
       ) : null}
 
       {/* 🔴 카드가 언제 오는지 아이가 알아야 한다 (UX-006 배송 대기) */}
-      {/* 🔴 **읽는 것은 테두리를 안 두른다.** 누를 수 없는데 눌리게 생기면 아이가 눌러 본다 */}
-      <div className="mt-3 flex items-center gap-2.5 px-1">
-        <span className="text-[1.5em]">{stage.emoji}</span>
-        <span className="flex-1">
-          <b className="block text-sub">{stage.label}</b>
-          <span className="text-cap text-ink-mute">{stage.body}</span>
-        </span>
-      </div>
+      {/*
+        🔴 **카드가 준비되면 이 줄을 없앤다** (사용자 요청).
+           이 자리는 **기다리는 동안** 「어디까지 왔는지」를 말하는 곳이다 —
+           다 오고 나면 할 말이 없는데, 남겨 두면 매일 같은 문장이 자리를 차지한다.
+           「카드를 쓸 수 있어요」는 **한 번 읽으면 되는 말**이지 상시 표시가 아니다.
+
+        🔴 **읽는 것은 테두리를 안 두른다.** 누를 수 없는데 눌리게 생기면 아이가 눌러 본다.
+      */}
+      {p.card !== "ACTIVE" ? (
+        <div className="mt-3 flex items-center gap-2.5 px-1">
+          <span className="text-[1.5em]">{stage.emoji}</span>
+          <span className="flex-1">
+            <b className="block text-sub">{stage.label}</b>
+            <span className="text-cap text-ink-mute">{stage.body}</span>
+          </span>
+        </div>
+      ) : null}
 
       {/* 🔴 **봉투가 있던 자리다** (D41). 소비를 적고 맞춰보는 곳은 계획 카드 하나다 —
           돈 화면에서 그리로 가는 길이 없으면 아이가 못 찾는다 */}
