@@ -19,8 +19,12 @@ import { INTEREST_CHOICES, TOPUP_AMOUNTS, type BankView } from "@/contracts/bank
  * 🔴 **돈을 옮기지 않는다.** 원장은 「얼마 줬다」는 기록이고 실제 돈은 앱 밖에 있다 (D18).
  *    실제 충전은 제휴사 API 가 한다 (`requestTopUp` · §6.1 진입점 9번 · D1 미확정).
  *
- * 🔴 이자는 **지급하지 않는다.** 부모가 이자율을 정하는 것까지이며 주기가 D6 미결이다.
- *    계산해 보여주는 것과 주는 것은 다르다.
+ * 🔴 이자율은 **「우리 집 적금」의 이자**다. 아이가 신청하면 이 값이 그 약속에 박히고
+ *    만기에 보호자가 눌러 지급한다 (`modules/savings`).
+ *
+ * 🔴 한동안 이것을 「모으기 목표에 주는 이자」로 계산해 보여줬다 — 근거가 `§10.1` 의
+ *    **[검증 대기] 가정** `A3` 였고 요구사항이 아니었다. 위시리스트의 실제 보상은
+ *    `REQ-FUNC-012` 의 30 · 70 · 100% 각 ⭐1 이다 (어긋남 대장 D28).
  */
 
 export async function getBank(
@@ -47,7 +51,6 @@ export async function getBank(
       : Promise.resolve(0),
   ]);
 
-  const savedWon = wallet.setAside;
   const pct = guardian?.savingsInterestPct ?? null;
 
   return {
@@ -58,8 +61,6 @@ export async function getBank(
     lockedWon: wallet.locked,
     cardActive: guardian?.mockCardStatus === "ACTIVE",
     interestPct: pct,
-    // 🔴 한 번 줄 때 기준. 주기가 정해지지 않았으므로 자동으로 주지 않는다
-    interestWon: pct === null ? 0 : Math.floor((savedWon * pct) / 100),
     waitingMissions: waiting,
     openMissions: open,
   };

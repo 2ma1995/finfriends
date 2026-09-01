@@ -193,8 +193,9 @@ export default async function ParentBankPage({
 
       {/*
         ── 이자율 설정 · 부모가 직접 주는 이자 (§9 A3) ──
-        🔴 이 화면에는 **이자가 두 개** 있다 — 여기(모으기 목표)와 「우리 집 적금」.
-           제목이 둘 다 「이자율」이면 보호자는 어느 쪽을 정하는지 모른다. 실제로 못 알아봤다.
+        🔴 이자는 **하나뿐**이다 — 「우리 집 적금」에 붙는 이자.
+           한동안 「모으기 목표에 주는 이자」를 따로 계산해 보여줬는데, 근거가 요구사항이
+           아니라 [검증 대기] 가정(A3)이었고 지급 경로도 0건이었다 (D28).
       */}
       <section className="mt-4">
         <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{interestNotice.title}</h2>
@@ -225,20 +226,9 @@ export default async function ParentBankPage({
               ))}
             </div>
 
-            {view.interestPct !== null ? (
-              <div className="mt-2 rounded-card border border-line bg-surface px-3 py-2">
-                {/* 🔴 「모은 돈」은 위 세 갈래에 이미 있다. 여기 또 두면 두 자리를 맞춰야 한다 */}
-                <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
-                  <span className="text-ink-mute">한 번 줄 때 이자</span>
-                  <b className="tabular-nums text-primary-d">{won(view.interestWon)}</b>
-                </div>
-              </div>
-            ) : null}
-
             <p className="mt-2 text-[0.8em] leading-relaxed text-ink-soft">{interestNotice.body}</p>
-            {/* 🔴 적금 이자와 헷갈리지 않게 그 자리에서 가른다 */}
-            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-mute">{interestNotice.vsSavings}</p>
-            <p className="mt-1 text-[0.78em] leading-relaxed text-miss">{interestNotice.todo}</p>
+            {/* 🔴 약속한 뒤에 바꿔도 이미 걸린 약속은 안 바뀐다 */}
+            <p className="mt-1 text-[0.8em] leading-relaxed text-ink-mute">{interestNotice.frozen}</p>
           </Card>
         </div>
       </section>
