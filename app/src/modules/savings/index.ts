@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
+
+/** 실천이 귀속되는 주기 — 벌기·잘 쓰기·모으기와 같은 달 단위다 (§6.2.1) */
+const cycleOf = (d: Date) => d.getFullYear() * 100 + (d.getMonth() + 1);
 import { getBalance, record as recordAllowance } from "@/modules/allowance";
 import { eul, i } from "@/lib/korean";
 
@@ -233,9 +236,26 @@ export async function accept(
             paidCount: p.kind === "INSTALLMENT" ? 1 : 0, lastPaidAt: now,
             ...(finalPct === undefined ? {} : { interestPct: finalPct }) },
   });
+  /**
+   * 🔴 **별만 주고 실천으로는 안 세고 있었다.** `practice_credits` 에 `GROW` 가
+   *    **0건**이라 불리기 나무의 실천 조건이 **영원히 0**이었다 —
+   *    `ADR-006` 이 「실천 0이면 학습·퀴즈를 넘쳐도 승급 못 한다」이므로
+   *    불리기 나무는 **아무리 배워도 씨앗에서 못 벗어났다.**
+   *
+   * 🔴 **불리기의 실천은 저금이 유일하다** (`D25`). 미션으로는 못 하고,
+   *    실제 금융상품 없이 인정할 수 있는 행동이 「약속하고 지키는 것」뿐이다.
+   */
+  const now2 = new Date();
+  const joinCredit = await prisma.practiceCredit.create({
+    data: {
+      childId: p.childId, triggerCode: "SAVINGS_JOINED", triggerPath: "PRACTICE",
+      topic: "GROW", approvalMode: "guardian",
+      earnedAt: now2, awardedAt: now2, cycleId: cycleOf(now2),
+    },
+  });
   await grantStar({
     childId: p.childId, triggerCode: "SAVINGS_JOINED", delta: 1,
-    idempotencyKey: `savings-join:${p.id}`,
+    idempotencyKey: `savings-join:${p.id}`, practiceId: joinCredit.id,
   });
   return { ok: true };
 }
@@ -311,9 +331,24 @@ export async function complete(guardianId: string, planId: string): Promise<Savi
   await prisma.savingsPlan.update({
     where: { id: p.id }, data: { state: "DONE", closedAt: new Date() },
   });
+  /**
+   * 🔴 **완주도 실천이다.** 가입은 「시작했다」이고 완주는 「끝까지 지켰다」다 —
+   *    불리기가 가르치려는 것이 후자이므로 ⭐10 이 붙는다 (`REQ-FUNC-014`).
+   *
+   * 🔴 **깬 것은 실천이 아니다.** `breakEarly` 에는 이것도 별도 없다 —
+   *    「만기 전에 찾으면 약속한 이자를 다 못 받는다」를 겪게 하는 것이 학습 가치다.
+   */
+  const doneAt = new Date();
+  const doneCredit = await prisma.practiceCredit.create({
+    data: {
+      childId: p.childId, triggerCode: "SAVINGS_DONE", triggerPath: "PRACTICE",
+      topic: "GROW", approvalMode: "guardian",
+      earnedAt: doneAt, awardedAt: doneAt, cycleId: cycleOf(doneAt),
+    },
+  });
   await grantStar({
     childId: p.childId, triggerCode: "SAVINGS_DONE", delta: 10,
-    idempotencyKey: `savings-done:${p.id}`,
+    idempotencyKey: `savings-done:${p.id}`, practiceId: doneCredit.id,
   });
   return { ok: true };
 }
