@@ -147,7 +147,8 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
   const [thisMonth, prevMonth] = await Promise.all([
     prisma.spendingRecord.findMany({
       where: { childId, occurredAt: { gte: monthStart } },
-      select: { actualAmount: true, merchantCategory: true, planCardId: true, categoryMatch: true },
+      select: { id: true, actualAmount: true, merchantCategory: true, planCardId: true, categoryMatch: true, occurredAt: true },
+      orderBy: { occurredAt: "desc" },
     }),
     prisma.spendingRecord.findMany({
       where: { childId, occurredAt: { gte: prevStart, lt: monthStart } },
@@ -184,6 +185,26 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
     byCategory,
     noPlanCount: thisMonth.filter((r) => r.planCardId === null).length,
     recordCount: thisMonth.length,
+    /**
+     * 🔴 **집계와 같은 배열에서 만든다.** 따로 조회하면 합계와 목록이 어긋난다 —
+     *    통장에서 이미 그 실수를 했다 (어긋남 대장 D22).
+     */
+    records: thisMonth.map((r) => {
+      const c = categoryOf(r.merchantCategory);
+      return {
+        id: r.id,
+        dayLabel: `${r.occurredAt.getMonth() + 1}월 ${r.occurredAt.getDate()}일`,
+        icon: c.icon,
+        categoryLabel: c.label,
+        amount: r.actualAmount,
+        // 🔴 셋 다 사실 진술이다. 어느 것도 잘못을 뜻하지 않는다 (ADR-008)
+        planNote: r.planCardId === null
+          ? ("계획 없이" as const)
+          : r.categoryMatch === "MISMATCHED"
+            ? ("계획에 없던 업종" as const)
+            : ("계획에 있었어요" as const),
+      };
+    }),
   };
 }
 

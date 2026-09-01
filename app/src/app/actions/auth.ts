@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import {
   GUARDIAN_COOKIE, createGuardian, signIn, closeSession, type AuthResult,
 } from "@/lib/session/guardian-session";
+import { DEVICE_COOKIE } from "@/lib/session/device-session";
+import { MODE_COOKIE } from "@/lib/session/device-mode";
 
 /**
  * 보호자 인증 — CON-001.
@@ -25,6 +27,28 @@ const MESSAGES: Record<Exclude<AuthResult, { ok: true }>["reason"], string> = {
   WEAK_PASSWORD: "비밀번호는 8자 이상이고 숫자를 하나 이상 넣어 주세요.",
   INVALID_EMAIL: "이메일 형식을 확인해 주세요.",
 };
+
+/**
+ * 🔴 **보호자로 들어오면 아동 모드를 끈다.**
+ *
+ * 안 껐더니 이런 일이 났다 — `test@naver.com` 으로 로그인했는데 화면에 **다른 집 아이**가
+ * 나왔다. 그 브라우저에 시드가 만든 아이(`dev-guardian` 의 「서연」)의 기기 토큰이
+ * 남아 있었고, 아이 화면은 **로그인한 보호자가 아니라 기기 토큰**을 보기 때문이다.
+ * 게다가 `/parent/**` 는 미들웨어가 전부 `/child/locked` 로 돌려보내서
+ * **자기 화면에 들어갈 수가 없었다.**
+ *
+ * 🔴 아동 모드를 푸는 정식 열쇠는 PIN 이다(`D5`). **그 화면이 아직 없다.**
+ *    그래서 한 번 아이 모드가 된 브라우저는 쿠키를 손으로 지우는 것 말고는
+ *    빠져나올 방법이 없었다. 비밀번호는 4자리 PIN 보다 강한 증명이므로
+ *    그때까지 로그인이 그 역할을 겸한다 (어긋남 대장 D27).
+ *
+ * 아이가 다시 쓰려면 초대 링크를 한 번 더 열면 된다 — 지금은 `/child/enter` 한 번이다.
+ */
+async function clearChildMode() {
+  const jar = await cookies();
+  jar.delete(MODE_COOKIE);
+  jar.delete(DEVICE_COOKIE);
+}
 
 async function setSessionCookie(token: string, expiresAt: Date) {
   const jar = await cookies();
@@ -56,6 +80,7 @@ export async function signUpAction(formData: FormData) {
   if (!result.ok) backTo("/signup", result.reason, email);
 
   await setSessionCookie(result.token, result.expiresAt);
+  await clearChildMode();
   // 가입 다음은 동의다. 동의 전에는 아이 정보를 받지 않는다 (P-05 · P-22)
   redirect("/consent");
 }
@@ -68,6 +93,7 @@ export async function signInAction(formData: FormData) {
   if (!result.ok) backTo("/login", result.reason, email);
 
   await setSessionCookie(result.token, result.expiresAt);
+  await clearChildMode();
   redirect("/parent/onboarding");
 }
 
@@ -75,5 +101,7 @@ export async function signOutAction() {
   const jar = await cookies();
   await closeSession(jar.get(GUARDIAN_COOKIE)?.value);
   jar.delete(GUARDIAN_COOKIE);
+  // 🔴 나갈 때도 끈다. 안 끄면 로그아웃하자마자 남의 아이 화면으로 떨어진다
+  await clearChildMode();
   redirect("/login");
 }

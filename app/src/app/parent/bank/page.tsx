@@ -99,19 +99,30 @@ export default async function ParentBankPage({
           <span className="block text-[0.72em] text-ink-mute">{walletLabels.total(child.displayName)}</span>
           <b className="text-[1.6em] tabular-nums">{won(view.totalWon)}</b>
         </div>
+        {/*
+          🔴 **부분의 합이 항상 위 숫자와 같아야 한다.** 묶인 돈이 늘 때마다
+             줄을 손으로 더하다 보면 하나를 빠뜨리고, 그러면 「돈이 어디 갔지」가 된다.
+             0원인 줄만 감추고 **0이 아닌 것은 전부 보여준다.**
+        */}
         <div className="mt-2 grid gap-1 border-t border-line pt-2">
-          <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
-            <span className="text-ink-mute">{walletLabels.free}</span>
-            <b className="tabular-nums">{won(view.freeWon)}</b>
-          </div>
-          <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
-            <span className="text-ink-mute">{walletLabels.setAside}</span>
-            <b className="tabular-nums">{won(view.setAsideWon)}</b>
-          </div>
-          {/* 🔴 숫자만 보면 「어디 갔지」가 된다 */}
-          {view.setAsideWon > 0 ? (
-            <p className="text-[0.76em] leading-relaxed text-ink-mute">{walletLabels.setAsideNote}</p>
-          ) : null}
+          {[
+            { label: walletLabels.free, amount: view.freeWon, always: true, note: null },
+            { label: walletLabels.setAside, amount: view.setAsideWon, always: false, note: walletLabels.setAsideNote },
+            { label: walletLabels.locked, amount: view.lockedWon, always: false, note: walletLabels.lockedNote },
+          ]
+            .filter((r) => r.always || r.amount > 0)
+            .map((r) => (
+              <div key={r.label}>
+                <div className="flex items-baseline justify-between gap-2 text-[0.82em]">
+                  <span className="text-ink-mute">{r.label}</span>
+                  <b className="tabular-nums">{won(r.amount)}</b>
+                </div>
+                {/* 🔴 숫자만 보면 「어디 갔지」가 된다. 묶인 이유를 그 자리에서 말한다 */}
+                {r.note && r.amount > 0 ? (
+                  <p className="text-[0.76em] leading-relaxed text-ink-mute">{r.note}</p>
+                ) : null}
+              </div>
+            ))}
         </div>
       </div>
 

@@ -38,6 +38,9 @@ export const walletLabels = {
   setAside: "목표에 넣어 둔 돈",
   /** 🔴 숫자만 보면 「어디 갔지」가 된다. 쓴 게 아니라는 것을 그 자리에서 말한다 */
   setAsideNote: "쓴 게 아니라 목표에 묶어 둔 돈이에요.",
+  locked: "적금에 넣은 돈",
+  /** 🔴 만기 전에는 못 쓴다는 것을 말한다. 안 적으면 부모가 쓸 수 있는 줄 안다 */
+  lockedNote: "「우리 집 적금」에 묶인 돈이에요. 만기가 되면 이자와 함께 돌아옵니다.",
 };
 export const topUpTitle = "용돈 넣기";
 export const savedNotice = "적어뒀어요. 아이 화면에 바로 보입니다.";

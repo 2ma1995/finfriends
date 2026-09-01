@@ -10,6 +10,7 @@
  *
  *   node tools/verify_auth.mjs
  */
+import { readFileSync } from "node:fs";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
@@ -136,6 +137,32 @@ try {
   await prisma.childAccount.deleteMany({ where: { guardianId: guardian.id } });
   await prisma.guardianAccount.delete({ where: { id: guardian.id } });
   await prisma.devAuthUser.delete({ where: { id: user.id } });
+  /**
+   * 🔴 **보호자로 들어오면 아동 모드를 끈다** — 어긋남 대장 D27.
+   *
+   * 안 껐더니 `test@naver.com` 으로 로그인했는데 **다른 집 아이**가 화면에 나왔다.
+   * 아이 화면은 로그인한 보호자가 아니라 **기기 토큰**을 보기 때문이고,
+   * `/parent/**` 는 미들웨어가 전부 막아 자기 화면에 못 들어갔다.
+   *
+   * 쿠키 동작은 DB 로 확인할 수 없어 **소스에서 확인한다.** 지우면 이 검사가 잡는다.
+   */
+  const auth = readFileSync(new URL("../src/app/actions/auth.ts", import.meta.url), "utf8");
+  const mode = readFileSync(new URL("../src/lib/session/device-mode.ts", import.meta.url), "utf8");
+  check("🔴 아동 모드 해제 함수가 있다", /async function clearChildMode/.test(auth));
+  check("  기기 모드 쿠키를 지운다", /jar\.delete\(MODE_COOKIE\)/.test(auth));
+  check("  아이 기기 토큰을 지운다", /jar\.delete\(DEVICE_COOKIE\)/.test(auth), "남기면 남의 아이가 보인다");
+  check("  로그인·가입·로그아웃 세 곳에서 부른다",
+    (auth.match(/await clearChildMode\(\)/g) ?? []).length === 3);
+  check("  /parent 는 아동 모드에서 막힌다", /GUARDIAN_PREFIXES = \["\/parent"\]/.test(mode));
+
+  /**
+   * 기기 토큰은 **어느 보호자의 것인지** 들고 있어야 한다 —
+   * 그래야 「로그인한 보호자 ≠ 기기 주인」을 알아볼 수 있다.
+   */
+  const dev = await prisma.deviceSession.findFirst({ where: { mode: "CHILD" }, select: { guardianId: true, childId: true } });
+  check("아이 기기가 보호자를 가리킨다", dev === null || Boolean(dev.guardianId && dev.childId),
+    "없으면 남의 아이인지 알 수 없다");
+
   check("정리 완료", true);
 
   // ⑩ 🔴 실제 데이터 불변식 — 고아 인증 사용자 0건.

@@ -32,7 +32,7 @@ export const INTEREST_CHOICES = [0, 1, 3, 5, 10] as const;
 export type BankView = {
   readonly childName: string | null;
   /**
-   * 🔴 **아이가 가진 돈 전체** = 쓸 수 있는 돈 + 목표에 넣어 둔 돈.
+   * 🔴 **아이가 가진 돈 전체** = 쓸 수 있는 돈 + 목표에 넣어 둔 돈 + 적금에 넣은 돈.
    *    원장 합만 보여주면 목표에 떼어 둔 돈이 **사라진 것처럼** 보인다 —
    *    실제로 20,000원을 준 뒤 화면에 10,500원만 떴다.
    */
@@ -41,6 +41,11 @@ export type BankView = {
   readonly freeWon: number;
   /** 🔴 목표에 묶인 돈. **쓴 게 아니다.** 이자가 붙는 대상이기도 하다 */
   readonly setAsideWon: number;
+  /**
+   * 🔴 적금(「우리 집 적금」)으로 묶인 돈. 이것도 **쓴 게 아니다.**
+   *    빠뜨리면 `total ≠ free + setAside` 가 되어 또 「돈이 어디 갔지」가 된다.
+   */
+  readonly lockedWon: number;
   /** 카드가 사용 중이어야 아이가 이 돈을 실제로 쓸 수 있다 */
   readonly cardActive: boolean;
   readonly interestPct: number | null;
