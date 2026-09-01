@@ -2,8 +2,14 @@ import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook } from "@/modules/allowance";
-import { getWishlist } from "@/modules/wishlist";
-import { remainingLabel, reachedLabel } from "@/app/child/wishlist/wishlist.fixture";
+import { getWishlist, MAX_TARGET, MAX_WISHES, MIN_TARGET } from "@/modules/wishlist";
+import { addWishAction } from "@/app/actions/wishlist";
+import {
+  addLabel as wishAddSubmit, addOpenLabel as wishAddLabel, addTitle as wishAddTitle,
+  nameLabel as wishNameLabel, namePlaceholder as wishNamePlaceholder,
+  reachedLabel, remainingLabel,
+  targetLabel as wishTargetLabel, targetPlaceholder as wishTargetPlaceholder,
+} from "@/app/child/wishlist/wishlist.fixture";
 import {
   getClosed, listOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, MAX_OPEN, WANTED_CHOICES,
 } from "@/modules/savings";
@@ -242,6 +248,35 @@ export default async function ChildPassbookPage({
           ))}
         </ul>
       )}
+
+      {/*
+        🔴 **저금 옆에만 추가 버튼이 있으면 갖고 싶은 것은 못 만드는 줄 안다.**
+           같은 화면에서 한쪽만 늘릴 수 있게 두면 그건 규칙이 아니라 빠뜨린 것으로 읽힌다.
+        🔴 **적고 나면 통장으로 돌아온다.** 폼이 `from` 을 들고 간다 —
+           위시리스트 화면으로 떨어지면 「내 통장이 어디 갔지」가 된다.
+      */}
+      {wish.wishes.length < MAX_WISHES ? (
+        <AddModal label={wishAddLabel} title={wishAddTitle} closeLabel={savings.closeLabel}>
+          <form action={addWishAction} className="grid gap-2">
+            <input type="hidden" name="from" value="allowance" />
+            <label className="grid gap-1">
+              <span className="text-cap text-ink-mute">{wishNameLabel}</span>
+              <input name="name" required maxLength={30} placeholder={wishNamePlaceholder}
+                     className="min-h-touch rounded-card border border-line bg-surface px-3 text-body" />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-cap text-ink-mute">{wishTargetLabel}</span>
+              <input name="targetAmount" type="number" inputMode="numeric"
+                     min={MIN_TARGET} max={MAX_TARGET} step={1} required placeholder={wishTargetPlaceholder}
+                     className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-body font-bold tabular-nums" />
+            </label>
+            <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
+              {wishAddSubmit}
+            </button>
+          </form>
+        </AddModal>
+      ) : null}
+
 
       {/* 🔴 **지난 기록은 딴 화면이다.** 30줄이 여기 붙으면 스크롤이 기록으로 끝나고
              목표도 저금도 그 밑에 묻힌다 — 기록을 줄인 게 아니라 자리를 옮겼다 */}

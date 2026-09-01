@@ -16,9 +16,16 @@ async function child() {
   return access.childId;
 }
 
-function back(query: string) {
+/**
+ * 🔴 **적은 자리로 돌려보낸다.** 통장에서 적었는데 위시리스트 화면으로 떨어지면
+ *    아이는 「내 통장이 어디 갔지」가 된다 — 하교 모달에서 겪은 것과 같은 모양이다.
+ *    폼이 `from` 을 들고 온다.
+ */
+function back(query: string, from?: string) {
+  const to = from === "allowance" ? "/child/allowance" : "/child/wishlist";
   revalidatePath("/child/wishlist");
-  redirect(query ? `/child/wishlist?${query}` : "/child/wishlist");
+  revalidatePath("/child/allowance");
+  redirect(query ? `${to}?${query}` : to);
 }
 
 export async function addWishAction(formData: FormData) {
@@ -28,7 +35,7 @@ export async function addWishAction(formData: FormData) {
     String(formData.get("name") ?? ""),
     Number(formData.get("targetAmount") ?? 0),
   );
-  back(r.ok ? "added=1" : `error=${r.reason}`);
+  back(r.ok ? "added=1" : `error=${r.reason}`, String(formData.get("from") ?? ""));
 }
 
 export async function depositAction(formData: FormData) {

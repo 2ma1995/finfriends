@@ -136,6 +136,7 @@ export default async function ChildWishlistPage({
       {!full ? (
         <AddModal label={addOpenLabel} title={addTitle} closeLabel={closeLabel}>
           <form action={addWishAction} className="grid gap-2">
+            <input type="hidden" name="from" value="wishlist" />
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{nameLabel}</span>
               <input name="name" required maxLength={30} placeholder={namePlaceholder}

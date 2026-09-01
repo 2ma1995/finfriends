@@ -21,7 +21,9 @@ import { MAX_TOPUP, TOPUP_AMOUNTS } from "@/contracts/bank";
 import { MAX_PCT, WANTED_CHOICES } from "@/modules/savings";
 import { PIN_LENGTH, PIN_MAX_TRIES } from "@/lib/session/child-mode-pin";
 import { EXPIRE_HOURS, REMIND_HOURS } from "@/modules/mission";
-import { MAX_TOPUP, MOVED_CODES } from "@/modules/allowance";
+// 🔴 `MAX_TOPUP` 은 `modules/allowance` 가 **계약을 그대로 재수출**한 것이다 —
+//    같은 이름을 두 번 가져오면 `tsc` 가 중복으로 막는다. 계약 쪽 하나만 쓴다
+import { MOVED_CODES } from "@/modules/allowance";
 import { eul, i as iParticle, josa } from "@/lib/korean";
 import { isGuardianPath } from "@/lib/session/device-mode";
 import { pushEnabled, saveSubscription } from "@/lib/push";
