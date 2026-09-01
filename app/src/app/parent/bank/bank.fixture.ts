@@ -80,17 +80,6 @@ export const fixErrors: Record<string, string> = {
   NOT_FOUND: "찾을 수 없어요.",
 };
 
-/**
- * 봉투 재배분 이력 — `AC-020-3` 「재배분 이력이 부모 화면에 남는다」.
- *
- * 🔴 **잘못을 표시하는 목록이 아니다.** 아이가 봉투를 옮긴 것 자체는 잘못이 아니고,
- *    요구는 **부모가 바뀐 것을 아는 것**이다. 경고색을 쓰면 또 다그치는 화면이 된다 (`P-03`).
- */
-export const reallocTitle = "봉투를 바꾼 기록";
-export const reallocNotice =
-  "아이가 봉투에 담는 금액을 바꾸면 여기에 남습니다. 바꾸는 것은 잘못이 아니고, 무엇이 달라졌는지 보시라고 적어 둡니다.";
-export const reallocEmpty = "아직 바꾼 적이 없어요.";
-
 /** SRS §3 은 미션 관리도 이 화면 안에 뒀다 */
 export const missionNotice =
   "아이가 「했어요」를 누르면 승인 대기로 올라옵니다. 승인하면 별이 지급되고 그 영역의 나무가 자랍니다.";

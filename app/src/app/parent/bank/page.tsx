@@ -8,12 +8,10 @@ import { MOVED_CODES, getHistory } from "@/modules/allowance";
 import { reverseEntryAction, topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { listForGuardian } from "@/modules/savings";
-import { listReallocations } from "@/modules/envelope";
 import {
   cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
-  historyTitle, missionNotice, moneyNotice, movedBadge, reallocEmpty, reallocNotice,
-  reallocTitle, reversedBadge, savedNotice, shortNotice, starSeparation, topUpErrors,
-  topUpTitle, walletLabels,
+  historyTitle, missionNotice, moneyNotice, movedBadge, reversedBadge, savedNotice,
+  shortNotice, starSeparation, topUpErrors, topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
@@ -62,11 +60,10 @@ export default async function ParentBankPage({
 
   const sp = await searchParams;
   // 🔴 잔액과 기록은 **같은 원장**에서 온다. 두 곳에서 읽으면 다시 갈린다
-  const [view, history, savings, reallocs] = await Promise.all([
+  const [view, history, savings] = await Promise.all([
     getBank(guardian.guardianId, child.id, child.displayName),
     getHistory(child.id, 10),
     listForGuardian(guardian.guardianId),
-    listReallocations(child.id, 5),
   ]);
   // 🔴 만기가 된 것도 「할 일」이다 — 부모가 눌러야 아이에게 원금과 이자가 간다
   const savingsRequested = savings.requested.length + savings.active.filter((a) => a.matured).length;
@@ -199,40 +196,6 @@ export default async function ParentBankPage({
           </ul>
         </section>
       ) : null}
-
-      {/*
-        ── 봉투를 바꾼 기록 — AC-020-3 ──
-        🔴 잘못을 표시하는 목록이 아니다. 바꾼 것 자체는 잘못이 아니고
-           **부모가 바뀐 것을 아는 것**이 요구다. 경고색을 쓰지 않는다 (P-03).
-      */}
-      <section className="mt-4">
-        <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{reallocTitle}</h2>
-        {reallocs.length === 0 ? (
-          <p className="mt-1.5 text-[0.78em] text-ink-mute">{reallocEmpty}</p>
-        ) : (
-          <ul className="mt-1.5 grid gap-1">
-            {reallocs.map((r) => (
-              <li key={r.id} className="rounded-card border border-line bg-surface px-3 py-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-[0.78em] text-ink-mute">
-                    {r.at.getMonth() + 1}월 {r.at.getDate()}일
-                  </span>
-                  <b className="text-[0.82em] tabular-nums">{won(r.total)}</b>
-                </div>
-                {/* 바뀐 결과 전체를 보여준다 — 봉투 여럿을 한 번에 고칠 수 있다 */}
-                <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[0.76em] text-ink-soft">
-                  {r.envelopes.map((e) => (
-                    <span key={e.name} className="tabular-nums">
-                      {e.emoji} {e.name} {won(e.allocated)}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="mt-1.5 text-[0.74em] leading-relaxed text-ink-mute">{reallocNotice}</p>
-      </section>
 
       {/* ── 미션 관리 — SRS 는 이것도 통장 안에 뒀다 ── */}
       {/* 🔴 「불리기」 실천을 여는 자리 — 아이가 신청하면 여기로 온다 (D25) */}

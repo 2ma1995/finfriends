@@ -6,7 +6,7 @@ import { getSpendSummary } from "@/modules/plan";
 import type { SpendRecordView } from "@/contracts/plan";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
-  emptyState, legacyBadge, monthEmpty, noPrevNotice, notice, noPlanNotice, overNotice,
+  emptyState, monthEmpty, noPrevNotice, notice, noPlanNotice,
   prevRecordsTitle, recordsNotice, recordsTitle, seedNotice,
 } from "./spending.fixture";
 
@@ -15,20 +15,14 @@ export const metadata = { title: "소비 내역 · 핀프렌즈" };
 
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-/**
- * 소비 한 줄. 🔴 **이번 달과 지난달이 같은 모양이어야 한다** — 따로 쓰면 한쪽만 고쳐진다.
- * 🔴 넘긴 금액을 **음수로 쓰지 않는다.** 「−700원」은 빚으로 읽힌다.
- */
+/** 소비 한 줄. 🔴 **이번 달과 지난달이 같은 모양이어야 한다** — 따로 쓰면 한쪽만 고쳐진다 */
 function SpendRow({ r }: { r: SpendRecordView }) {
   return (
     <li className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
       <span aria-hidden className="shrink-0 text-[1.1em]">{r.icon}</span>
       <span className="min-w-0 flex-1">
         <b className="block truncate text-[0.86em] font-medium">{r.categoryLabel}</b>
-        <span className="block text-[0.74em] text-ink-mute">
-          {r.dayLabel} · {r.planNote}
-          {r.legacy ? ` · ${legacyBadge}` : ""}
-        </span>
+        <span className="block text-[0.74em] text-ink-mute">{r.dayLabel} · {r.planNote}</span>
       </span>
       <b className="shrink-0 tabular-nums text-[0.88em]">{won(r.amount)}</b>
     </li>
@@ -147,9 +141,6 @@ export default async function ParentSpendingPage() {
           <SpendRow key={r.id} r={r} />
         ))}
       </ul>
-      {view.records.some((r) => r.overBy > 0) ? (
-        <p className="mt-1.5 text-[0.72em] leading-relaxed text-ink-mute">{overNotice}</p>
-      ) : null}
       <p className="mt-1.5 text-[0.72em] leading-relaxed text-ink-mute">{recordsNotice}</p>
       <p className="mt-1 text-[0.72em] leading-relaxed text-ink-mute">{seedNotice}</p>
 

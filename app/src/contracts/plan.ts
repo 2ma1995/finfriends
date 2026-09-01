@@ -91,9 +91,7 @@ export type SpendSummaryView = {
   readonly recordCount: number;
   /**
    * 🔴 **건별 내역.** 집계만 있으면 「소비 내역」이라는 이름이 거짓이 된다 —
-   *    부모는 합계 4,500원을 보고도 무엇을 샀는지 알 수 없었다.
-   *    `REQ-FUNC-013` 은 집계까지만 요구하지만 추적표의 컴포넌트 이름이
-   *    `SpendingLedgerView` 이고 화면 이름도 「내역」이다 (어긋남 대장 D26).
+   *    부모는 합계 4,500원을 보고도 무엇을 샀는지 알 수 없었다 (어긋남 대장 D26).
    */
   readonly records: readonly SpendRecordView[];
   /**
@@ -120,16 +118,6 @@ export type SpendRecordView = {
   /**
    * 🔴 **잘못 표시가 아니다.** ⭐ 판정은 금액 단독이고(ADR-008) 업종 불일치는
    *    회고 문장을 가를 뿐 별을 막지 않는다. 화면도 그렇게 읽히게 적는다.
-   *
-   * 🔴 봉투 기록과 계획 카드 기록은 **다른 말을 한다** — 같은 문구를 쓰면 거짓이 된다.
-   *    「간식 봉투에서 썼어요」와 「계획에 있었어요」는 다른 사실이다 (어긋남 대장 D35).
    */
-  readonly planNote: string;
-  /**
-   * 🔴 **넘긴 금액을 음수로 쓰지 않는다.** 「−700원」은 아이도 부모도 **빚**으로 읽는다.
-   *    0이면 봉투 안이거나 봉투 이전 기록이다.
-   */
-  readonly overBy: number;
-  /** 봉투 이전(계획 카드) 기록인가 — 화면이 섞이지 않게 표시한다 */
-  readonly legacy: boolean;
+  readonly planNote: "계획에 있었어요" | "계획에 없던 업종" | "계획 없이";
 };
