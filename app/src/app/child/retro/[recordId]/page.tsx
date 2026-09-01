@@ -81,10 +81,17 @@ export default async function ChildRetroPage({ params }: { params: Promise<{ rec
         ) : null}
       </div>
 
-      {/* 아이가 하는 유일한 조작 — 이유를 고르게 하지 않는다 */}
-      <button className="mt-2 min-h-touch w-full rounded-card bg-primary text-[0.9em] font-bold text-white">
+      {/*
+        아이가 하는 유일한 조작 — 이유를 고르게 하지 않는다.
+
+        🔴 **아무 데도 안 가는 버튼이었다.** `<button>` 인데 폼도 핸들러도 없어서
+           눌러도 화면이 그대로였다 — 아이는 「눌렸나?」로 남는다.
+           회고를 닫고 나면 갈 곳은 **계획 카드**다. 거기서 다음 장을 적는다.
+      */}
+      <Link href="/child/plan"
+            className="mt-2 grid min-h-touch w-full place-items-center rounded-card bg-primary text-[0.9em] font-bold text-white">
         {confirmLabel}
-      </button>
+      </Link>
 
       {r.otherBranchId ? (
         <p className="mt-2 text-center text-[0.74em] text-ink-mute">
