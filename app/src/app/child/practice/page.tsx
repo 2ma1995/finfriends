@@ -5,7 +5,7 @@ import { getTodayBoard } from "@/modules/practice";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
   claim, claimed, consentRequired, done, hint, needsLesson, noDevice, quizDone, quizToday,
-  readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
+  parentMissions, readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
 } from "./practice.fixture";
 
 // 오늘의 실천 — 네 영역을 한 화면에. 🔴 「오늘 하나」가 실천을 만든다
@@ -101,7 +101,13 @@ export default async function ChildPracticePage({
         })}
       </ul>
 
-      <p className="mt-3 text-center text-[0.78em] text-ink-mute">{hint}</p>
+      {/* 🔴 부모가 만든 미션은 **금액이 걸려 있다.** 여기 실천과 다른 흐름이라 따로 보낸다 */}
+      <Link href="/child/missions"
+            className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-line bg-surface text-[0.84em] font-bold text-primary-d">
+        🎯 {parentMissions}
+      </Link>
+
+      <p className="mt-2 text-center text-[0.78em] text-ink-mute">{hint}</p>
     </Screen>
   );
 }

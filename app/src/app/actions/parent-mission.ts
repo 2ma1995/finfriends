@@ -56,16 +56,18 @@ export async function createMissionAction(formData: FormData) {
 
   const title = String(formData.get("title") ?? "");
   const topic = String(formData.get("topic") ?? "") as Topic;
-  const reward = Number.parseInt(String(formData.get("reward") ?? ""), 10);
+  // 🔴 ⭐는 REQ-FUNC-002 가 1로 못박았다. 보호자가 정하는 것은 **금액**이다
+  const reward = 1;
+  const payoutWon = Number.parseInt(String(formData.get("payoutWon") ?? "0"), 10) || 0;
 
-  const result = await createMission(g.guardianId, child.id, { title, topic, reward });
+  const result = await createMission(g.guardianId, child.id, { title, topic, reward, payoutWon });
 
   if (!result.ok) {
     const q = new URLSearchParams({
       error: CREATE_MISSION_MESSAGES[result.reason],
       title,
       topic: topic ?? "",
-      reward: Number.isNaN(reward) ? "" : String(reward),
+      payoutWon: String(payoutWon),
     });
     redirect(`/parent/bank/missions/new?${q}`);
   }
@@ -73,5 +75,7 @@ export async function createMissionAction(formData: FormData) {
   revalidatePath("/parent/bank/missions");
   revalidatePath("/parent/tree");
   revalidatePath("/child/missions");
+  // 🔴 승인하면 용돈이 들어간다 — 돈 화면도 되살린다
+  revalidatePath("/child/practice");
   redirect("/parent/bank/missions?created=1");
 }

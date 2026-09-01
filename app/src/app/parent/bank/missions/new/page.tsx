@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { REWARD_MAX, REWARD_MIN, TITLE_MAX } from "@/contracts/mission";
+import { PAYOUT_MAX, TITLE_MAX } from "@/contracts/mission";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import { findChild } from "@/modules/consent";
 import { listOpenForGuardian } from "@/modules/mission";
@@ -20,7 +20,7 @@ const OPENABLE: readonly Topic[] = ["EARN", "SPEND", "SAVE"];
 export default async function NewMissionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; title?: string; topic?: string; reward?: string }>;
+  searchParams: Promise<{ error?: string; title?: string; topic?: string; payoutWon?: string }>;
 }) {
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
@@ -46,7 +46,7 @@ export default async function NewMissionPage({
     );
   }
 
-  const { error, title, topic, reward } = await searchParams;
+  const { error, title, topic, payoutWon } = await searchParams;
   const open = await listOpenForGuardian(guardian.guardianId);
 
   return (
@@ -103,22 +103,25 @@ export default async function NewMissionPage({
           <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.topic}</small>
         </fieldset>
 
+        {/* 🔴 `REQ-FUNC-002` — 보호자가 정하는 것은 **금액**이다. ⭐는 1로 못박혀 있다.
+            미션은 「벌기」의 실체다 — 심부름하고 용돈을 받는 것이 아이가 겪는
+            유일한 「버는」 경험이다 */}
         <div className="grid gap-1">
-          <Label htmlFor="reward" className="text-[0.8em] font-normal text-ink-soft">
-            해내면 줄 별
+          <Label htmlFor="payoutWon" className="text-[0.8em] font-normal text-ink-soft">
+            해내면 줄 용돈
           </Label>
           <Input
-            id="reward"
-            name="reward"
+            id="payoutWon"
+            name="payoutWon"
             type="number"
             inputMode="numeric"
-            required
-            min={REWARD_MIN}
-            max={REWARD_MAX}
-            defaultValue={reward ?? "1"}
-            className="min-h-touch rounded-card border-line bg-surface px-3 text-[0.9em] tabular-nums text-ink"
+            min={0}
+            max={PAYOUT_MAX}
+            step={100}
+            defaultValue={payoutWon ?? "1000"}
+            className="min-h-touch rounded-card border-line bg-surface px-3 text-right text-[0.9em] tabular-nums text-ink"
           />
-          <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.reward}</small>
+          <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.payout}</small>
         </div>
 
         <div className="mt-0.5">

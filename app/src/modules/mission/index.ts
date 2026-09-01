@@ -1,11 +1,13 @@
 import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
+import { record as recordAllowance } from "@/modules/allowance";
 import { findLesson } from "@/contracts/lessons";
 import { isPracticeOpen } from "@/contracts/learning";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
   OPEN_LIMIT, REWARD_MAX, REWARD_MIN, TITLE_MAX,
+  PAYOUT_MAX,
   type CreateMissionInput, type CreateMissionResult,
   type MissionBoardView, type MissionBucket, type MissionView,
 } from "@/contracts/mission";
@@ -35,7 +37,7 @@ function whenLabel(at: Date | null, now = new Date()) {
 }
 
 function toView(r: {
-  id: string; title: string; topic: string; reward: number;
+  id: string; title: string; topic: string; reward: number; payoutWon: number;
   state: string; doneAt: Date | null; decidedAt: Date | null; rejectReason: string | null;
   sourceId?: string | null;
 }): MissionView {
@@ -44,7 +46,7 @@ function toView(r: {
   return {
     id: r.id, title: r.title, topic,
     topicLabel: TOPIC_LABEL[topic], icon: TOPIC_ICON[topic],
-    reward: r.reward, bucket,
+    reward: r.reward, payoutWon: r.payoutWon, bucket,
     whenLabel: whenLabel(bucket === "TODO" ? null : (r.decidedAt ?? r.doneAt)),
     rejectReason: r.rejectReason,
     backfilled: r.state === "BACKFILLED",
@@ -58,7 +60,7 @@ export async function getMissionBoard(childId: string): Promise<MissionBoardView
     orderBy: [{ state: "asc" }, { createdAt: "desc" }],
     take: 40,
     select: {
-      id: true, title: true, topic: true, reward: true,
+      id: true, title: true, topic: true, reward: true, payoutWon: true,
       state: true, doneAt: true, decidedAt: true, rejectReason: true, sourceId: true,
     },
   });
@@ -112,7 +114,7 @@ export async function listPendingForGuardian(guardianId: string) {
     where: { guardianId, state: "PENDING", doneAt: { not: null } },
     orderBy: { doneAt: "asc" },
     select: {
-      id: true, title: true, topic: true, reward: true,
+      id: true, title: true, topic: true, reward: true, payoutWon: true,
       state: true, doneAt: true, decidedAt: true, rejectReason: true, sourceId: true,
     },
   });
@@ -129,7 +131,8 @@ export async function listPendingForGuardian(guardianId: string) {
 export async function approveMission(guardianId: string, missionId: string) {
   const m = await prisma.mission.findFirst({
     where: { id: missionId, guardianId, state: "PENDING", doneAt: { not: null } },
-    select: { id: true, childId: true, reward: true, doneAt: true, topic: true, cycleId: true },
+    select: { id: true, childId: true, reward: true, payoutWon: true, doneAt: true,
+              topic: true, cycleId: true, title: true },
   });
   if (!m) return false;
 
@@ -173,6 +176,22 @@ export async function approveMission(guardianId: string, missionId: string) {
     practiceId: credit.id,
   });
   if (!granted.ok) return false;
+
+  /**
+   * 🔴 **금액이 걸려 있으면 용돈으로 들어간다** (`REQ-FUNC-002`).
+   *    미션은 「벌기」의 실체다 — 심부름하고 용돈을 받는 것이 아이가 겪는 유일한
+   *    **「버는」 경험**이다. 별만 주면 학습(`earn-3`)과 어긋난다.
+   *
+   * 🔴 별↔현금 전환이 아니다 (P-21). 보호자가 **일한 대가로 주는 것**이고
+   *    실제 돈은 앱 밖에서 오간다. 원장은 그 사실을 적을 뿐이다 (D18).
+   * 🔴 멱등키가 미션 id 라 두 번 승인해도 용돈은 한 번만 들어간다.
+   */
+  if (m.payoutWon > 0) {
+    await recordAllowance(
+      m.childId, m.payoutWon, "TOPUP", `${m.title} — 미션을 하고 받았어요`,
+      `mission-payout:${m.id}`,
+    );
+  }
 
   await prisma.mission.update({
     where: { id: m.id },
@@ -223,6 +242,10 @@ export async function createMission(
   if (!Number.isInteger(input.reward) || input.reward < REWARD_MIN || input.reward > REWARD_MAX) {
     return { ok: false, reason: "REWARD_OUT_OF_RANGE" };
   }
+  // 🔴 금액은 0(별만) 부터 100,000원까지. 손이 미끄러진 0 하나를 막는다
+  if (!Number.isInteger(input.payoutWon) || input.payoutWon < 0 || input.payoutWon > PAYOUT_MAX) {
+    return { ok: false, reason: "PAYOUT_OUT_OF_RANGE" };
+  }
 
   // 아직 안 한 미션이 너무 많으면 아이가 무엇부터 할지 고르지 못한다
   const open = await prisma.mission.count({
@@ -237,6 +260,7 @@ export async function createMission(
       title,
       topic: input.topic,
       reward: input.reward,
+      payoutWon: input.payoutWon,
       // 만들면 「아직 안 함」이다 — doneAt 이 null 인 PENDING
       state: "PENDING",
     },
@@ -252,7 +276,7 @@ export async function listOpenForGuardian(guardianId: string) {
     where: { guardianId, state: "PENDING", doneAt: null },
     orderBy: { createdAt: "desc" },
     select: {
-      id: true, title: true, topic: true, reward: true,
+      id: true, title: true, topic: true, reward: true, payoutWon: true,
       state: true, doneAt: true, decidedAt: true, rejectReason: true,
     },
   });
@@ -312,6 +336,8 @@ export async function claimPractice(childId: string, guardianId: string, lessonI
       title: lesson.tryIt,
       topic: lesson.topic,
       reward: 1,
+      // 🔴 학습에서 온 실천에는 금액이 없다. 아이가 스스로 금액을 정하면 그건 용돈이 아니다
+      payoutWon: 0,
       state: "PENDING",
       doneAt: new Date(),
       cycleId: cycleIdOf(),

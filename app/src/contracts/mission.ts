@@ -21,7 +21,10 @@ export type MissionView = {
   readonly topic: Topic;
   readonly topicLabel: string;
   readonly icon: string;
+  /** ⭐ 개수 — `REQ-FUNC-002` 가 1로 못박았다 */
   readonly reward: number;
+  /** 🔴 보호자가 건 **금액(원)**. 승인되면 용돈이 된다. 0이면 별만 준다 */
+  readonly payoutWon: number;
   readonly bucket: MissionBucket;
   readonly whenLabel: string | null;
   readonly rejectReason: string | null;
@@ -58,17 +61,23 @@ export const TITLE_MAX = 40;
 /** 한 아이에게 열려 있는 미션 상한. 넘치면 아이가 무엇부터 할지 못 고른다 */
 export const OPEN_LIMIT = 10;
 
+/** 🔴 미션 금액 상한 — 손이 미끄러진 0 하나를 막는다 */
+export const PAYOUT_MAX = 100_000;
+
 export type CreateMissionInput = {
   readonly title: string;
   readonly topic: Topic;
+  /** ⭐ 개수 — `REQ-FUNC-002` 가 1로 못박았다 */
   readonly reward: number;
+  /** 🔴 보호자가 건 **금액(원)**. 승인되면 용돈이 된다. 0이면 별만 준다 */
+  readonly payoutWon: number;
 };
 
 export type CreateMissionError =
   | "TITLE_REQUIRED"
   | "TITLE_TOO_LONG"
   | "TOPIC_INVALID"
-  | "REWARD_OUT_OF_RANGE"
+  | "REWARD_OUT_OF_RANGE" | "PAYOUT_OUT_OF_RANGE"
   | "TOO_MANY_OPEN"
   | "NO_CHILD"
   /** 🔴 「불리기」는 실천 경로가 닫혀 있다 (F15 · P-20) */
@@ -79,6 +88,7 @@ export const CREATE_MISSION_MESSAGES: Record<CreateMissionError, string> = {
   TITLE_TOO_LONG: `조건은 ${TITLE_MAX}자까지 쓸 수 있어요. 아이가 읽을 문장입니다.`,
   TOPIC_INVALID: "영역을 하나 골라 주세요.",
   TOPIC_LOCKED: "「불리기」는 아직 실천 경로가 열리지 않았어요.",
+  PAYOUT_OUT_OF_RANGE: "금액은 0원부터 100,000원까지 정할 수 있어요.",
   REWARD_OUT_OF_RANGE: `별은 ${REWARD_MIN}개에서 ${REWARD_MAX}개까지 정할 수 있어요.`,
   TOO_MANY_OPEN: `아직 안 한 미션이 ${OPEN_LIMIT}개예요. 하나를 마치면 새로 만들 수 있어요.`,
   NO_CHILD: "등록한 아이가 없어요.",

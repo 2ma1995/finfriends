@@ -22,7 +22,13 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
     <li className={`rounded-card border p-3 ${tone}`}>
       <div className="flex items-baseline justify-between gap-2">
         <b className="text-[0.9em]">{m.icon} {m.title}</b>
-        <span className="shrink-0 text-[0.78em] text-star-d">⭐ {m.reward}</span>
+        <span className="shrink-0 text-[0.78em]">
+          {/* 🔴 금액이 걸린 미션은 **용돈이 생긴다.** 별만 보이면 「벌기」가 안 보인다 */}
+          {m.payoutWon > 0 ? (
+            <b className="text-primary-d">{m.payoutWon.toLocaleString("ko-KR")}원</b>
+          ) : null}
+          <span className="text-star-d">{m.payoutWon > 0 ? " · " : ""}⭐ {m.reward}</span>
+        </span>
       </div>
       <div className="mt-0.5 text-[0.72em] text-ink-mute">
         {m.topicLabel}{m.whenLabel ? ` · ${m.whenLabel}` : ""}

@@ -267,8 +267,12 @@ model Mission {
   guardianId  String        @map("guardian_id") @db.Uuid
   title       String
   topic       LearningTopic
-  /// 지급할 별. 보호자가 미리 정한다
+  /// 🔴 ⭐ 개수. `REQ-FUNC-002` 가 **1로 못박았다** — 값은 금액으로 매긴다
   reward      Int           @default(1)
+  /// 🔴 보호자가 미션에 건 **금액(원)**. 승인 시 용돈 원장에 들어간다.
+  ///    미션은 「벌기」의 실체다 — 심부름하고 용돈을 받는 것이 아이가 겪는 유일한 「버는」 경험이다.
+  ///    별↔현금 전환이 아니다(P-21). 보호자가 일한 대가로 주는 것이고 실제 돈은 앱 밖에서 오간다
+  payoutWon   Int           @default(0) @map("payout_won")
   state       ApprovalState @default(PENDING)
   /// 아이가 「했어요」를 누른 시각. null 이면 아직 안 함
   doneAt      DateTime?     @map("done_at") @db.Timestamptz(6)
