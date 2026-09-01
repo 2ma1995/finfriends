@@ -25,6 +25,7 @@ import { MAX_TOPUP, MOVED_CODES } from "@/modules/allowance";
 import { eul, i as iParticle, josa } from "@/lib/korean";
 import { isGuardianPath } from "@/lib/session/device-mode";
 import { pushEnabled, saveSubscription } from "@/lib/push";
+import { exactWhen, relativeWhen } from "@/lib/when";
 
 let failed = 0;
 const check = (n: string, ok: boolean, d = "") => {
@@ -174,6 +175,68 @@ check("  미션 단위로 묶는다", /for \(const m of stale\)[\s\S]{0,900}?\$t
 
 /** 🔴 탈퇴도 한 트랜잭션이어야 한다 — 절반만 지워진 계정이 남으면 안 된다 */
 check("🔴 탈퇴가 트랜잭션이다", /\$transaction\(\[/.test(src("modules/account/index.ts")));
+
+// ── 「언제」 (D59) ──
+
+/**
+ * 🔴 **경과 시간이 아니라 달력 날짜로 센다.** 다섯 모듈이 각자 사본으로
+ *    `Math.floor((now - at) / 864e5)` 를 갖고 있었다 — 어제 23시에 적은 줄을
+ *    오늘 8시에 보면 9시간 경과라 `0` 이 되어 **「오늘」이라고 말했다.**
+ *    부모가 어제 넣은 용돈을 오늘 넣은 것으로 읽는다.
+ */
+{
+  const now = new Date(Date.UTC(2026, 8, 1, 23, 0)); // 9/2 08:00 KST
+  const at = new Date(Date.UTC(2026, 8, 1, 14, 0));  // 9/1 23:00 KST
+  check("🔴 어제 늦게 적은 줄을 「어제」라고 한다", relativeWhen(at, now) === "어제",
+    "경과 시간으로 세면 9시간이라 「오늘」이 된다");
+  check("  자정을 조금 넘겨도 날짜가 바뀐다",
+    relativeWhen(new Date(Date.UTC(2026, 8, 1, 14, 50)), new Date(Date.UTC(2026, 8, 1, 15, 30))) === "어제",
+    "KST 23:50 → 00:30 은 40분 차이지만 어제다");
+  check("  같은 날은 「오늘」이다",
+    relativeWhen(new Date(Date.UTC(2026, 8, 1, 1, 0)), new Date(Date.UTC(2026, 8, 1, 10, 0))) === "오늘");
+}
+
+/**
+ * 🔴 **부모가 줄을 고르는 화면은 시각까지 보여야 한다** (사용자 지적).
+ *    「보낸돈 수정하기」에서 오늘 적은 줄이 셋이면 셋 다 「오늘」이었다 —
+ *    어느 것을 되돌리는지 알 수 없다.
+ */
+{
+  const now = new Date(Date.UTC(2026, 8, 1, 10, 0));
+  check("🔴 부모용은 시각이 붙는다", exactWhen(new Date(Date.UTC(2026, 8, 1, 5, 32)), now) === "오늘 14:32",
+    "「오늘」만 있으면 되돌릴 줄을 고를 수 없다");
+  check("  KST 로 읽는다", exactWhen(new Date(Date.UTC(2026, 8, 1, 15, 5)), new Date(Date.UTC(2026, 8, 1, 16, 0))) === "오늘 00:05",
+    "서버가 UTC 로 돌면 9시간 어긋난다 — Vercel 이 UTC 다");
+  check("  해가 다르면 해를 적는다", exactWhen(new Date(Date.UTC(2025, 8, 1, 5, 32)), now) === "2025년 9월 1일",
+    "안 적으면 작년 9월과 올해 9월이 같아 보인다");
+  check("  올해면 해를 안 적는다", exactWhen(new Date(Date.UTC(2026, 4, 1, 5, 32)), now) === "5월 1일 14:32");
+}
+
+/** 🔴 사본이 다시 생기지 않게 — 모듈이 자기 계산을 갖고 있으면 안 된다 */
+for (const m of ["allowance", "card", "star-ledger", "mission", "plan"]) {
+  check(`  ${m} 이 자기 날짜 계산을 갖지 않는다`,
+    !/\/ 864e5\)/.test(src(`modules/${m}/index.ts`)),
+    "사본은 같은 버그를 여러 벌 갖게 된다 — 실제로 다섯 벌이었다");
+}
+
+/** 🔴 아이 화면에 시각이 새어 나가지 않는다 — 기본값이 상대말이어야 한다 */
+check("🔴 원장 목록의 기본은 상대말이다",
+  /when: "relative" \| "exact" = "relative"/.test(src("modules/allowance/index.ts")),
+  "기본을 exact 로 두면 아이 화면(getPassbook)에 시각이 나간다");
+
+/**
+ * 🔴 **금액 버튼이 바로 넣지 않는다** (사용자 요청). 누르는 순간 적히면
+ *    잘못 누른 것을 되돌릴 기회가 없다 — 아이 화면 숫자가 즉시 바뀐다.
+ */
+const topup = src("components/parent/TopUpForm.tsx");
+check("🔴 금액 버튼이 제출하지 않는다", /type="button"/.test(topup),
+  "`type` 을 빼면 폼이 제출돼 예전 동작으로 돌아간다");
+check("  누른 것이 보인다", /aria-pressed/.test(topup),
+  "칸만 조용히 바뀌면 부모가 또 누른다");
+check("  빈 칸으로는 못 누른다", /disabled=\{amount\.trim\(\)\.length === 0\}/.test(topup));
+check("  통장 화면에 즉시 제출 폼이 남지 않았다",
+  !/action=\{topUpMockAction\}[\s\S]{0,200}?type="hidden" name="amount"/.test(src("app/parent/bank/page.tsx")),
+  "숨은 amount 를 가진 폼이 남아 있으면 그 버튼은 여전히 바로 넣는다");
 
 // ── 웹 푸시 (D56) ──
 

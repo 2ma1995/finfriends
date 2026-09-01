@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { exactWhen, relativeWhen } from "@/lib/when";
 
 /**
  * 용돈 장부 — 어긋남 대장 D18.
@@ -33,10 +34,7 @@ export async function getBalance(childId: string) {
   return agg._sum.delta ?? 0;
 }
 
-function whenLabel(at: Date, now = new Date()) {
-  const days = Math.floor((now.getTime() - at.getTime()) / 864e5);
-  return days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
-}
+
 
 /** 🔴 목표로 옮긴 것은 **쓴 게 아니다.** 같은 「나감」으로 보이면 아이가 없어진 줄 안다 */
 export const MOVED_CODES = ["WISH_SET_ASIDE", "WISH_RELEASE", "SAVINGS_LOCK", "SAVINGS_RELEASE"];
@@ -51,7 +49,22 @@ const LABEL: Record<string, string> = {
   SAVINGS_RELEASE: "적금이 끝났어요",
 };
 
-export async function getHistory(childId: string, take = 20): Promise<AllowanceEntryView[]> {
+/**
+ * 원장 목록.
+ *
+ * 🔴 **「언제」의 모양을 부르는 쪽이 고른다** (2026-09-01 사용자 지적 · D59).
+ *
+ *    - `"relative"` — 「오늘 · 어제 · 3일 전」. **아이 화면**이 쓴다.
+ *      얼마나 지났는지가 아이에게 필요한 정보다.
+ *    - `"exact"` — 「오늘 14:32」. **부모가 줄을 고르는 화면**이 쓴다.
+ *      되돌릴 줄을 고르는데 셋 다 「오늘」이면 어느 것인지 알 수 없다.
+ *
+ *    🔴 기본은 `"relative"` 다. 아이 화면(`getPassbook`)이 이 함수를 부르므로
+ *       기본을 `"exact"` 로 두면 **아이에게 시각이 새어 나간다.**
+ */
+export async function getHistory(
+  childId: string, take = 20, when: "relative" | "exact" = "relative",
+): Promise<AllowanceEntryView[]> {
   const [rows, undone] = await Promise.all([
     prisma.allowanceEntry.findMany({
       where: { childId }, orderBy: { createdAt: "desc" }, take,
@@ -62,7 +75,7 @@ export async function getHistory(childId: string, take = 20): Promise<AllowanceE
   return rows.map((r) => ({
     id: r.id, delta: r.delta,
     memo: r.memo ?? LABEL[r.code] ?? "",
-    whenLabel: whenLabel(r.createdAt),
+    whenLabel: when === "exact" ? exactWhen(r.createdAt) : relativeWhen(r.createdAt),
     code: r.code,
     byGuardian: r.code === "TOPUP" || r.code === "ADJUST",
     reversed: undone.has(r.id),

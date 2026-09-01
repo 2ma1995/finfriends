@@ -32,7 +32,7 @@ export default async function BankAdjustPage({
   if (!guardian) redirect("/login");
 
   const [sp, child] = await Promise.all([searchParams, findChild(guardian.guardianId)]);
-  const history = child ? await getHistory(child.id, 50) : [];
+  const history = child ? await getHistory(child.id, 50, "exact") : [];
   // 🔴 되돌릴 수 있는 것만. 보호자가 적었고 아직 안 되돌린 줄이다
   const fixable = history.filter((h) => h.byGuardian && !h.reversed);
 

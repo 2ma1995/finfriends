@@ -42,6 +42,12 @@ export const customPlaceholder = "금액";
 export const customSubmit = "넣기";
 /** 🔴 상한을 미리 말한다 — 넣고 나서 거절되면 왜 안 되는지 모른다 */
 export const customHint = "1원부터 500,000원까지 넣을 수 있어요.";
+
+/**
+ * 🔴 **버튼이 바로 넣지 않는다는 것을 말한다** (D59). 전에는 누르는 순간 적혔으므로
+ *    부모가 예전 동작을 기억하고 있으면 눌러 놓고 넣은 줄 안다.
+ */
+export const presetHint = "금액 버튼을 누르면 칸에 적힙니다. 「넣기」를 눌러야 들어가요.";
 export const savedNotice = "적어뒀어요. 아이 화면에 바로 보입니다.";
 
 export const topUpErrors: Record<string, string> = {

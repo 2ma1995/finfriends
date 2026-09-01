@@ -32,7 +32,7 @@ export default async function BankHistoryPage() {
   if (!guardian) redirect("/login");
 
   const child = await findChild(guardian.guardianId);
-  const history = child ? await getHistory(child.id, 50) : [];
+  const history = child ? await getHistory(child.id, 50, "exact") : [];
 
   return (
     <Screen role="부모 화면" title={title} sub={child ? `${child.displayName} · ${sub}` : sub}

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { relativeWhen as whenLabel } from "@/lib/when";
 import { categoryOf } from "@/contracts/plan";
 import { categoryFromMcc, mccLabel } from "@/contracts/mcc";
 
@@ -31,10 +32,7 @@ export type CardTxnView = {
   readonly isMock: boolean;
 };
 
-function whenLabel(at: Date, now = new Date()) {
-  const days = Math.floor((now.getTime() - at.getTime()) / 864e5);
-  return days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
-}
+
 
 function toView(r: {
   id: string; amount: number; merchant: string; category: string;

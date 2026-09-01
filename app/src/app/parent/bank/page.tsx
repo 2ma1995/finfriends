@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
-import { TOPUP_AMOUNTS } from "@/contracts/bank";
 import { findChild } from "@/modules/consent";
 import { getBank } from "@/modules/bank";
 import { topUpMockAction } from "@/app/actions/parent-bank";
+import { TopUpForm } from "@/components/parent/TopUpForm";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { listForGuardian } from "@/modules/savings";
 import {
   adjustLabel, cardNeeded, customHint, customLabel, customPlaceholder, customSubmit,
-  historyLabel, missionNotice, savedNotice, topUpErrors, topUpTitle, walletLabels,
+  historyLabel, missionNotice, presetHint, savedNotice, topUpErrors, topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
@@ -116,42 +116,23 @@ export default async function ParentBankPage({
       <section className="mt-2.5">
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">{topUpTitle}</h2>
         {/*
-          🔴 금액을 직접 입력받지 않는다. 시연에 필요한 것은 「용돈을 줬다고 적는다」이지
-             임의 금액이 아니고, 입력란을 두면 실제 이체처럼 읽힌다.
+          🔴 **금액 버튼이 바로 넣지 않는다** (2026-09-01 사용자 요청 · D59).
+             누르는 순간 적히면 잘못 누른 것을 되돌릴 기회가 없다 —
+             아이 화면 숫자가 즉시 바뀌고 상쇄하는 줄을 새로 적어야 한다.
+             버튼은 칸을 채우고, 넣는 것은 「넣기」 하나다.
+
+          🔴 **클라이언트 컴포넌트다.** 누른 금액을 칸에 넣는 것은 브라우저 일이다.
+             서버 액션은 그대로 넘겨준다 — 검사는 `topUpAllowance` 가 다시 한다.
         */}
-        {/* 🔴 자주 쓰는 금액은 버튼 — 세 번 중 두 번은 이걸로 끝난다 */}
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-          {TOPUP_AMOUNTS.map((a) => (
-            <form key={a} action={topUpMockAction}>
-              <input type="hidden" name="amount" value={a} />
-              <button
-                type="submit"
-                className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub tabular-nums text-ink-soft"
-              >
-                +{a.toLocaleString("ko-KR")}
-              </button>
-            </form>
-          ))}
-        </div>
-        {/*
-          🔴 **그 밖의 금액은 직접 넣는다** (D53).
-             `type="number"` 에 `min`·`max`·`step` 을 건다 — 화면 검사일 뿐이고
-             `topUpAllowance` 가 정수와 상한을 다시 본다 (§6.6 규약 ②).
-        */}
-        <form action={topUpMockAction} className="mt-1.5 flex items-center gap-1.5">
-          <label className="sr-only" htmlFor="topup-custom">{customLabel}</label>
-          <input
-            id="topup-custom" name="amount" type="number" inputMode="numeric"
-            min={1} max={500000} step={1} required placeholder={customPlaceholder}
-            className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums"
+        <div className="mt-1.5">
+          <TopUpForm
+            action={topUpMockAction}
+            labels={{
+              srLabel: customLabel, placeholder: customPlaceholder,
+              submit: customSubmit, hint: customHint, presetHint,
+            }}
           />
-          <span className="shrink-0 text-sub text-ink-mute">원</span>
-          <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white">
-            {customSubmit}
-          </button>
-        </form>
-        {/* 🔴 상한을 미리 말한다 — 넣고 나서 거절되면 왜 안 되는지 모른다 */}
-        <p className="mt-1 text-cap leading-relaxed text-ink-mute">{customHint}</p>
+        </div>
 
         {!view.cardActive ? (
           <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{cardNeeded}</p>

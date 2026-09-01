@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/db";
+import { relativeWhen as whenLabel } from "@/lib/when";
 import type {
   GrantStarInput, GrantStarResult, StarEntryView, StarWalletView, StarTriggerCode,
 } from "@/contracts/star";
@@ -35,12 +36,7 @@ const KIND: Record<StarTriggerCode, string> = {
 };
 
 /** 아이가 이해할 수 있는 말로 (REQ-NF-014 · P-12) */
-function whenLabel(at: Date, now = new Date()) {
-  const days = Math.floor((now.getTime() - at.getTime()) / 864e5);
-  if (days <= 0) return "오늘";
-  if (days === 1) return "어제";
-  return `${days}일 전`;
-}
+
 
 export async function getBalance(childId: string): Promise<number> {
   const agg = await prisma.starLedgerEntry.aggregate({

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { relativeWhen } from "@/lib/when";
 import {
   CATEGORIES, categoryOf,
   type NewPlanCard, type PlanCardView, type RetroView,
@@ -32,9 +33,9 @@ const RETRO_EXCEEDED = (over: number) => [
   "적어두지 않았던 게 있었네요.",
 ];
 
+/** 🔴 장소를 덧붙인 변형. 「어제 · 문구점」처럼 읽힌다 */
 function whenLabel(at: Date, where: string | null, now = new Date()) {
-  const days = Math.floor((now.getTime() - at.getTime()) / 864e5);
-  const when = days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
+  const when = relativeWhen(at, now);
   return where ? `${when} · ${where}` : when;
 }
 

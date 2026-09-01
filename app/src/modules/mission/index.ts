@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { relativeWhen } from "@/lib/when";
 import { sendToGuardian } from "@/lib/push";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
@@ -46,12 +47,9 @@ function bucketOf(state: string, doneAt: Date | null): MissionBucket {
   return doneAt ? "WAITING" : "TODO";
 }
 
+/** 🔴 아직 안 한 것은 날짜가 없다 — `null` 을 그대로 흘린다 */
 function whenLabel(at: Date | null, now = new Date()) {
-  if (!at) return null;
-  const days = Math.floor((now.getTime() - at.getTime()) / 864e5);
-  if (days <= 0) return "오늘";
-  if (days === 1) return "어제";
-  return `${days}일 전`;
+  return at ? relativeWhen(at, now) : null;
 }
 
 function toView(r: {
