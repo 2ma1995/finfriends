@@ -161,11 +161,37 @@ export async function markDone(childId: string, missionId: string) {
       doneAt: new Date(), cycleId: cycleIdOf(),
     },
   });
-  return r.count === 1;
+  if (r.count !== 1) return false;
+
+  /**
+   * 🔴 **바로 알린다** (어긋남 대장 D52).
+   *    24시간을 기다리면 아이는 그 사이 아무 반응도 못 받는다 —
+   *    「했어요」를 누른 그 순간이 부모가 알아야 할 시점이다.
+   *
+   * 🔴 알림 하나로 **승인 화면의 애니메이션**도 정해진다.
+   *    안 읽은 알림이 있는 미션 카드가 움직이고, 부모가 화면을 열면 멈춘다.
+   *    「새로 온 것」을 세는 자리를 두 곳에 두면 갈린다.
+   */
+  const m = await prisma.mission.findUnique({
+    where: { id: missionId },
+    select: { guardianId: true, title: true },
+  });
+  if (m) {
+    await notifyOnce(m.guardianId, "MISSION_WAITING_NEW", missionId,
+      "미션을 끝냈어요", `「${m.title}」 확인해 주세요.`);
+  }
+  return true;
 }
 
-/** 잘못 눌렀을 때 되돌리기 — 아직 보호자가 안 봤을 때만 */
+/**
+ * 잘못 눌렀을 때 되돌리기 — 아직 보호자가 안 봤을 때만.
+ *
+ * 🔴 **알림도 거둔다.** 안 거두면 부모가 알림을 눌러 가 보는데 그 미션이 없다.
+ */
 export async function undoDone(childId: string, missionId: string) {
+  await prisma.notification.deleteMany({
+    where: { missionId, kind: "MISSION_WAITING_NEW", readAt: null },
+  });
   const r = await prisma.mission.updateMany({
     where: { id: missionId, childId, state: "PENDING", doneAt: { not: null } },
     data: { doneAt: null, cycleId: null },
@@ -184,6 +210,31 @@ export async function listPendingForGuardian(guardianId: string) {
     },
   });
   return rows.map((r) => toView(r));
+}
+
+/**
+ * 아직 부모가 **못 본** 미션 id — 승인 화면이 그 카드만 움직인다 (어긋남 대장 D52).
+ *
+ * 🔴 **알림의 읽음 여부가 기준이다.** 「새로 온 것」을 세는 자리를 두 곳에 두면 갈린다 —
+ *    잔액에서 세 번 겪은 그 모양이다.
+ */
+export async function unseenMissionIds(guardianId: string) {
+  const rows = await prisma.notification.findMany({
+    where: { guardianId, kind: "MISSION_WAITING_NEW", readAt: null, missionId: { not: null } },
+    select: { missionId: true },
+  });
+  return new Set(rows.map((r) => r.missionId as string));
+}
+
+/**
+ * 🔴 **봤다고 찍는다.** 승인 화면을 연 순간이 「확인」이다 —
+ *    승인·거절까지 기다리면 화면을 여러 번 열어도 계속 움직인다.
+ */
+export async function markMissionsSeen(guardianId: string) {
+  await prisma.notification.updateMany({
+    where: { guardianId, kind: "MISSION_WAITING_NEW", readAt: null },
+    data: { readAt: new Date() },
+  });
 }
 
 /**

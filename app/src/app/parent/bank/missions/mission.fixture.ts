@@ -57,3 +57,6 @@ export const expireNotice = "「했어요」를 누른 뒤 사흘 안에 확인�
  *    승인까지 막힌다. 그래서 **서버가 검사하고 여기로 돌려보낸다.**
  */
 export const reasonRequired = "돌려보내려면 이유를 적어 주세요. 아이 화면에 그대로 보입니다.";
+
+/** 🔴 아직 못 본 미션에 붙인다. 부모가 화면을 열면 다음부터 안 붙는다 (D52) */
+export const newBadge = "새로 왔어요";

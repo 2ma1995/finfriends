@@ -65,6 +65,47 @@ try {
   const doneAt = new Date(Date.now() - 2 * 864e5);
   const m = await prisma.mission.create({ data: { childId: c.id, guardianId: g.id, title: "신발 정리", topic: "EARN", reward: 1, state: "PENDING", doneAt, cycleId: 202608 } });
 
+  /**
+   * 🔴 **「했어요」를 누르면 바로 알린다** — 어긋남 대장 D52.
+   *    24시간을 기다리면 아이는 그 사이 아무 반응도 못 받는다.
+   *    같은 알림이 승인 화면의 애니메이션도 정한다 — 세는 자리가 하나여야 갈리지 않는다.
+   */
+  await prisma.notification.create({
+    data: { guardianId: g.id, kind: "MISSION_WAITING_NEW", missionId: m.id,
+            title: "미션을 끝냈어요", body: `「${m.title}」 확인해 주세요.` },
+  });
+  const unseen = async () => (await prisma.notification.findMany({
+    where: { guardianId: g.id, kind: "MISSION_WAITING_NEW", readAt: null, missionId: { not: null } },
+    select: { missionId: true },
+  })).map((r) => r.missionId);
+
+  check("🔴 「했어요」 직후 부모에게 알림이 남는다", (await unseen()).includes(m.id));
+
+  // markMissionsSeen — 승인 화면을 연 순간이 「확인」이다
+  await prisma.notification.updateMany({
+    where: { guardianId: g.id, kind: "MISSION_WAITING_NEW", readAt: null },
+    data: { readAt: new Date() },
+  });
+  check("🔴 화면을 열면 움직임이 멈춘다", (await unseen()).length === 0,
+    "영원히 움직이는 것은 알림이 아니라 소음이다");
+
+  // 🔴 되돌리면 알림도 거둔다 — 안 거두면 눌러 가 봤을 때 그 미션이 없다
+  const undoMission = await prisma.mission.create({
+    data: { childId: c.id, guardianId: g.id, title: "잘못 누름", topic: "EARN",
+            reward: 1, state: "PENDING", doneAt: new Date(), cycleId: 202609 },
+  });
+  await prisma.notification.create({
+    data: { guardianId: g.id, kind: "MISSION_WAITING_NEW", missionId: undoMission.id,
+            title: "미션을 끝냈어요", body: "「잘못 누름」" },
+  });
+  await prisma.notification.deleteMany({
+    where: { missionId: undoMission.id, kind: "MISSION_WAITING_NEW", readAt: null },
+  });
+  check("🔴 되돌리면 알림도 거둔다",
+    (await prisma.notification.count({ where: { missionId: undoMission.id } })) === 0,
+    "안 거두면 부모가 눌러 가 봤을 때 그 미션이 없다");
+  await prisma.mission.delete({ where: { id: undoMission.id } });
+
   const before = stageFor("EARN", 1, 1, await prisma.practiceCredit.count({ where: { childId: c.id, topic: "EARN" } }));
   check("승인 전에는 새싹", before === 0, "실천 0");
 

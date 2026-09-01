@@ -1,14 +1,14 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
-  autoCompleteStaleMissions, countOverdue, listPendingForGuardian, photoMissionIds,
-  remindStaleMissions,
+  autoCompleteStaleMissions, countOverdue, listPendingForGuardian, markMissionsSeen,
+  photoMissionIds, remindStaleMissions, unseenMissionIds,
 } from "@/modules/mission";
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
   approveLabel, BULK_THRESHOLD, bulkLabel, empty, expireNotice, fromLessonBadge,
-  needLogin, overdueNotice, photoAlt, photoNotice, reasonPlaceholder, reasonRequired,
-  rejectLabel, retroNotice,
+  needLogin, newBadge, overdueNotice, photoAlt, photoNotice, reasonPlaceholder,
+  reasonRequired, rejectLabel, retroNotice,
 } from "./mission.fixture";
 
 // PRC-001 · PRC-003 — 승인 대기와 일괄 승인
@@ -38,10 +38,19 @@ export default async function ParentMissionsPage({
   await autoCompleteStaleMissions({ guardianId: g.guardianId });
   await remindStaleMissions({ guardianId: g.guardianId });
 
-  const [pendings, overdue] = await Promise.all([
+  const [pendings, overdue, unseen] = await Promise.all([
     listPendingForGuardian(g.guardianId),
     countOverdue(g.guardianId),
+    // 🔴 아직 못 본 것 — 이 카드만 움직인다 (D52)
+    unseenMissionIds(g.guardianId),
   ]);
+
+  /**
+   * 🔴 **읽은 뒤에 찍는다.** 이 화면을 연 순간이 「확인」이다.
+   *    먼저 찍으면 이번 화면에서 「새로 왔어요」가 사라져 부모가 무엇이 새 건지 못 본다.
+   *    승인·거절까지 기다리면 화면을 여러 번 열어도 계속 움직인다.
+   */
+  await markMissionsSeen(g.guardianId);
   // 🔴 사진이 붙은 미션만 자리를 만든다. 사진은 **선택**이므로 없는 것이 정상이다
   const withPhoto = await photoMissionIds(pendings.map((p) => p.id));
 
@@ -78,11 +87,20 @@ export default async function ParentMissionsPage({
 
           <ul className="mt-2 grid gap-1.5">
             {pendings.map((p) => (
-              <li key={p.id} className="rounded-card border border-line bg-surface p-3">
+              <li
+                key={p.id}
+                className={`rounded-card border bg-surface p-3 ${
+                  unseen.has(p.id) ? "border-primary-l ff-new" : "border-line"
+                }`}
+              >
                 <div className="flex items-baseline justify-between gap-2">
                   <b className="text-[0.9em]">{p.title}</b>
                   <span className="shrink-0 text-[0.72em] text-ink-mute">{p.whenLabel}</span>
                 </div>
+                {/* 🔴 움직임만으로는 무엇이 새 건지 말이 안 된다. 글로도 적는다 */}
+                {unseen.has(p.id) ? (
+                  <p className="mt-0.5 text-[0.72em] font-bold text-primary-d">✨ {newBadge}</p>
+                ) : null}
                 {p.fromLesson ? (
                   <p className="mt-0.5 text-[0.72em] font-bold text-primary-d">📚 {fromLessonBadge}</p>
                 ) : null}
