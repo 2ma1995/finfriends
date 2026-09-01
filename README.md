@@ -73,6 +73,22 @@ npm run dev          # http://localhost:3000
 
 ```
 
+## 🔴 검증이 남긴 것을 거둔다
+
+검증 스크립트는 실제 DB 에 계정을 만든다. **예외가 나면 정리가 덜 된다** —
+`catch` 가 `dev_auth.users` 만 지우고 보호자·아이는 남긴다.
+그러면 **나무·숲 집계에 섞여 들어간다.** 실제로 두 건이 쌓여 있었다(「루프」·「떠남」).
+
+```bash
+npm run db:cleanup          # 미리 보기
+npm run db:cleanup -- --yes # 실제로 지운다
+```
+
+**사람이 만든 계정과 시드(`dev-guardian`)는 건드리지 않는다.**
+판정 기준은 검증 스크립트가 쓰는 이메일 접두사와, **인증 사용자가 없는 고아 보호자**다.
+
+---
+
 ## 🔴 검증은 사본을 만들지 않는다
 
 `verify_*.mjs` 일곱 개는 판정 로직을 **베껴** 갖고 있다. DB 불변식은 그렇게 봐도 되지만
@@ -136,6 +152,7 @@ node tools/verify_bank_ledger.mjs   # 아이 통장 · 용돈 원장 21건
 node tools/verify_withdraw.mjs      # 탈퇴 · 파기 8건
 node tools/verify_cycle_audit.mjs   # 주기 전환 · 스냅샷 · 원장 정산 10건
 npm run verify:logic                # 🔴 순수 판정 — **실제 코드를 부른다** (사본이 아니다)
+npm run db:cleanup                  # 검증이 남긴 계정·고아 보호자 거두기 (--yes 로 실제 삭제)
 npm run gate:origin                 # 오리진 분리 — 아이 화면에 부모 기능 0건
 ```
 

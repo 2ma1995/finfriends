@@ -238,6 +238,11 @@ try {
   check("정리 완료", true);
 } catch (e) {
   console.error("\n예외:", e.message); failed++;
+  /**
+   * 🔴 **예외가 나면 정리가 덜 됐다.** `dev_auth.users` 만 지우면 보호자·아이가
+   *    **고아로 남아** 나무·숲 집계에 섞여 들어간다. 실제로 두 건이 쌓였다.
+   *    남는 것이 있어도 `npm run db:cleanup` 이 거둔다 — 그게 마지막 그물이다.
+   */
   if (user) await prisma.devAuthUser.deleteMany({ where: { id: user.id } });
 }
 await prisma.$disconnect();

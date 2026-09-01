@@ -16,7 +16,8 @@
     "prebuild": "node tools/scan_child_bundle.mjs",
     "postbuild": "node tools/scan_child_bundle.mjs",
     "gate:origin": "node tools/scan_child_bundle.mjs",
-    "verify:logic": "tsx --conditions=react-server tools/verify_logic.ts"
+    "verify:logic": "tsx --conditions=react-server tools/verify_logic.ts",
+    "db:cleanup": "node tools/cleanup_test_data.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
