@@ -43,6 +43,25 @@ export async function issueDeviceToken(guardianId: string, childId: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + TTL_DAYS * 864e5);
 
+  /**
+   * 🔴 **한 번도 안 쓴 옛 등록은 거둬들인다.**
+   *
+   * 등록할 때마다 줄이 하나씩 생기는데 지우는 사람이 없어서, 브라우저 하나를 두 번
+   * 등록하면 보호자 화면에 **기기가 2개**로 보였다. 실제로 그렇게 쌓였다 —
+   * 한 아이에 6줄까지 갔다. 보호자는 어느 것을 해제해야 할지 알 수 없다.
+   *
+   * 🔴 **쓰던 기기는 건드리지 않는다.** `lastSeenAt > createdAt` 이면 실제로 들어온
+   *    적이 있는 기기다 — 아이가 태블릿과 폰을 함께 쓸 수 있으므로 그것까지 끊으면
+   *    멀쩡히 쓰던 기기가 갑자기 잠긴다. **한 번도 안 들어온 등록만** 거둔다.
+   */
+  await prisma.deviceSession.updateMany({
+    where: {
+      guardianId, childId, mode: "CHILD", revokedAt: null,
+      lastSeenAt: { lte: prisma.deviceSession.fields.createdAt },
+    },
+    data: { revokedAt: new Date() },
+  });
+
   await prisma.deviceSession.create({
     data: {
       guardianId,
@@ -68,7 +87,10 @@ export async function verifyChildAccess(token: string | undefined): Promise<Chil
 
   const device = await prisma.deviceSession.findUnique({
     where: { tokenHash: hash(token) },
-    select: { guardianId: true, childId: true, expiresAt: true, revokedAt: true, mode: true },
+    select: {
+      id: true, guardianId: true, childId: true, expiresAt: true, revokedAt: true,
+      mode: true, lastSeenAt: true,
+    },
   });
 
   if (!device || device.mode !== "CHILD" || !device.childId) return { ok: false, reason: "NO_DEVICE" };
@@ -82,6 +104,24 @@ export async function verifyChildAccess(token: string | undefined): Promise<Chil
   });
   if (!guardian?.consentCompleted) {
     return { ok: false, reason: "CONSENT_REQUIRED", guardianId: device.guardianId };
+  }
+
+  /**
+   * 🔴 **마지막 사용 시각을 남긴다.**
+   *
+   * 이걸 안 적어서 모든 기기 줄의 「마지막 사용」이 등록 시각 그대로였다 —
+   * 보호자 화면에 기기가 둘 있어도 **어느 것이 지금 쓰는 것인지 알 수 없었다.**
+   * 해제할 것을 고를 수가 없으니 목록이 있으나 마나였다.
+   *
+   * 🔴 읽기 경로에 쓰기를 넣는 것이므로 **10분에 한 번만** 적는다.
+   *    아이 화면은 진입마다 이 함수를 부른다 — 매번 쓰면 화면 한 번에 쓰기 한 번이다.
+   */
+  const TOUCH_MS = 10 * 60 * 1000;
+  if (Date.now() - device.lastSeenAt.getTime() > TOUCH_MS) {
+    await prisma.deviceSession.update({
+      where: { id: device.id },
+      data: { lastSeenAt: new Date() },
+    });
   }
 
   return { ok: true, childId: device.childId, guardianId: device.guardianId };
