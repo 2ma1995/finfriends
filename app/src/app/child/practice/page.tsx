@@ -4,7 +4,7 @@ import { currentChild } from "@/lib/session/current-child";
 import { getTodayBoard } from "@/modules/practice";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
-  claim, consentRequired, done, hint, needsLesson, noDevice, quizDone, quizToday,
+  claim, claimed, consentRequired, done, hint, needsLesson, noDevice, quizDone, quizToday,
   readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
 } from "./practice.fixture";
 
@@ -12,7 +12,11 @@ import {
 export const metadata = { title: "실천하기 · 핀프렌즈" };
 const SLUG: Record<string, string> = { EARN: "earn", SPEND: "spend", SAVE: "save", GROW: "grow" };
 
-export default async function ChildPracticePage() {
+export default async function ChildPracticePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ claimed?: string }>;
+}) {
   const access = await currentChild();
   if (!access.ok) {
     return (
@@ -22,10 +26,15 @@ export default async function ChildPracticePage() {
     );
   }
 
-  const cells = await getTodayBoard(access.childId);
+  const [cells, sp] = await Promise.all([getTodayBoard(access.childId), searchParams]);
 
   return (
     <Screen role="아이 화면" title={title} sub={sub} back={{ href: "/child/learn", label: "배우기" }}>
+      {sp.claimed ? (
+        <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
+          {claimed}
+        </p>
+      ) : null}
       {/* 🔴 네 영역을 **한 화면에 나란히** 둔다 — 무엇이 남았는지 한눈에 보여야 고른다 */}
       <ul className="grid grid-cols-2 gap-2">
         {cells.map((c) => {

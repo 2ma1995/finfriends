@@ -19,6 +19,9 @@ export const quizDone = "오늘 문제 다 풀었어요";
 export const savingsCta = "저금하러 가기 →";
 export const savingsNone = "저금을 시작하면 실천이 돼요";
 
+/** 🔴 눌렀으면 무슨 일이 일어났는지 말한다. 조용히 바뀌면 「눌렸나?」가 된다 */
+export const claimed = "올렸어요! 부모님이 확인하면 별이 붙어요.";
+
 export const hint = "네 가지를 다 할 필요는 없어요. 오늘 하나면 충분해요.";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };

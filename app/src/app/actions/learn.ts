@@ -41,7 +41,11 @@ export async function claimPracticeAction(formData: FormData) {
   if (!access.ok) redirect("/child/locked?from=%2Fchild%2Flearn");
 
   await claimPractice(access.childId, access.guardianId, id);
+  // 🔴 실천은 이제 한 화면에 모여 있다. 배우기 영역으로 보내면 아이는
+  //    자기가 누른 결과를 못 보고 「눌렸나?」가 된다
+  revalidatePath("/child/practice");
   revalidatePath("/child/learn");
   revalidatePath("/child/missions");
-  redirect(`/child/learn/${lesson.topic.toLowerCase()}?claimed=${id}`);
+  revalidatePath("/child/home");
+  redirect(`/child/practice?claimed=${lesson.topic.toLowerCase()}`);
 }
