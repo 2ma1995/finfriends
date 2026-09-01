@@ -70,20 +70,19 @@ export default async function ChildHomePage({
 
       <div className="mt-3 rounded-card border border-line bg-surface py-3">
         <RoomStage items={placed} layout={room.layout} characterId={room.characterId}
-                   wear={room.wear} turn={turn} startEdit={startEdit} />
+                   wear={room.wear} turn={turn} startEdit={startEdit}
+                   sideAction={
+                     <Link href="/child/shop"
+                           className="flex min-h-touch w-full items-center justify-center rounded-card border-2 border-primary bg-primary text-[0.88em] font-bold text-white">
+                       🛍 {shopLink}
+                     </Link>
+                   } />
         {placed.length === 0 ? (
           <p className="mt-1 text-center text-[0.74em] text-ink-mute">
             <b>{emptyRoom.title}</b> · {emptyRoom.body}
           </p>
         ) : null}
       </div>
-
-      {/* 🔴 상점은 탭에 없다. 방을 보고 나서 들어가는 자리라 **여기가 유일한 입구**다 —
-          작은 글씨 링크로 두면 아이가 못 찾는다 */}
-      <Link href="/child/shop"
-            className="mt-3 flex min-h-touch w-full items-center justify-center gap-1.5 rounded-card border-2 border-primary bg-primary-bg text-[0.9em] font-bold text-primary-d">
-        🛍 {shopLink}
-      </Link>
 
       <h2 className="mt-3 text-[0.82em] font-bold">{itemsLabel(placed.length)}</h2>
 

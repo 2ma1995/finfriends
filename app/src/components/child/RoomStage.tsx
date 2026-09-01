@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { CATALOG, DEFAULT_CHARACTER, type Item } from "@/contracts/items";
 import { saveLayoutAction } from "@/app/actions/items";
 import type { Layout } from "./Room3D";
@@ -21,7 +21,9 @@ function baseLayout(items: readonly Item[]): Layout {
   return out;
 }
 
-export function RoomStage({ items, layout: saved, characterId, wear, turn = 0, startEdit = false }: {
+export function RoomStage({
+  items, layout: saved, characterId, wear, turn = 0, startEdit = false, sideAction,
+}: {
   items: readonly Item[];
   /** 🔴 서버가 준다. 예전엔 localStorage 에 있어서 기기를 바꾸면 방이 사라졌다 */
   layout: Record<string, { x: number; z: number; ry: number; y?: number }>;
@@ -29,6 +31,11 @@ export function RoomStage({ items, layout: saved, characterId, wear, turn = 0, s
   wear: readonly string[];
   turn?: number;
   startEdit?: boolean;
+  /**
+   * 🔴 「방 꾸미기」 **옆에** 놓을 것. 상점은 서버 링크라 여기서 만들 수 없어 밖에서 받는다.
+   *    둘은 「방을 바꾸는 일」로 같은 묶음이다 — 떨어뜨려 놓으면 아이가 서로 다른 일로 안다.
+   */
+  sideAction?: ReactNode;
 }) {
   const charModel = useMemo(
     () => CATALOG.find((i) => i.id === characterId)?.model
@@ -137,10 +144,14 @@ export function RoomStage({ items, layout: saved, characterId, wear, turn = 0, s
       ) : (
         <>
           <span className="text-[0.72em] text-ink-mute">끌어서 방을 돌려보기</span>
-          <button onClick={() => setEdit(true)}
-                  className="min-h-touch w-full rounded-card border-2 border-primary bg-primary-bg text-[0.88em] font-bold text-primary-d">
-            🛠 방 꾸미기
-          </button>
+          {/* 🔴 방을 바꾸는 두 가지를 나란히 둔다 — 꾸미기와 사기 */}
+          <div className={`grid w-full gap-1.5 ${sideAction ? "grid-cols-2" : ""}`}>
+            <button onClick={() => setEdit(true)}
+                    className="min-h-touch w-full rounded-card border-2 border-primary bg-primary-bg text-[0.88em] font-bold text-primary-d">
+              🛠 방 꾸미기
+            </button>
+            {sideAction}
+          </div>
         </>
       )}
     </div>
