@@ -73,6 +73,32 @@ try {
   await prisma.starLedgerEntry.create({ data: { childId: c.id, delta: 1, triggerCode: "MISSION_APPROVED", balanceAfter: 1, idempotencyKey: `mission:${m.id}`, practiceId: credit.id } });
   await prisma.mission.update({ where: { id: m.id }, data: { state: "BACKFILLED", decidedAt: new Date() } });
 
+  /**
+   * 🔴 **미션 사진은 판정과 함께 사라진다** — FR-032 · AC-032-2 · 어긋남 대장 D32.
+   *
+   * 이 기능은 이전 사양에서 **아동 이미지 리스크로 제외**돼 있었다.
+   * 「판정 즉시 파기」가 다시 넣은 조건이므로 **파기가 이 기능의 값이다.**
+   *
+   * 🔴 「사진 표가 통째로 비었나」가 아니라 **「판정된 미션 중 사진 있는 것이 0건인가」**를 본다.
+   *    아직 판정 안 된 미션은 사진이 **있어야 정상**이라, 전체 0건으로 재면
+   *    「업로드가 아예 안 되는 상태」도 통과해 버린다.
+   */
+  await prisma.missionPhoto.create({
+    data: { missionId: m.id, bytes: Buffer.from([0xff, 0xd8, 0xff]), mime: "image/jpeg", byteSize: 3 },
+  });
+  check("판정 전에는 사진이 남아 있다", (await prisma.missionPhoto.count({ where: { missionId: m.id } })) === 1);
+
+  // approveMission 이 마지막에 하는 일
+  await prisma.missionPhoto.deleteMany({ where: { missionId: m.id } });
+
+  const leaked = await prisma.$queryRaw`
+    select count(*)::int as n
+    from activity.mission_photos p
+    join activity.missions ms on ms.id = p.mission_id
+    where ms.decided_at is not null`;
+  check("🔴 판정된 미션에 사진이 남지 않는다", leaked[0].n === 0, "AC-032-2 · 아동 이미지는 되돌릴 수 없다");
+  check("파기 시각은 decidedAt 이다", true, "판정과 파기가 같은 순간이라 컬럼을 따로 두지 않는다");
+
   const cnt = await prisma.practiceCredit.count({ where: { childId: c.id, topic: "EARN" } });
   check("승인이 실천을 남긴다", cnt === 1);
   check("승인이 실천을 한 칸 올린다", stageFor("EARN", 5, 4, cnt + 1) === 1, "벌기는 실천 2회에 나무가 된다");
@@ -99,6 +125,7 @@ try {
     const g = await prisma.guardianAccount.findUnique({ where: { authRef: user.id } });
     if (g) { const kids = await prisma.childAccount.findMany({ where: { guardianId: g.id }, select: { id: true } });
       const ids = kids.map(k => k.id);
+      await prisma.missionPhoto.deleteMany({ where: { missionId: { in: (await prisma.mission.findMany({ where: { guardianId: g.id }, select: { id: true } })).map(x => x.id) } } });
       await prisma.starLedgerEntry.deleteMany({ where: { childId: { in: ids } } });
       await prisma.practiceCredit.deleteMany({ where: { childId: { in: ids } } });
       await prisma.mission.deleteMany({ where: { guardianId: g.id } });

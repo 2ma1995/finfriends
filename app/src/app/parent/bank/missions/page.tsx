@@ -1,10 +1,10 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { listPendingForGuardian } from "@/modules/mission";
+import { listPendingForGuardian, photoMissionIds } from "@/modules/mission";
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
   approveLabel, BULK_THRESHOLD, bulkLabel, empty, fromLessonBadge, needLogin,
-  reasonPlaceholder, rejectLabel, retroNotice,
+  photoAlt, photoNotice, reasonPlaceholder, rejectLabel, retroNotice,
 } from "./mission.fixture";
 
 // PRC-001 · PRC-003 — 승인 대기와 일괄 승인
@@ -21,6 +21,8 @@ export default async function ParentMissionsPage() {
   }
 
   const pendings = await listPendingForGuardian(g.guardianId);
+  // 🔴 사진이 붙은 미션만 자리를 만든다. 사진은 **선택**이므로 없는 것이 정상이다
+  const withPhoto = await photoMissionIds(pendings.map((p) => p.id));
 
   return (
     <Screen role="부모 화면" title="승인 대기" sub={`${pendings.length}건`}>
@@ -59,6 +61,22 @@ export default async function ParentMissionsPage() {
                   </span>
                   <span className="text-[0.78em] text-star-d">⭐ {p.reward}</span>
                 </div>
+
+                {/*
+                  🔴 사진은 **판정하면 사라진다** (AC-032-1 · AC-032-2).
+                     경로가 no-store 라 브라우저에도 안 남는다.
+                */}
+                {withPhoto.has(p.id) ? (
+                  <div className="mt-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/parent/bank/missions/photo/${p.id}`}
+                      alt={photoAlt}
+                      className="max-h-56 w-full rounded-card border border-line object-contain"
+                    />
+                    <p className="mt-1 text-[0.72em] leading-relaxed text-ink-mute">{photoNotice}</p>
+                  </div>
+                ) : null}
 
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
                   <form action={approveMissionAction}>
