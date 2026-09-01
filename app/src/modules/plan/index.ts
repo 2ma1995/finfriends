@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { recentSpends } from "@/modules/envelope";
 import {
   CATEGORIES, categoryOf,
   type NewPlanCard, type PlanCardView, type RetroView,
@@ -152,11 +153,41 @@ function toRecord(r: {
     categoryLabel: c.label,
     amount: r.actualAmount,
     // 🔴 셋 다 사실 진술이다. 어느 것도 잘못을 뜻하지 않는다 (ADR-008)
+    // 🔴 봉투 이전 기록이다. 문구도 그때 말이어야 한다 (어긋남 대장 D35)
     planNote: r.planCardId === null
-      ? ("계획 없이" as const)
+      ? "계획 없이"
       : r.categoryMatch === "MISMATCHED"
-        ? ("계획에 없던 업종" as const)
-        : ("계획에 있었어요" as const),
+        ? "계획에 없던 업종"
+        : "계획에 있었어요",
+    overBy: 0,
+    legacy: true,
+  };
+}
+
+/**
+ * 봉투로 쓴 한 건 → 화면 줄.
+ *
+ * 🔴 **넘겨도 음수로 쓰지 않는다** — 「700원 넘었어요」다. 「−700원」은 빚으로 읽힌다.
+ * 🔴 **초과는 잘못이 아니다.** 결제는 통과했고(`AC-021-2`) ⭐만 안 나갔다.
+ */
+function envelopeToRecord(r: {
+  id: string; merchant: string | null; category: string; amount: number;
+  within: boolean; overBy: number; unclassified: boolean; occurredAt: Date;
+  envelopeName: string; envelopeEmoji: string; icon: string;
+}) {
+  return {
+    id: r.id,
+    dayLabel: `${r.occurredAt.getMonth() + 1}월 ${r.occurredAt.getDate()}일`,
+    icon: r.icon,
+    categoryLabel: r.merchant?.trim() || categoryOf(r.category).label,
+    amount: r.amount,
+    planNote: r.unclassified
+      ? "어느 봉투인지 몰라요"
+      : r.within
+        ? `${r.envelopeEmoji} ${r.envelopeName} 봉투에서 썼어요`
+        : `${r.envelopeEmoji} ${r.envelopeName} 봉투를 ${r.overBy.toLocaleString("ko-KR")}원 넘었어요`,
+    overBy: r.within ? 0 : r.overBy,
+    legacy: false,
   };
 }
 
@@ -165,7 +196,13 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-  const [thisMonth, prevMonth] = await Promise.all([
+  /**
+   * 🔴 **소비가 두 표에 있다.** 봉투(`envelope_spends`)가 지금 경로이고,
+   *    계획 카드(`spending_records`)는 봉투 이전 기록이다.
+   *    한쪽만 읽으면 **봉투로 쓴 돈이 부모 화면에 아예 안 나온다** —
+   *    잔액에서 세 번 겪은 것과 같은 모양이다 (어긋남 대장 D35).
+   */
+  const [thisMonth, prevMonth, envelopeRows] = await Promise.all([
     prisma.spendingRecord.findMany({
       where: { childId, occurredAt: { gte: monthStart } },
       select: { id: true, actualAmount: true, merchantCategory: true, planCardId: true, categoryMatch: true, occurredAt: true },
@@ -177,20 +214,39 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
       select: { id: true, actualAmount: true, merchantCategory: true, planCardId: true, categoryMatch: true, occurredAt: true },
       orderBy: { occurredAt: "desc" },
     }),
+    recentSpends(childId, 50),
   ]);
 
-  const total = thisMonth.reduce((s, r) => s + r.actualAmount, 0);
-  const prevTotal = prevMonth.reduce((s, r) => s + r.actualAmount, 0);
+  /**
+   * 🔴 **합계도 두 표를 함께 센다.** 목록만 합치고 합계를 한쪽만 세면
+   *    「4,500원인데 줄을 더하면 5,700원」이 된다 — 통장에서 이미 겪은 실수다 (`D22-b`).
+   *
+   * 🔴 **환불된 건은 빼지 않는다.** 실제로 쓴 적이 있는 기록이고,
+   *    빼면 이번 달 합계가 과거로 바뀐다. 화면이 환불을 따로 말한다.
+   */
+  const envThis = envelopeRows.filter((e) => e.occurredAt >= monthStart);
+  const envPrev = envelopeRows.filter((e) => e.occurredAt >= prevStart && e.occurredAt < monthStart);
 
-  // 업종별 집계. 계획에 없던 업종은 강조 대상으로 표시한다
+  const total = thisMonth.reduce((s, r) => s + r.actualAmount, 0)
+    + envThis.reduce((s, r) => s + r.amount, 0);
+  const prevTotal = prevMonth.reduce((s, r) => s + r.actualAmount, 0)
+    + envPrev.reduce((s, r) => s + r.amount, 0);
+
+  // 업종별 집계 — 두 경로의 업종 코드가 같아서 그대로 합쳐진다
   const bucket = new Map<string, { amount: number; unplanned: boolean }>();
+  const bump = (code: string, amount: number, unplanned: boolean) => {
+    const cur = bucket.get(code) ?? { amount: 0, unplanned: false };
+    cur.amount += amount;
+    if (unplanned) cur.unplanned = true;
+    bucket.set(code, cur);
+  };
+  // 봉투 이전 기록 — 계획이 없었거나 업종이 어긋났으면 강조한다
   for (const r of thisMonth) {
-    const cur = bucket.get(r.merchantCategory) ?? { amount: 0, unplanned: false };
-    cur.amount += r.actualAmount;
-    // 계획이 없었거나 업종이 어긋났으면 강조한다
-    if (r.planCardId === null || r.categoryMatch === "MISMATCHED") cur.unplanned = true;
-    bucket.set(r.merchantCategory, cur);
+    bump(r.merchantCategory, r.actualAmount, r.planCardId === null || r.categoryMatch === "MISMATCHED");
   }
+  // 🔴 봉투 기록 — 강조는 **봉투를 넘겼거나 분류가 안 된 것**이다.
+  //    넘긴 것은 잘못이 아니라 「부모가 알아야 할 것」이다 (AC-021-2 · 결제는 통과했다)
+  for (const r of envThis) bump(r.category, r.amount, !r.within || r.unclassified);
 
   const byCategory = [...bucket.entries()]
     .map(([code, v]) => {
@@ -206,15 +262,19 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
     delta: total - prevTotal,
     hasPrevMonth: prevMonth.length > 0,
     byCategory,
-    noPlanCount: thisMonth.filter((r) => r.planCardId === null).length,
-    recordCount: thisMonth.length,
+    // 계획 없이 나간 소비 + 어느 봉투인지 모르는 소비 — 둘 다 「대조할 것이 없는」 건이다
+    noPlanCount: thisMonth.filter((r) => r.planCardId === null).length
+      + envThis.filter((r) => r.unclassified).length,
+    recordCount: thisMonth.length + envThis.length,
     /**
      * 🔴 **집계와 같은 배열에서 만든다.** 따로 조회하면 합계와 목록이 어긋난다 —
      *    통장에서 이미 그 실수를 했다 (어긋남 대장 D22).
      */
-    records: thisMonth.map(toRecord),
+    records: [...envelopeRows.filter((e) => e.occurredAt >= monthStart).map(envelopeToRecord),
+              ...thisMonth.map(toRecord)],
     // 🔴 달이 바뀐 날 「기록이 없다」로 보이지 않게 한다
-    prevRecords: prevMonth.map(toRecord),
+    prevRecords: [...envelopeRows.filter((e) => e.occurredAt >= prevStart && e.occurredAt < monthStart).map(envelopeToRecord),
+                  ...prevMonth.map(toRecord)],
   };
 }
 
