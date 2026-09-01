@@ -218,9 +218,9 @@ export async function withdrawAccount(guardianId: string): Promise<{ ok: boolean
     prisma.childItem.deleteMany({ where: byChild }),
     prisma.childOnboarding.deleteMany({ where: byChild }),
     prisma.childRoom.deleteMany({ where: byChild }),
-    prisma.envelopeChange.deleteMany({ where: byChild }),
-    prisma.envelopeSpend.deleteMany({ where: byChild }),
-    prisma.envelope.deleteMany({ where: byChild }),
+    // 🔴 **빠져 있었다** (D52). 하교 시각을 만들며(D41) 여기 안 넣어서
+    //    탈퇴한 집의 하교 시각이 계속 남았다. 파기 누락은 규제 항목이다
+    prisma.childSchedule.deleteMany({ where: byChild }),
     prisma.forestSnapshot.deleteMany({ where: byChild }),
     prisma.learningProgress.deleteMany({ where: byChild }),
     prisma.planCard.deleteMany({ where: byChild }),
