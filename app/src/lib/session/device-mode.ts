@@ -11,8 +11,14 @@ export const MODE_COOKIE = "ff_device";
 
 export type DeviceMode = "GUARDIAN" | "CHILD";
 
-/** 보호자 전용 경로 — 아동 모드에서 서버가 막는다 */
-export const GUARDIAN_PREFIXES = ["/parent"] as const;
+/**
+ * 보호자 전용 경로 — 아동 모드에서 서버가 막는다.
+ *
+ * 🔴 `/screens` 도 여기 있다. 화면 목록 자체는 아무것도 안 하지만
+ *    **`/parent/**` 링크가 줄줄이 있어서**, 아이 기기에서 열리면 아이가
+ *    승인·결제 화면이 있다는 것부터 알게 된다.
+ */
+export const GUARDIAN_PREFIXES = ["/parent", "/screens"] as const;
 
 export function isGuardianPath(pathname: string) {
   return GUARDIAN_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

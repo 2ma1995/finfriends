@@ -10,7 +10,8 @@ import { currentGuardian } from "@/lib/session/guardian-session";
  *    아이 기기에는 보호자 세션이 남아 있을 수 있고, 그 경우 보호자 화면으로 보내면
  *    아이가 승인·소비 화면에 도달한다 (D5 · PRC-001 붕괴).
  *
- * 화면 목록(`/screens`)은 프로토타입 색인이며 실제 서비스 동선이 아니다.
+ * 화면 목록(`/screens`)은 **개발·시연용 색인**이며 실제 서비스 동선이 아니다.
+ * 보호자 세션이 있어야 열리고, 아동 모드에서는 미들웨어가 막는다 (D5 · S5).
  */
 export default async function RootPage() {
   // ① 아이 기기 — 토큰과 동의를 매 진입마다 확인한다 (ACE-8.2)
