@@ -16,7 +16,7 @@ export const approveLabel = "승인";
 export const rejectLabel = "아니요";
 export const bulkLabel = "모두 승인";
 /** 🔴 사유 없이 거절하지 않는다 — 아이 화면에서 「미실천」과 구별되지 않는다 (AC-6.2) */
-export const reasonPlaceholder = "아이가 볼 이유를 적어 주세요";
+export const reasonPlaceholder = "거절 사유를 적어주세요";
 
 export const empty = { title: "기다리는 미션이 없어요", body: "아이가 미션을 마치면 여기에 올라옵니다" };
 export const needLogin = { title: "로그인이 필요해요", body: "보호자 계정으로 로그인해 주세요" };
@@ -47,3 +47,13 @@ export const overdueNotice = (n: number) =>
 
 /** 🔴 기다림에 끝이 있다는 것을 부모도 알아야 한다 */
 export const expireNotice = "「했어요」를 누른 뒤 사흘 안에 확인해 주세요.";
+
+/**
+ * 🔴 **사유 없이 거절하지 않는다** (`AC-6.2`).
+ *    사유가 없으면 아이 화면에서 **「미실천」과 구별되지 않고**, 아이에게는
+ *    「했는데 왜」만 남는다.
+ *
+ * 🔴 입력칸에 `required` 를 걸 수 없다 — 「칭찬하기」와 같은 폼이라
+ *    승인까지 막힌다. 그래서 **서버가 검사하고 여기로 돌려보낸다.**
+ */
+export const reasonRequired = "돌려보내려면 이유를 적어 주세요. 아이 화면에 그대로 보입니다.";

@@ -6,14 +6,20 @@ import {
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
   approveLabel, BULK_THRESHOLD, bulkLabel, empty, expireNotice, fromLessonBadge,
-  needLogin, overdueNotice, photoAlt, photoNotice, reasonPlaceholder, rejectLabel,
-  retroNotice,
+  needLogin, overdueNotice, photoAlt, photoNotice, reasonPlaceholder, reasonRequired,
+  rejectLabel, retroNotice,
 } from "./mission.fixture";
 
 // PRC-001 · PRC-003 — 승인 대기와 일괄 승인
 export const metadata = { title: "승인 대기 · 핀프렌즈" };
 
-export default async function ParentMissionsPage() {
+export default async function ParentMissionsPage({
+  searchParams,
+}: {
+  // 🔴 사유 없이 돌려보내려 한 미션 id — 그 카드에만 알림을 띄운다
+  searchParams: Promise<{ needReason?: string }>;
+}) {
+  const sp = await searchParams;
   const g = await currentGuardian();
   if (!g) {
     return (
@@ -101,23 +107,39 @@ export default async function ParentMissionsPage() {
                   </div>
                 ) : null}
 
-                <div className="mt-2 grid grid-cols-2 gap-1.5">
-                  <form action={approveMissionAction}>
-                    <input type="hidden" name="missionId" value={p.id} />
-                    <button className="min-h-touch w-full rounded-card bg-primary text-[0.82em] font-bold text-white">
+                {/*
+                  🔴 **한 폼에 두 버튼이다.** 사유 칸이 버튼 줄 **아래**에 있어야 하는데
+                     폼을 둘로 나누면 그 칸이 거절 폼 밖에 놓여 값이 안 실린다.
+                     `formAction` 으로 버튼마다 다른 액션을 건다 — 승인은 사유를 무시한다.
+
+                  🔴 사유 칸에 `required` 를 걸 수 없다. 같은 폼이라 **승인까지 막힌다.**
+                     그래서 서버가 검사하고 돌려보낸다 (`AC-6.2`).
+                */}
+                <form className="mt-2 grid gap-1.5">
+                  <input type="hidden" name="missionId" value={p.id} />
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      formAction={approveMissionAction}
+                      className="min-h-touch w-full rounded-card bg-primary text-[0.82em] font-bold text-white"
+                    >
                       {approveLabel}
                     </button>
-                  </form>
-                  {/* 🔴 거절은 사유를 함께 받는다. 사유 없이 보내면 아이 화면에서 「미실천」과 같아진다 */}
-                  <form action={rejectMissionAction} className="grid gap-1">
-                    <input type="hidden" name="missionId" value={p.id} />
-                    <input name="reason" placeholder={reasonPlaceholder}
-                           className="min-h-touch w-full rounded-card border border-line-2 bg-surface px-2 text-[0.74em]" />
-                    <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft">
+                    <button
+                      formAction={rejectMissionAction}
+                      className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft"
+                    >
                       {rejectLabel}
                     </button>
-                  </form>
-                </div>
+                  </div>
+                  <input
+                    name="reason" maxLength={40} placeholder={reasonPlaceholder}
+                    className="min-h-touch w-full rounded-card border border-line-2 bg-surface px-2.5 text-[0.76em]"
+                  />
+                  {/* 🔴 이 미션에서 사유 없이 돌려보내려 한 경우만 */}
+                  {sp.needReason === p.id ? (
+                    <p className="text-[0.74em] leading-relaxed text-miss">{reasonRequired}</p>
+                  ) : null}
+                </form>
               </li>
             ))}
           </ul>

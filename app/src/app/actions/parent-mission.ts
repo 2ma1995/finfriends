@@ -23,10 +23,22 @@ export async function approveMissionAction(formData: FormData) {
 export async function rejectMissionAction(formData: FormData) {
   const g = await requireGuardian();
   const id = String(formData.get("missionId") ?? "");
-  const reason = String(formData.get("reason") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  /**
+   * 🔴 **사유 없이 거절하지 않는다** (`AC-6.2`).
+   *    사유가 없으면 아이 화면에서 **「미실천」과 구별되지 않고**,
+   *    아이에게는 「했는데 왜」만 남는다.
+   *
+   * 🔴 입력칸에 `required` 를 걸 수 없다 — 「칭찬하기」와 같은 폼이라 승인까지 막힌다.
+   *    그래서 여기서 막고 **그 카드로 돌려보낸다.**
+   */
+  if (id && reason.length === 0) redirect(`/parent/bank/missions?needReason=${id}`);
+
   if (id) await rejectMission(g.guardianId, id, reason);
   revalidatePath("/parent/bank/missions");
   revalidatePath("/child/missions");
+  redirect("/parent/bank/missions");
 }
 
 /** 일괄 승인 — PRC-003. 한 건씩 돌린다. 멱등키가 미션 id 라 중복은 그냥 무시된다 */
@@ -66,7 +78,6 @@ export async function createMissionAction(formData: FormData) {
     const q = new URLSearchParams({
       error: CREATE_MISSION_MESSAGES[result.reason],
       title,
-      topic: topic ?? "",
       payoutWon: String(payoutWon),
     });
     redirect(`/parent/bank/missions/new?${q}`);

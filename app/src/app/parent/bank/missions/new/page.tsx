@@ -34,7 +34,8 @@ const OPENABLE: readonly Topic[] = ["EARN"];
 export default async function NewMissionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; title?: string; topic?: string; payoutWon?: string }>;
+  // 🔴 `topic` 은 되채울 것이 없다 — 미션은 「벌기」뿐이라 고를 것이 없다 (D50)
+  searchParams: Promise<{ error?: string; title?: string; payoutWon?: string }>;
 }) {
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
@@ -60,7 +61,7 @@ export default async function NewMissionPage({
     );
   }
 
-  const { error, title, topic, payoutWon } = await searchParams;
+  const { error, title, payoutWon } = await searchParams;
   const open = await listOpenForGuardian(guardian.guardianId);
 
   return (

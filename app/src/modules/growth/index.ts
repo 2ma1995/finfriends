@@ -169,7 +169,14 @@ type SnapStage = { topic: Topic; label: string; stage: Stage };
  * 🔴 **오른 것만 보여주지 않는다.** 내려간 것도 그대로 적는다 —
  *    좋은 소식만 남기면 이 화면은 성장 증거가 아니라 광고가 된다.
  */
-function buildDeltas(snaps: readonly { yearMonth: string; finalStages: unknown; starsEarned: number }[]) {
+type SnapMetrics = {
+  learn?: number; quiz?: number; practice?: number;
+  spentWon?: number; savingRate?: number | null;
+};
+
+function buildDeltas(snaps: readonly {
+  yearMonth: string; finalStages: unknown; deltaItems: unknown; starsEarned: number;
+}[]) {
   if (snaps.length < 2) return [];
   const [last, before] = snaps;
   const beforeBy = new Map(
@@ -196,6 +203,48 @@ function buildDeltas(snaps: readonly { yearMonth: string; finalStages: unknown; 
       improved: last.starsEarned > before.starsEarned,
     });
   }
+
+  /**
+   * 🔴 **단계 말고도 달라진 것을 보여준다** (`REQ-FUNC-009` — 변화 항목 **7개 이상**).
+   *
+   *    단계만 보면 리포트가 대개 비어 있다 — 나무 단계는 한 달에 잘 안 바뀐다.
+   *    학습·퀴즈·실천·소비·저축률은 **매달 움직이므로** 그것이 실제 변화다.
+   *
+   * 🔴 **오른 것만 보여주지 않는다.** 내려간 것도 그대로 적는다 —
+   *    좋은 소식만 남기면 이 화면은 성장 증거가 아니라 광고가 된다.
+   *
+   * 🔴 **한쪽에 값이 없으면 건너뛴다.** 없는 것을 0으로 그리면 보호자는
+   *    「변화 없음」이 아니라 **「고장」**으로 읽는다 (`AC-E2`).
+   */
+  const a = (before.deltaItems ?? {}) as SnapMetrics;
+  const b = (last.deltaItems ?? {}) as SnapMetrics;
+
+  const rows: readonly { label: string; from?: number | null; to?: number | null; unit: string }[] = [
+    { label: "실천 횟수", from: a.practice, to: b.practice, unit: "번" },
+    { label: "맞힌 퀴즈", from: a.quiz, to: b.quiz, unit: "개" },
+    { label: "읽은 이야기", from: a.learn, to: b.learn, unit: "편" },
+    { label: "저축률", from: a.savingRate, to: b.savingRate, unit: "%" },
+  ];
+  for (const r of rows) {
+    if (typeof r.from !== "number" || typeof r.to !== "number" || r.from === r.to) continue;
+    out.push({
+      label: r.label,
+      from: `${r.from}${r.unit}`,
+      to: `${r.to}${r.unit}`,
+      improved: r.to > r.from,
+    });
+  }
+
+  // 🔴 소비는 **적은 쪽이 좋은 것이 아니다.** 계획대로 쓰는 것이 목표이므로 방향을 판정하지 않는다
+  if (typeof a.spentWon === "number" && typeof b.spentWon === "number" && a.spentWon !== b.spentWon) {
+    out.push({
+      label: "쓴 돈",
+      from: `${a.spentWon.toLocaleString("ko-KR")}원`,
+      to: `${b.spentWon.toLocaleString("ko-KR")}원`,
+      improved: false,
+    });
+  }
+
   return out;
 }
 
@@ -235,7 +284,7 @@ export async function getForestView(childId: string, childName: string): Promise
     prisma.forestSnapshot.findMany({
       where: { childId },
       orderBy: { yearMonth: "desc" }, take: 2,
-      select: { yearMonth: true, finalStages: true, starsEarned: true },
+      select: { yearMonth: true, finalStages: true, deltaItems: true, starsEarned: true },
     }),
   ]);
 
@@ -366,9 +415,49 @@ export async function rollCycleIfNeeded(childId: string): Promise<number> {
       practices.filter((x) => x.topic !== null).map((x) => [x.topic as Topic, x._count._all]),
     );
 
-    const stars = await prisma.starLedgerEntry.aggregate({
-      where: { childId, createdAt: { gte: m, lt: next }, delta: { gt: 0 } }, _sum: { delta: true },
-    });
+    const [stars, spend, saved, topUp] = await Promise.all([
+      prisma.starLedgerEntry.aggregate({
+        where: { childId, createdAt: { gte: m, lt: next }, delta: { gt: 0 } }, _sum: { delta: true },
+      }),
+      // 그 달 소비 합계 — 「잘 쓰기」의 실제 숫자다
+      prisma.spendingRecord.aggregate({
+        where: { childId, occurredAt: { gte: m, lt: next } }, _sum: { actualAmount: true },
+      }),
+      // 그 달 목표에 넣은 돈 — 저축률의 분자
+      prisma.allowanceEntry.aggregate({
+        where: { childId, code: "WISH_SET_ASIDE", createdAt: { gte: m, lt: next } }, _sum: { delta: true },
+      }),
+      // 그 달 받은 용돈 — 저축률의 분모
+      prisma.allowanceEntry.aggregate({
+        where: { childId, code: "TOPUP", createdAt: { gte: m, lt: next } }, _sum: { delta: true },
+      }),
+    ]);
+
+    /**
+     * 🔴 **그 달의 학습·실천·소비를 스냅샷에 담는다** (`REQ-FUNC-009`).
+     *
+     *    담지 않으면 전월 비교가 **나무 단계와 별 두 가지**뿐이다. 단계는 한 달에 잘 안
+     *    바뀌므로 리포트가 대개 **비어 있었다** — 요구는 「변화 항목 **7개 이상**」이다.
+     *
+     * 🔴 **학습·퀴즈는 누적값이다.** `learning_progress` 에 주기 구분이 없어
+     *    「그 달의 값」을 되돌릴 수 없다. **찍는 시점의 누적**을 담고,
+     *    비교는 **누적의 차이**로 낸다 — 그것이 그 달에 늘어난 양이다.
+     *    그래서 **이번 달부터 담기 시작하면 다음 달에 첫 비교가 나온다.** 과거는 소급 안 된다.
+     */
+    const learnTotal = progress.reduce((n, x) => n + x.completed, 0);
+    const quizTotal = progress.reduce((n, x) => n + x.quizCorrect, 0);
+    const practiceTotal = [...practiceBy.values()].reduce((n, x) => n + x, 0);
+    const setAside = Math.abs(saved._sum.delta ?? 0);
+    const got = topUp._sum.delta ?? 0;
+
+    const metrics = {
+      learn: learnTotal,
+      quiz: quizTotal,
+      practice: practiceTotal,
+      spentWon: spend._sum.actualAmount ?? 0,
+      // 🔴 받은 돈이 0이면 저축률을 0%로 쓰지 않는다 — 나눌 것이 없다
+      savingRate: got > 0 ? Math.round((setAside / got) * 100) : null,
+    };
 
     /**
      * 🔴 **학습·퀴즈는 지금 값을 쓴다.** 주기별 학습 기록이 없어서다 —
@@ -387,11 +476,12 @@ export async function rollCycleIfNeeded(childId: string): Promise<number> {
       create: {
         childId, yearMonth: ym,
         finalStages,
-        // 델타는 읽을 때 앞 스냅샷과 견줘 만든다 — 여기 넣으면 두 곳을 맞춰야 한다
-        deltaItems: [],
+        // 🔴 `deltaItems` 에 **그 달 값**을 담는다. 델타 자체는 읽을 때 앞 달과 견줘 만든다 —
+        //    계산 결과를 저장하면 두 곳을 맞춰야 하고, 한쪽만 고쳐지면 숫자가 갈린다
+        deltaItems: metrics,
         starsEarned: stars._sum.delta ?? 0,
       },
-      update: { finalStages, starsEarned: stars._sum.delta ?? 0 },
+      update: { finalStages, deltaItems: metrics, starsEarned: stars._sum.delta ?? 0 },
     });
     if (!exists) made++;
   }

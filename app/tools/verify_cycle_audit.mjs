@@ -136,6 +136,66 @@ try {
   const snapCount = await prisma.forestSnapshot.count({ where: { childId: c.id, yearMonth: ym } });
   check("다시 세도 스냅샷이 늘지 않는다", snapCount === 1, "upsert 다 — 같은 달에 두 장이 생기면 안 된다");
 
+  /**
+   * 🔴 **전월 비교가 7개 이상 나오는가** — REQ-FUNC-009.
+   *
+   *    단계만 보면 리포트가 대개 비어 있다 — 나무 단계는 한 달에 잘 안 바뀐다.
+   *    학습·퀴즈·실천·소비·저축률은 매달 움직이므로 그것이 실제 변화다.
+   */
+  const buildDeltas = (snaps) => {
+    if (snaps.length < 2) return [];
+    const [last, before] = snaps;
+    const beforeBy = new Map((before.finalStages ?? []).map((x) => [x.topic, x.stage]));
+    const out = (last.finalStages ?? []).flatMap((x) => {
+      const was = beforeBy.get(x.topic);
+      return was === undefined || was === x.stage ? [] : [{ label: x.label }];
+    });
+    if (last.starsEarned !== before.starsEarned) out.push({ label: "이번 달 별" });
+    const a = before.deltaItems ?? {}, b = last.deltaItems ?? {};
+    for (const [label, k] of [["실천 횟수","practice"],["맞힌 퀴즈","quiz"],["읽은 이야기","learn"],["저축률","savingRate"]]) {
+      if (typeof a[k] === "number" && typeof b[k] === "number" && a[k] !== b[k]) out.push({ label });
+    }
+    if (typeof a.spentWon === "number" && typeof b.spentWon === "number" && a.spentWon !== b.spentWon) out.push({ label: "쓴 돈" });
+    return out;
+  };
+
+  const stages4 = (s0, s1, s2, s3) => [
+    { topic: "EARN", label: "벌기", stage: s0 }, { topic: "SPEND", label: "잘 쓰기", stage: s1 },
+    { topic: "SAVE", label: "모으기", stage: s2 }, { topic: "GROW", label: "불리기", stage: s3 },
+  ];
+
+  const prevSnap = { yearMonth: "2026-07", finalStages: stages4(0,0,0,0), starsEarned: 3,
+    deltaItems: { learn: 2, quiz: 1, practice: 1, spentWon: 3000, savingRate: 10 } };
+  const lastSnap = { yearMonth: "2026-08", finalStages: stages4(1,1,1,0), starsEarned: 9,
+    deltaItems: { learn: 6, quiz: 5, practice: 4, spentWon: 5200, savingRate: 35 } };
+
+  const deltas = buildDeltas([lastSnap, prevSnap]);
+  check("🔴 전월 비교가 7개 이상 나온다", deltas.length >= 7,
+    `${deltas.length}개 — ${deltas.map((d) => d.label).join(" · ")}`);
+
+  // 🔴 단계만 있으면 리포트가 빈다 — 그래서 그 달 값을 담는다
+  const stagesOnly = buildDeltas([
+    { ...lastSnap, finalStages: stages4(0,0,0,0), starsEarned: 3, deltaItems: {} },
+    { ...prevSnap, deltaItems: {} },
+  ]);
+  check("단계가 그대로면 예전엔 0개였다", stagesOnly.length === 0,
+    "그 달 값을 담지 않으면 리포트가 비어 있었다");
+
+  // 🔴 한쪽에 값이 없으면 건너뛴다 — 0으로 그리면 「고장」으로 읽힌다
+  const partial = buildDeltas([
+    { ...lastSnap, deltaItems: { practice: 4 } },
+    { ...prevSnap, deltaItems: {} },
+  ]);
+  check("🔴 한쪽에 값이 없으면 그 줄을 안 만든다",
+    !partial.some((d) => d.label === "실천 횟수"), "없는 것을 0으로 그리지 않는다 (AC-E2)");
+
+  // 🔴 내려간 것도 적는다 — 좋은 소식만 남기면 광고가 된다
+  const down = buildDeltas([
+    { ...lastSnap, deltaItems: { ...lastSnap.deltaItems, practice: 0 } },
+    prevSnap,
+  ]);
+  check("🔴 내려간 것도 리포트에 남는다", down.some((d) => d.label === "실천 횟수"));
+
   // ── 별 원장 정산 ──
   const good = await prisma.starLedgerEntry.create({
     data: { childId: c.id, delta: 2, triggerCode: "QUIZ_CORRECT", balanceAfter: 5, idempotencyKey: key() },
