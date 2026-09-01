@@ -10,6 +10,7 @@ import {
 import { requestSavingsAction } from "@/app/actions/savings";
 import { SavingsForm } from "@/components/child/SavingsForm";
 import { SavingsCard } from "@/components/child/SavingsCard";
+import { AddSavings } from "@/components/child/AddSavings";
 import {
   balanceTitle, card, consentRequired, historyTitle,
   errors, noDevice, notice, savedTitle, savings,
@@ -147,10 +148,15 @@ export default async function ChildPassbookPage({
         </ul>
       ) : null}
 
-      {/* 🔴 **자리가 남았을 때만 폼을 연다.** 꽉 찼는데 폼이 보이면 눌러 보고 막힌다 */}
+      {/*
+        🔴 **자리가 남았을 때만 연다.** 꽉 찼는데 버튼이 보이면 눌러 보고 막힌다.
+        🔴 **폼은 모달로 접는다** (사용자 요청). 늘 펼쳐 두면 화면 절반을 차지하는데,
+           저금은 한 달에 한 번 시작하는 일이지 매일 하는 일이 아니다.
+      */}
       {opens.length < MAX_OPEN ? (
-        <div className={opens.length > 0 ? "mt-2" : ""}>
-        <div className="rounded-card bg-surface p-3.5">
+        <AddSavings label={savings.addLabel} title={savings.addTitle} closeLabel={savings.closeLabel}>
+          {/* 🔴 모달 안은 이미 흰 바탕이다. 상자를 또 두르면 두 겹이 된다 */}
+          <div>
           <p className="text-sub leading-relaxed">{savings.what}</p>
           <p className="mt-1 text-cap text-ink-mute">{savings.notBank}</p>
 
@@ -180,7 +186,7 @@ export default async function ChildPassbookPage({
             }}
           />
         </div>
-        </div>
+        </AddSavings>
       ) : (
         <p className="mt-2 text-center text-cap text-ink-mute">{savings.full}</p>
       )}
