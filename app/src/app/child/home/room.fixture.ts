@@ -24,7 +24,14 @@ export const emptyRoom = {
   body: "별을 모아서 하나씩 꾸며 봐요",
 };
 
-export const itemsLabel = (n: number) => `내 아이템 ${n}개`;
+/**
+ * 🔴 자리표시자를 쓴다 — 문구는 여기가, 숫자는 화면이 갖는다.
+ *    함수는 클라이언트 컴포넌트로 못 넘어간다(직렬화가 안 된다).
+ */
+export const itemsTitle = "내 아이템 (방에 {n}개)";
+export const myItemsHint = "칸을 누르면 가진 것을 볼 수 있어요";
+/** 🔴 빈 칸도 말한다. 아무것도 안 나오면 아이는 「고장났나」로 읽는다 */
+export const emptyCategory = "여긴 아직 없어요.";
 export const shopLink = "상점";
 export const todoTitle = "오늘 할 일";
 /** 🔴 출석 별 — 받았을 때만 말한다. 매번 띄우면 아이가 무시한다 (FR-010) */

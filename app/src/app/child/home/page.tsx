@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Screen, Empty } from "@/components/shared/Screen";
 import { MoneyHUD } from "@/components/child/MoneyHUD";
 import { RoomStage } from "@/components/child/RoomStage";
-import { CATEGORIES, byCategory } from "@/contracts/items";
-import { emptyRoom, itemsLabel, shopLink, todo, todoTitle } from "./room.fixture";
+import { MyItems } from "@/components/child/MyItems";
+import { emptyCategory, emptyRoom, itemsTitle, myItemsHint, shopLink, todo, todoTitle } from "./room.fixture";
 import { getRoom, placedItems } from "@/modules/items";
 import { getWalletTotals } from "@/modules/allowance";
 import { markAttendance } from "@/modules/attendance";
@@ -126,23 +126,10 @@ export default async function ChildHomePage({
         ) : null}
       </div>
 
-      <h2 className="mt-3 text-[0.82em] font-bold">{itemsLabel(placed.length)}</h2>
-
-      <ul className="mt-1.5 grid grid-cols-6 gap-1.5">
-        {CATEGORIES.map((c) => {
-          const mine = byCategory(c.key).filter((i) => room.owned.includes(i.id)).length;
-          const all = byCategory(c.key).length;
-          return (
-            <li key={c.key}>
-              <Link href={`/child/shop?c=${c.key}`}
-                    className="grid min-h-touch place-items-center rounded-card border border-line bg-surface py-1.5 text-center">
-                <span className="text-[1.2em]">{c.emoji}</span>
-                <span className="text-[0.58em] text-ink-mute">{mine}/{all}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {/* 🔴 한 줄로 접어 두고 고른 것만 아래에 편다 — **가진 것만** 보여준다 */}
+      <MyItems owned={room.owned} placedCount={placed.length}
+               title={itemsTitle} shopLabel={shopLink}
+               emptyCat={emptyCategory} hint={myItemsHint} />
 
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{todoTitle}</h2>
       <ul className="grid gap-1.5">
