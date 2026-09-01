@@ -203,6 +203,31 @@ model ChildAccount {
 ///
 /// 「이 기기는 아이 것」을 **서버가 안다.** 쿠키만으로 두면 지우면 그만이다.
 /// `S5` 감사가 「아동 모드 기기에서 보호자 경로 시도」를 여기서 센다.
+/// 아이 앱 초대 — `FR-002` · 어긋남 대장 D33.
+///
+/// 🔴 **기기 토큰과 다른 것이다.** 링크에 실려 나가는 것은 **한 번 쓰면 죽는 짧은 코드**이고,
+///    기기 토큰(`device_sessions.token_hash`)은 그 코드를 교환해서 **그 자리에서 새로 발급**된다.
+///    한동안 기기 토큰 자체를 주소에 실었다 — 180일짜리 자격증명이 브라우저 기록 ·
+///    서버 로그 · 링크 미리보기에 남았다 (`D24` 가 지적한 것).
+///
+/// 🔴 **원문을 저장하지 않는다.** 해시만 남기므로 DB 가 새도 링크는 새지 않는다.
+/// 🔴 **소진은 원자적이어야 한다.** 두 기기가 같은 링크를 동시에 열면 한 쪽만 성립해야 한다.
+model ChildInvite {
+  id         String    @id @default(uuid()) @db.Uuid
+  guardianId String    @map("guardian_id") @db.Uuid
+  childId    String    @map("child_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  /// 🔴 **24시간**. 링크는 오래 살수록 위험하다 (`FR-002`)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  /// 소진 시각. 값이 있으면 다시 쓸 수 없다
+  usedAt     DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([guardianId, childId])
+  @@map("child_invites")
+  @@schema("identity")
+}
+
 model DeviceSession {
   id         String     @id @default(uuid()) @db.Uuid
   guardianId String     @map("guardian_id") @db.Uuid

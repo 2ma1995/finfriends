@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { ensureTreeStates } from "@/modules/growth";
+import { revokeInvites } from "@/lib/session/child-invite";
 import {
   REQUIRED_KEYS, type CompleteConsentResult, type ConsentItemKey, type ConsentState,
 } from "@/contracts/consent";
@@ -63,6 +64,13 @@ export async function withdrawConsent(guardianId: string): Promise<void> {
     where: { id: guardianId },
     data: { consentCompleted: false, consentAt: null },
   });
+  /**
+   * 🔴 **돌아다니는 초대 링크를 전부 죽인다** (`AC-002-4`).
+   *    진입 판정에서도 동의를 다시 보므로 링크가 살아 있어도 열리지는 않지만,
+   *    철회한 뒤에 아이가 링크를 눌러 **기기가 등록되는 것 자체**를 두면 안 된다 —
+   *    등록은 성립했는데 화면은 잠긴 상태가 되어 무엇이 잘못됐는지 아무도 모른다.
+   */
+  await revokeInvites(guardianId);
 }
 
 // ─────────────────────────────────────────────────────────────

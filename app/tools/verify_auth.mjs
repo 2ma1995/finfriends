@@ -207,6 +207,57 @@ try {
   await prisma.guardianAccount.delete({ where: { id: guardian.id } });
   await prisma.devAuthUser.delete({ where: { id: user.id } });
 
+  /**
+   * 🔴 **초대 링크는 24시간짜리 1회용이다** — FR-002 · 어긋남 대장 D33.
+   *    한동안 180일짜리 기기 토큰을 주소에 실었다. 주소는 기록에 남고,
+   *    그 문자열 하나면 누구든 그 아이의 화면에 들어간다.
+   */
+  const inviteHash = (t) => createHash("sha256").update(t).digest("hex");
+  const mkInvite = async (over = {}) => {
+    const t = randomBytes(16).toString("base64url");
+    await prisma.childInvite.create({
+      data: { guardianId: guardian.id, childId: dchild.id, tokenHash: inviteHash(t),
+              expiresAt: new Date(Date.now() + 24 * 3600e3), ...over },
+    });
+    return t;
+  };
+  /** consumeInvite 의 소진 한 문장 */
+  const consume = async (t) => (await prisma.childInvite.updateMany({
+    where: { tokenHash: inviteHash(t), usedAt: null, expiresAt: { gt: new Date() } },
+    data: { usedAt: new Date() },
+  })).count;
+
+  const good = await mkInvite();
+  check("🔴 초대 코드 원문을 저장하지 않는다",
+    (await prisma.childInvite.findFirst({ where: { tokenHash: inviteHash(good) }, select: { tokenHash: true } }))?.tokenHash !== good,
+    "해시만 남으므로 DB 가 새도 링크는 안 샌다");
+  check("살아 있는 코드는 한 번 통과한다", (await consume(good)) === 1);
+  check("🔴 같은 코드는 두 번 안 된다", (await consume(good)) === 0, "1회용 (FR-002)");
+
+  const expired = await mkInvite({ expiresAt: new Date(Date.now() - 1000) });
+  check("🔴 만료된 코드는 거부된다", (await consume(expired)) === 0, "TTL 24시간");
+
+  const ttl = await prisma.childInvite.findFirst({
+    where: { tokenHash: inviteHash(await mkInvite()) }, select: { expiresAt: true, createdAt: true },
+  });
+  const hours = (ttl.expiresAt - ttl.createdAt) / 3600e3;
+  check("TTL 이 24시간이다", hours > 23.9 && hours < 24.1, `${hours.toFixed(1)}시간`);
+
+  // 🔴 새 코드를 내면 앞의 미사용 코드는 죽는다 — 링크가 여러 장 돌아다니면 안 된다
+  const older = await mkInvite();
+  await prisma.childInvite.updateMany({
+    where: { guardianId: guardian.id, childId: dchild.id, usedAt: null }, data: { usedAt: new Date() },
+  });
+  await mkInvite();
+  check("🔴 새로 만들면 앞의 링크는 죽는다", (await consume(older)) === 0, "어느 것이 유효한지 알 수 없게 된다");
+
+  const liveInvites = await prisma.childInvite.count({
+    where: { guardianId: guardian.id, childId: dchild.id, usedAt: null },
+  });
+  check("살아 있는 초대는 하나뿐", liveInvites === 1);
+
+  await prisma.childInvite.deleteMany({ where: { guardianId: guardian.id } });
+
   check("정리 완료", true);
 
   // ⑩ 🔴 실제 데이터 불변식 — 고아 인증 사용자 0건.
