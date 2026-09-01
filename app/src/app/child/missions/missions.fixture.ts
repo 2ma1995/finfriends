@@ -29,6 +29,8 @@ export const doneLabel = "했어요";
  *    필수인데 안 해도 된다고 적으면 아이가 그냥 눌렀다가 막힌다.
  */
 export const photoLabel = "사진 보여주기";
+/** 🔴 선택인 칸은 **안 해도 된다고 적는다.** 필수와 같은 말을 쓰면 아이가 눌렀다가 막힌 줄 안다 */
+export const photoLabelOptional = "사진 보여주기 (안 해도 돼요)";
 export const photoNotice = "부모님만 보시고 바로 지워져요.";
 
 /**
@@ -43,13 +45,16 @@ export const photoLater = "사진 나중에 보여주기";
  *    어떤 것은 없으면 아이는 「왜 다르지」가 된다. 이유가 각각 다르다.
  */
 export const photoWhy = "부모님이 볼 수 없는 일이라서 사진이 있어야 해요.";
+/**
+ * 🔴 **선택인데 왜 칸이 있는지** 말한다. 벌기는 앱이 볼 수 없는 일이라 사진이 도움이
+ *    되지만, **아이가 스스로 고른 실천**이라 강요하지 않는다 — 안 붙이면 부모가 물어본다.
+ */
+export const photoWhyOptional = "보여주고 싶으면 붙여요. 안 붙여도 부모님이 물어보고 확인해 주세요.";
+/** 🔴 벌기는 여기 없다 — 벌기는 부모 미션이든 배워서 한 것이든 **사진칸이 있다** */
 export const noPhotoWhy: Partial<Record<string, string>> = {
   SPEND: "카드로 쓴 내역이 부모님께 보여요. 사진은 안 찍어도 돼요.",
   SAVE: "통장에 모인 돈이 부모님께 보여요. 사진은 안 찍어도 돼요.",
   GROW: "저금한 것이 부모님께 보여요. 사진은 안 찍어도 돼요.",
-  /** 🔴 배워서 스스로 고른 실천 — 부모가 시킨 일이 아니라서 증거를 요구하지 않는다 */
-  LESSON: "내가 배우고 스스로 고른 실천이에요. 사진은 안 찍어도 돼요.",
-  EARN: "내가 배우고 스스로 고른 실천이에요. 사진은 안 찍어도 돼요.",
 };
 export const photoAttached = "📷 사진을 보여줬어요";
 export const photoReplace = "다른 사진으로 바꾸기";

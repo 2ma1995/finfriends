@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentChild } from "@/lib/session/current-child";
 import { attachPhoto, findForPhoto, markDone, undoDone } from "@/modules/mission";
-import { needsPhoto } from "@/contracts/mission";
+import { photoRuleOf } from "@/contracts/mission";
 
 /**
  * 미션 「했어요」 / 되돌리기 — PRC-001.
@@ -24,15 +24,18 @@ export async function markMissionDone(formData: FormData) {
   const hasFile = file instanceof File && file.size > 0;
 
   /**
-   * 🔴 **벌기 부모 미션만 사진이 필수다** (D49 · 사용자 결정).
-   *    집안일·심부름은 **앱이 볼 수 없다** — 사진이 유일한 증거다.
-   *    잘 쓰기는 카드 내역이, 모으기는 통장이, 불리기는 적금 회차가 답한다.
+   * 🔴 **막는 것은 `REQUIRED` 하나뿐이다** (D49 · 사용자 결정).
+   *    벌기 · **부모가 시킨** 미션은 집안일·심부름이라 앱이 볼 수 없고,
+   *    시킨 사람이 있으니 증거가 있어야 한다.
+   *
+   *    벌기라도 **배워서 스스로 고른 실천은 `OPTIONAL`** 이다 — 보여주고 싶으면
+   *    붙이고, 아니면 부모가 나중에 물어서 확인한다 (`FR-032` 「선택」 그대로).
    *
    * 🔴 **필수인 건 올리기 전에 본다.** 올린 뒤에 막으면 아이가 한 일이
    *    「기다리는 중」에 사진 없이 남고, 부모는 판정할 근거가 없다.
    */
   const m = await findForPhoto(access.childId, id);
-  if (m && needsPhoto(m.topic, m.fromLesson) && !hasFile) {
+  if (m && photoRuleOf(m.topic, m.fromLesson) === "REQUIRED" && !hasFile) {
     redirect("/child/missions?photo=NEED");
   }
 

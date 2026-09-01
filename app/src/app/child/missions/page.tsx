@@ -1,12 +1,13 @@
 import { Screen, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
-import { needsPhoto, type MissionView } from "@/contracts/mission";
+import { photoRuleOf, type MissionView } from "@/contracts/mission";
 import { attachMissionPhoto, markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
   backfilledNotice, consentRequired, doneLabel, empty, intro, noDevice, noPhotoWhy,
-  photoAttached, photoLabel, photoLater, photoNotice, photoReplace, photoResult,
-  photoWhy, rejectedPrefix, sections, source, undoLabel, waitingNotice,
+  photoAttached, photoLabel, photoLabelOptional, photoLater, photoNotice, photoReplace,
+  photoResult, photoWhy, photoWhyOptional, rejectedPrefix, sections, source,
+  undoLabel, waitingNotice,
 } from "./missions.fixture";
 
 // PRC-001 — 미션. 🔴 아이가 하는 일은 「했어요」 하나뿐이다. 승인은 보호자가 한다
@@ -22,21 +23,22 @@ export const metadata = { title: "미션 · 핀프렌즈" };
  * 🔴 `capture` 는 여전히 안 넣는다 — 강제 촬영은 요구가 아니고,
  *    이미 찍어 둔 사진도 고를 수 있어야 한다.
  */
-function PhotoField({ label, required }: { label: string; required?: boolean }) {
+function PhotoField({ required }: { required: boolean }) {
   return (
     <label className="grid gap-1">
-      <span className="text-[0.72em] text-ink-mute">{label}</span>
+      <span className="text-[0.72em] text-ink-mute">{required ? photoLabel : photoLabelOptional}</span>
       {/* 🔴 `required` 는 **거드는 것**이다. 막는 것은 서버다 — 폼은 주소만 알면 던진다 (§6.6) */}
       <input type="file" name="photo" accept="image/*" required={required}
              className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-[0.72em]" />
-      <span className="text-[0.7em] text-ink-mute">{required ? photoWhy : photoNotice}</span>
+      <span className="text-[0.7em] text-ink-mute">{required ? photoWhy : photoWhyOptional}</span>
+      <span className="text-[0.7em] text-ink-mute">{photoNotice}</span>
     </label>
   );
 }
 
 function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
   // 🔴 아이 화면과 서버가 **같은 함수**를 본다. 갈라지면 한쪽만 사진을 기다린다
-  const photoNeeded = needsPhoto(m.topic, m.fromLesson);
+  const rule = photoRuleOf(m.topic, m.fromLesson);
   /**
    * 🔴 **지금 할 것이 가장 안 눈에 띄었다.** 기다림·완료·거절은 각각 색이 있는데
    *    정작 **해야 할 것(`TODO`)만 무색**이었다 — 화면에서 제일 밋밋한 칸이
@@ -101,12 +103,10 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
                아이한테 다시 찍어 오라고 하지 않는다.
             🔴 **왜 없는지도 말한다.** 어떤 칸엔 있고 어떤 칸엔 없으면 「왜 다르지」가 된다.
           */}
-          {photoNeeded ? (
-            <PhotoField label={photoLabel} required />
+          {rule === "NONE" ? (
+            <p className="text-[0.72em] leading-relaxed text-ink-mute">{noPhotoWhy[m.topic]}</p>
           ) : (
-            <p className="text-[0.72em] leading-relaxed text-ink-mute">
-              {noPhotoWhy[m.fromLesson ? "LESSON" : m.topic] ?? noPhotoWhy[m.topic]}
-            </p>
+            <PhotoField required={rule === "REQUIRED"} />
           )}
           <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
             {doneLabel}
@@ -118,13 +118,13 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
            누르기 전에 찍어 두라는 건 어른의 순서다. 예전엔 이 길이 아예 없었다.
         🔴 이미 붙였으면 그렇다고 **말해 준다.** 안 그러면 「올라갔나?」 싶어 또 올린다.
       */}
-      {action === "undo" && photoNeeded ? (
+      {action === "undo" && rule !== "NONE" ? (
         <form action={attachMissionPhoto} className="mt-2 grid gap-1.5">
           <input type="hidden" name="missionId" value={m.id} />
           {m.hasPhoto ? (
             <p className="text-[0.76em] font-bold text-primary-d">{photoAttached}</p>
           ) : null}
-          <PhotoField label={m.hasPhoto ? photoReplace : photoLater} />
+          <PhotoField required={false} />
           <button className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-[0.8em] font-bold text-primary-d">
             {m.hasPhoto ? photoReplace : photoLater}
           </button>
