@@ -17,8 +17,7 @@ export const MONEY_PATHS = [
   "/child/welcome",       // 첫 진입에서도 잔액을 보여준다
   "/child/allowance",     // 아이 통장
   "/child/wishlist",      // 목표에 넣을 수 있는 금액이 바뀐다
-  "/child/plan",          // 계획 세울 때 쓸 수 있는 돈이 바뀐다
-  "/child/envelopes",     // 🔴 충전하면 배분 화면이 열려야 한다 (FR-020)
+  // 🔴 봉투·저금·기입장이 모두 통장 한 화면에 있다 — 돈 화면은 여기 하나다
 ] as const;
 
 /** 별까지 움직였을 때 — 적금 가입·만기는 ⭐가 함께 나간다 */

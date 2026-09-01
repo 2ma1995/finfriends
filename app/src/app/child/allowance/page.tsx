@@ -1,6 +1,9 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook, MOVED_CODES } from "@/modules/allowance";
+import { getBoard, recentSpends } from "@/modules/envelope";
+import { getUnmatched } from "@/modules/card";
+import { allocateAction, settleAction } from "@/app/actions/envelope";
 import {
   getClosed, getOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, WANTED_CHOICES,
 } from "@/modules/savings";
@@ -8,7 +11,7 @@ import { breakSavingsAction, payInstallmentAction, requestSavingsAction } from "
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel,
   errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
-  perUnit, setAsideNotice, title, totalTitle,
+  envelope, perUnit, setAsideNotice, title, totalTitle,
 } from "./allowance.fixture";
 
 // D18 · D20 — 아이 통장. 🔴 두 자료가 가장 강조하는 실천이 용돈기입장 쓰기다
@@ -18,27 +21,31 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 export default async function ChildPassbookPage({
   searchParams,
 }: {
-  searchParams: Promise<{ asked?: string; broke?: string; error?: string }>;
+  searchParams: Promise<{ asked?: string; broke?: string; error?: string;
+                          saved?: string; spent?: string; over?: string }>;
 }) {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title={title} back={{ href: "/child/plan", label: "계획 카드" }}>
+      <Screen role="아이 화면" title={title} back={{ href: "/child/home", label: "내 방" }}>
         <Empty emoji="📒" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
   }
 
   const sp = await searchParams;
-  const [p, open, closed] = await Promise.all([
+  const [p, open, closed, board, txns, spends] = await Promise.all([
     getPassbook(access.childId, access.guardianId),
     getOpen(access.childId),
     getClosed(access.childId, 3),
+    getBoard(access.childId),
+    getUnmatched(access.childId, 4),
+    recentSpends(access.childId, 6),
   ]);
   const stage = card[p.card];
 
   return (
-    <Screen role="아이 화면" title={title} back={{ href: "/child/plan", label: "계획 카드" }}>
+    <Screen role="아이 화면" title={title} back={{ href: "/child/home", label: "내 방" }}>
       {/* 🔴 **가진 돈 전체가 먼저다.** 「쓸 수 있는 돈」만 크게 보이면
           목표에 떼어 둔 돈이 없어진 것처럼 보인다 — 부모 화면과 숫자가 갈리던 원인이다 */}
       <div className="rounded-card border border-line bg-surface px-3 py-3 text-center">
@@ -46,10 +53,15 @@ export default async function ChildPassbookPage({
         <b className="mt-0.5 block text-title tabular-nums">{won(p.total)}</b>
       </div>
 
+      {/* 🔴 봉투에 담은 돈은 **「쓸 수 있는 돈」 안에** 있다. 따로 더하면 두 번 센다 —
+          담아 둔 몫만 옆에 갈라 보여준다 */}
       <div className={`mt-1.5 grid gap-1.5 ${p.locked > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
         <div className="rounded-card border border-line bg-surface px-2 py-2 text-center">
           <div className="text-[0.68em] text-ink-mute">{balanceTitle}</div>
           <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.balance)}</b>
+          {board.allocatedTotal > 0 ? (
+            <div className="text-[0.62em] text-ink-mute">봉투에 {won(board.allocatedTotal)}</div>
+          ) : null}
         </div>
         <div className="rounded-card border border-line bg-sand px-2 py-2 text-center">
           <div className="text-[0.68em] text-ink-mute">{savedTitle}</div>
@@ -75,14 +87,108 @@ export default async function ChildPassbookPage({
         </span>
       </div>
 
+      {/* 🔴 **돈 화면은 여기 하나다.** 봉투를 따로 두면 아이가 돈을 네 군데서 찾아야 한다 */}
+      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{envelope.title}</h2>
+      <p className="mb-1.5 text-[0.74em] text-ink-mute">
+        {board.unallocated > 0 ? envelope.unallocated(board.unallocated) : envelope.allDone}
+      </p>
+
+      {sp.saved || sp.spent ? (
+        <div className="mb-1.5"><Card tone="grow">
+          <p className="text-[0.86em]">{sp.saved ? envelope.saved : envelope.spent}</p>
+        </Card></div>
+      ) : null}
+      {/* 🔴 넘긴 것을 벌처럼 말하지 않는다. 결제는 됐다는 사실을 함께 말한다 (AC-021-2) */}
+      {sp.over ? (
+        <div className="mb-1.5"><Card tone="miss">
+          <p className="text-[0.86em]">{envelope.overNotice(Number(sp.over))}</p>
+          <p className="mt-1 text-[0.84em] text-ink-soft">{envelope.overAsk}</p>
+        </Card></div>
+      ) : null}
+      {sp.error && envelope.errors[sp.error] ? (
+        <div className="mb-1.5"><Card tone="miss">
+          <p className="text-[0.86em]">{envelope.errors[sp.error]}</p>
+        </Card></div>
+      ) : null}
+
+      {/* 🔴 합계가 쓸 수 있는 돈을 넘으면 저장이 거부된다 (AC-020-1) */}
+      <form action={allocateAction} className="grid gap-1.5">
+        {board.envelopes.map((e) => (
+          <div key={e.id} className={`rounded-card border p-2.5 ${
+            e.overBy > 0 ? "border-miss-line bg-miss-bg" : "border-line bg-surface"}`}>
+            <div className="flex items-center gap-2">
+              <span className="text-[1.2em]">{e.emoji}</span>
+              <b className="flex-1 text-[0.86em]">{e.name}</b>
+              <label className="flex items-center gap-1">
+                <input name={`env:${e.id}`} type="number" inputMode="numeric" min={0} step={100}
+                       defaultValue={e.allocated}
+                       className="min-h-touch w-24 rounded-card border border-line bg-surface px-2 text-right text-[0.88em] tabular-nums" />
+                <span className="text-[0.78em] text-ink-mute">원</span>
+              </label>
+            </div>
+            <p className={`mt-1 text-[0.74em] ${e.overBy > 0 ? "text-miss" : "text-ink-mute"}`}>
+              {e.overBy > 0 ? envelope.over(e.overBy) : envelope.remaining(e.remaining)}
+              {e.spent > 0 ? ` · 쓴 돈 ${won(e.spent)}` : ""}
+            </p>
+          </div>
+        ))}
+        <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
+          {envelope.save}
+        </button>
+      </form>
+
+      {/* 🔴 실제 웹훅이 없다. 예시 거래로 흐름을 세우고 그 사실을 밝힌다 */}
+      {txns.length > 0 ? (
+        <>
+          <div className="mt-3 flex items-baseline justify-between">
+            <h3 className="text-[0.8em] font-bold">{envelope.mockTitle}</h3>
+            <span className="text-[0.66em] text-ink-mute">{envelope.mockBadge}</span>
+          </div>
+          <ul className="mt-1 grid gap-1">
+            {txns.map((t) => (
+              <li key={t.id}>
+                <form action={settleAction}>
+                  <input type="hidden" name="txnId" value={t.id} />
+                  <button className="flex min-h-touch w-full items-center gap-2 rounded-card border border-line bg-surface px-2 text-left">
+                    <span className="text-[1.1em]">{t.icon}</span>
+                    <span className="flex-1 text-[0.78em]">{t.merchant}</span>
+                    <b className="tabular-nums text-[0.8em]">{won(t.amount)}</b>
+                    <span className="shrink-0 text-[0.7em] text-primary-d">{envelope.settle}</span>
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      {spends.length > 0 ? (
+        <>
+          <h3 className="mb-1 mt-3 text-[0.8em] font-bold">{envelope.spentTitle}</h3>
+          <ul className="grid gap-1">
+            {spends.map((v) => (
+              <li key={v.id} className={`flex items-center gap-2 rounded-card border px-3 py-2 ${
+                v.within ? "border-line bg-surface" : "border-miss-line bg-miss-bg"}`}>
+                <span className="flex-1">
+                  <b className="block text-[0.82em]">{v.envelopeEmoji} {v.merchant}</b>
+                  <span className="text-[0.7em] text-ink-mute">
+                    {v.envelopeName}{v.unclassified ? ` · ${envelope.unclassified}` : ""}
+                  </span>
+                </span>
+                <span className={`shrink-0 text-[0.7em] ${v.within ? "text-primary-d" : "text-miss"}`}>
+                  {v.within ? envelope.within : `${envelope.overBadge} ${won(v.overBy)}`}
+                </span>
+                <b className="shrink-0 tabular-nums text-[0.82em]">{won(v.amount)}</b>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      <p className="mt-1.5 text-[0.74em] leading-relaxed text-ink-mute">{envelope.notice}</p>
+
       {/* 🔴 「불리기」 실천을 여는 유일한 길 — SAVINGS_JOINED · SAVINGS_DONE (D25).
           은행 적금이 아니라 부모님과 하는 약속이다 (P-20 가입 중개 금지) */}
-      {/* 🔴 충전한 돈을 **쓸 곳별로 나눠 담는** 자리 (FR-020) */}
-      <a href="/child/envelopes"
-         className="mt-3 flex min-h-touch w-full items-center justify-center gap-1 rounded-card border-2 border-primary bg-primary-bg text-[0.88em] font-bold text-primary-d">
-        ✉️ 봉투에 나눠 담기 →
-      </a>
-
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{savings.title}</h2>
       {sp.error ? (
         <div className="mb-1.5"><Card tone="miss">

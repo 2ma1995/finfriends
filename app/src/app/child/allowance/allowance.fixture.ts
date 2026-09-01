@@ -115,6 +115,43 @@ export const errors: Record<string, string> = {
   NOT_FOUND: "찾을 수 없어요.",
 };
 
+/**
+ * 봉투 — `FR-020` · `FR-021`. 🔴 **돈 화면은 통장 하나다.**
+ *    봉투를 따로 두면 아이가 돈을 네 군데서 찾아야 한다.
+ */
+export const envelope = {
+  title: "봉투",
+  sub: "쓸 곳을 미리 나눠 담아요",
+  unallocated: (won: number) => `아직 안 담은 돈 ${won.toLocaleString("ko-KR")}원`,
+  allDone: "다 담았어요",
+  remaining: (won: number) => `${won.toLocaleString("ko-KR")}원 남음`,
+  /** 🔴 음수를 안 보여준다. 아이가 빚으로 읽는다 */
+  over: (won: number) => `${won.toLocaleString("ko-KR")}원 넘었어요`,
+  overAsk: "다음엔 얼마로 할까요?",
+  save: "이렇게 담기",
+  saved: "담았어요!",
+  spent: "봉투 안에서 썼어요. ⭐ 1개!",
+  overNotice: (won: number) =>
+    `${won.toLocaleString("ko-KR")}원 넘었어요. 이번엔 별이 안 붙어요. 결제는 됐어요.`,
+  mockTitle: "카드에서 온 내역",
+  mockBadge: "카드 연결 전이라 예시 데이터입니다",
+  settle: "봉투에서 빼기",
+  spentTitle: "쓴 내역",
+  within: "봉투 안",
+  overBadge: "넘음",
+  unclassified: "어느 봉투인지 몰라요",
+  /** 🔴 사후 수정이 소급되지 않는다는 것을 미리 말한다 (AC-021-3) */
+  notice: "봉투를 나중에 고쳐도 이미 쓴 것은 그대로예요.",
+  errors: {
+    OVER_WALLET: "쓸 수 있는 돈보다 많이 담았어요. 줄여서 다시 담아요.",
+    BAD_AMOUNT: "금액을 다시 봐주세요.",
+    NO_ENVELOPE: "봉투를 찾을 수 없어요.",
+    ALREADY: "이미 봉투에서 뺀 결제예요.",
+  } as Record<string, string>,
+};
+
+export const envelopeTitle = "봉투에 담은 돈";
+
 export const historyTitle = "들어오고 나간 돈";
 export const empty = {
   title: "아직 기록이 없어요",

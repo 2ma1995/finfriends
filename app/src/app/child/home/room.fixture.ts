@@ -7,8 +7,6 @@
  */
 export const todo = [
   { href: "/child/practice", emoji: "✋", label: "실천하기" },
-  { href: "/child/envelopes", emoji: "✉️", label: "봉투" },
-  { href: "/child/plan",     emoji: "📝", label: "계획 카드" },
   { href: "/child/wishlist", emoji: "🎁", label: "갖고 싶은 것" },
 ];
 

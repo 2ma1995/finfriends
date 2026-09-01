@@ -12,13 +12,14 @@ import { getTxn, attach } from "@/modules/card";
  */
 async function child() {
   const access = await currentChild();
-  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fenvelopes");
+  if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fallowance");
   return access.childId;
 }
 
 function back(q: string) {
   revalidateMoney();
-  redirect(q ? `/child/envelopes?${q}` : "/child/envelopes");
+  // 🔴 돈 화면은 통장 하나다. 봉투도 저금도 기입장도 여기 있다
+  redirect(q ? `/child/allowance?${q}` : "/child/allowance");
 }
 
 /** 🔴 합계가 쓸 수 있는 돈을 넘으면 **저장을 거부한다** (AC-020-1) */

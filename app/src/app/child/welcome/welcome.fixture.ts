@@ -45,9 +45,9 @@ export const tour: readonly TourStep[] = [
   },
   {
     emoji: "📝",
-    title: "쓰기 전에 적어 둬",
-    lines: ["얼마 쓸지 먼저 적어.", "쓰고 나서 얼마 썼는지 비교해.", "비슷하게 맞히면 별이 생겨."],
-    peek: { href: "/child/plan/new", label: "계획 카드 보기" },
+    title: "쓸 곳을 미리 나눠 둬",
+    lines: ["간식·문구처럼 쓸 곳을 정해서 봉투에 나눠 담아.", "카드로 쓰면 그 봉투에서 저절로 빠져.", "봉투 안에서 쓰면 별이 생겨."],
+    peek: { href: "/child/allowance", label: "내 통장 보기" },
   },
   {
     emoji: "🎁",

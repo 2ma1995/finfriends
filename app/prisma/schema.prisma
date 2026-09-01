@@ -454,6 +454,9 @@ model PlanCard {
 }
 
 /// 계획↔실제 대조와 두 갈래 회고
+/// 🔴 **계획 카드 시절의 소비 기록이다.** 봉투(`FR-020`·`FR-021`)가 그 자리를 가져가면서
+///    **새 기록은 여기 쌓이지 않는다** — `envelope_spends` 로 간다.
+///    표를 남기는 이유는 옛 기록이 들어 있고 부모 소비 내역이 그것을 읽기 때문이다.
 model SpendingRecord {
   id               String           @id @default(uuid()) @db.Uuid
   planCardId       String?          @map("plan_card_id") @db.Uuid
@@ -466,11 +469,6 @@ model SpendingRecord {
   categoryMatch    CategoryMatch?   @map("category_match")
   /// 회고 문장 풀에서 **비복원 추출**한 id — 재노출률을 재려면 어느 문장인지 남아야 한다
   sentenceId       String?          @map("sentence_id")
-  /// 🔴 봉투 기록. null 이면 **봉투 이전(계획 카드) 기록**이다 — 옛 화면이 그렇게 읽는다
-  envelopeId       String?          @map("envelope_id") @db.Uuid
-  /// 넘긴 금액(원). 0이면 봉투 안
-  envelopeOver     Int?             @map("envelope_over")
-  unclassified     Boolean          @default(false)
   occurredAt       DateTime         @map("occurred_at") @db.Timestamptz(6)
 
   planCard PlanCard? @relation(fields: [planCardId], references: [id])

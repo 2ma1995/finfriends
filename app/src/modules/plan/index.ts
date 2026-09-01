@@ -1,16 +1,19 @@
 import "server-only";
 import { prisma } from "@/db";
 import {
-  CATEGORIES, categoryOf,
-  type NewPlanCard, type PlanCardView, type RetroView,
+  categoryOf,
+  type PlanCardView, type RetroView,
   type SpendLineView, type SpendSummaryView,
 } from "@/contracts/plan";
-import { grantStar } from "@/modules/star-ledger";
-import { record as recordAllowance } from "@/modules/allowance";
-import { attach as attachTxn, findByRecord } from "@/modules/card";
+import { findByRecord } from "@/modules/card";
 
 /**
- * 계획 카드 · 계획↔실제 대조 — PLN-001 · PLN-002 · PLN-003 슬라이스.
+ * 계획 카드 — 🔴 **읽기 전용이다.**
+ *
+ * **봉투(`FR-020`·`FR-021`)가 이 자리를 가져갔다.** 두 경로가 함께 살아 있으면
+ * 아이가 두 군데서 소비를 적고 **⭐ 판정 기준이 둘**이 된다(계획 한도 vs 봉투 잔액).
+ * 그래서 **쓰기를 멈췄다.** 표와 옛 기록은 남는다 — 지우면 지난 데이터가 사라지고
+ * 부모 소비 내역이 깨진다.
  *
  * 🔴 **⭐ 판정은 금액 단독이다** (ADR-008).
  *    업종 일치는 회고 **문장을 분기**할 뿐, 별을 차단하지 않는다.
@@ -105,32 +108,6 @@ export async function getLatestRetroId(childId: string) {
   });
   return r?.id ?? null;
 }
-
-/**
- * 계획 카드 저장 — PLN-001.
- * 🔴 「예산」·「한도」가 아니라 **계획 카드**다. 적는 주체를 기록한다 — 보호자가 대신 적어도 남는다.
- */
-export async function createPlanCard(childId: string, input: NewPlanCard) {
-  const known = CATEGORIES.some((c) => c.code === input.category);
-  if (!known) throw new Error("모르는 업종이다");
-  if (input.limitAmount <= 0) throw new Error("금액은 0보다 커야 한다");
-
-  return prisma.planCard.create({
-    data: {
-      childId,
-      whereText: input.where.trim(),
-      category: input.category,
-      limitAmount: input.limitAmount,
-      items: input.items?.trim() || null,
-      author: input.author === "보호자" ? "GUARDIAN" : "CHILD",
-    },
-    select: { id: true },
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
-// 소비 내역 — PLN-005 · §6.1 진입점 11번 (RSC 읽기)
-// ─────────────────────────────────────────────────────────────
 
 /**
  * 🔴 **결제 웹훅(PTN-002)이 아직 없다.** `spending_records` 는 시드로만 들어온다.
@@ -256,79 +233,3 @@ export async function getPlanCards(childId: string): Promise<PlanCardView[]> {
 export type RecordResult =
   | { ok: true; recordId: string; met: boolean; starred: boolean }
   | { ok: false; reason: "NOT_FOUND" | "ALREADY" | "BAD_AMOUNT" | "NOT_ENOUGH" };
-
-/** 한 번에 적을 수 있는 금액 — 손이 미끄러진 0 하나를 막는다 */
-export const MAX_ACTUAL = 1_000_000;
-
-/**
- * 「얼마 썼는지 적기」 → 회고 — PLN-002 · PLN-003.
- *
- * 🔴 **⭐ 판정은 금액 단독이다** (ADR-008). 업종이 달라도 금액을 지켰으면 별을 준다.
- *    섞으면 「업종이 달라서 별을 못 받았다」가 되어 아이가 규칙을 오해한다.
- * 🔴 **넘겨도 차감하지 않는다** (P-03). 미지급일 뿐이다.
- * 🔴 **계획 하나에 실제 하나다.** 다시 적어 별을 또 받을 수 없다 — 멱등키도 계획 id 다.
- * 🔴 지킨 경우는 **실천**이다(성장 나무 「계획 지키기」). `PracticeCredit` 을 남긴다.
- */
-export async function recordActual(
-  childId: string, planCardId: string, actualAmount: number, actualCategory: string,
-  /** 카드 내역에서 골랐다면 그 거래 id — 🔴 **금액은 여전히 아이가 적은 값이다.** 대조용이다 */
-  cardTxnId?: string,
-): Promise<RecordResult> {
-  if (!Number.isFinite(actualAmount) || actualAmount < 0 || actualAmount > MAX_ACTUAL) {
-    return { ok: false, reason: "BAD_AMOUNT" };
-  }
-  const plan = await prisma.planCard.findFirst({
-    where: { id: planCardId, childId },
-    select: {
-      id: true, whereText: true, category: true, limitAmount: true,
-      spendings: { select: { id: true }, take: 1 },
-    },
-  });
-  if (!plan) return { ok: false, reason: "NOT_FOUND" };
-  if (plan.spendings.length > 0) return { ok: false, reason: "ALREADY" };
-
-  const amount = Math.floor(actualAmount);
-  const met = amount <= plan.limitAmount;
-  const known = CATEGORIES.some((c) => c.code === actualCategory);
-  const category = known ? actualCategory : plan.category;
-  const now = new Date();
-
-  // 🔴 **쓴 돈은 용돈에서 빠진다** (D18). 0원은 「안 썼다」이므로 장부를 건드리지 않는다
-  if (amount > 0) {
-    const paid = await recordAllowance(
-      childId, -amount, "PLAN_SPEND", `${plan.whereText}에서 썼어요`, `plan-spend:${plan.id}`,
-    );
-    if (!paid.ok) return { ok: false, reason: "NOT_ENOUGH" };
-  }
-
-  const rec = await prisma.spendingRecord.create({
-    data: {
-      planCardId: plan.id, childId, actualAmount: amount,
-      merchantCategory: category,
-      matchResult: met ? "MET" : "EXCEEDED",
-      categoryMatch: category === plan.category ? "MATCHED" : "MISMATCHED",
-      occurredAt: now,
-    },
-    select: { id: true },
-  });
-
-  // 🔴 거래를 붙여 둔다. 한 거래는 한 번만 쓰인다 — 같은 거래로 별을 두 번 받을 수 없다
-  if (cardTxnId) await attachTxn(childId, cardTxnId, rec.id);
-
-  if (!met) return { ok: true, recordId: rec.id, met: false, starred: false };
-
-  const credit = await prisma.practiceCredit.create({
-    data: {
-      childId, triggerCode: "SPENDING_RETRO", triggerPath: "PRACTICE",
-      topic: "SPEND", approvalMode: "auto",
-      earnedAt: now, awardedAt: now,
-      cycleId: now.getFullYear() * 100 + (now.getMonth() + 1),
-    },
-  });
-  const res = await grantStar({
-    childId, triggerCode: "SPENDING_RETRO", delta: 1,
-    idempotencyKey: `retro:${plan.id}`, practiceId: credit.id,
-  });
-
-  return { ok: true, recordId: rec.id, met: true, starred: res.ok && !res.duplicated };
-}
