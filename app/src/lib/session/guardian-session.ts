@@ -57,7 +57,7 @@ function normalizeEmail(email: string) {
 
 export type AuthResult =
   | { ok: true; guardianId: string; token: string; expiresAt: Date }
-  | { ok: false; reason: "EMAIL_TAKEN" | "BAD_CREDENTIALS" | "WEAK_PASSWORD" | "INVALID_EMAIL" };
+  | { ok: false; reason: "EMAIL_TAKEN" | "BAD_CREDENTIALS" | "LOCKED" | "WEAK_PASSWORD" | "INVALID_EMAIL" };
 
 function validate(email: string, password: string): AuthResult | null {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, reason: "INVALID_EMAIL" };
@@ -110,12 +110,53 @@ export async function createGuardian(emailRaw: string, password: string): Promis
   return { ok: true, guardianId, token, expiresAt };
 }
 
+/**
+ * 🔴 **연속으로 이만큼 틀리면 잠근다** — 어긋남 대장 D54.
+ *    없어서 비밀번호를 무한히 시도할 수 있었다. 네 자리 PIN 은 다섯 번이면 잠그는데(`D42`)
+ *    부모 비밀번호는 안 막고 있었다 — 뚫리면 **아이 데이터 전체**가 열린다.
+ *
+ *    PIN 보다 넉넉한 이유 — 비밀번호는 사람이 오타를 낸다. 다섯 번은 잠그기 쉽다.
+ */
+const MAX_LOGIN_TRIES = 10;
+/** 잠기는 시간. 🔴 영구 잠금은 안 한다 — 부모가 자기 계정에서 영영 못 들어오면 안 된다 */
+const LOCK_MINUTES = 15;
+
 /** 로그인. 이메일이 없는 경우와 비밀번호가 틀린 경우를 **구분해 알리지 않는다** */
 export async function signIn(emailRaw: string, password: string): Promise<AuthResult> {
   const email = normalizeEmail(emailRaw);
   const user = await prisma.devAuthUser.findFirst({ where: { email } });
-  if (!user || !passwordMatches(password, user.passwordHash)) {
-    return { ok: false, reason: "BAD_CREDENTIALS" };
+
+  /**
+   * 🔴 **없는 이메일도 같은 답을 준다.** 계정이 있는지 없는지 새면
+   *    공격자가 먼저 이메일 목록을 만든다 — 그다음이 비밀번호다.
+   */
+  if (!user) return { ok: false, reason: "BAD_CREDENTIALS" };
+
+  // 🔴 잠긴 동안은 **맞는 비밀번호도 받지 않는다.** 그래야 잠금이 뜻을 갖는다
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    return { ok: false, reason: "LOCKED" };
+  }
+
+  if (!passwordMatches(password, user.passwordHash)) {
+    const tried = user.failedAttempts + 1;
+    const lock = tried >= MAX_LOGIN_TRIES;
+    await prisma.devAuthUser.update({
+      where: { id: user.id },
+      data: {
+        // 잠글 때는 세던 것을 되돌린다 — 풀린 뒤 한 번 틀리면 또 잠기면 안 된다
+        failedAttempts: lock ? 0 : tried,
+        lockedUntil: lock ? new Date(Date.now() + LOCK_MINUTES * 60_000) : user.lockedUntil,
+      },
+    });
+    return { ok: false, reason: lock ? "LOCKED" : "BAD_CREDENTIALS" };
+  }
+
+  // 🔴 맞았으면 되돌린다. 안 되돌리면 오타가 쌓여 멀쩡한 부모가 잠긴다
+  if (user.failedAttempts > 0 || user.lockedUntil) {
+    await prisma.devAuthUser.update({
+      where: { id: user.id },
+      data: { failedAttempts: 0, lockedUntil: null },
+    });
   }
 
   // 🔴 보호자 행이 없다고 「비밀번호가 틀렸다」로 답하지 않는다 — 자격증명은 맞았다.

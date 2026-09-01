@@ -15,7 +15,8 @@
     "db:up": "../tools/dev_db.sh",
     "prebuild": "node tools/scan_child_bundle.mjs",
     "postbuild": "node tools/scan_child_bundle.mjs",
-    "gate:origin": "node tools/scan_child_bundle.mjs"
+    "gate:origin": "node tools/scan_child_bundle.mjs",
+    "verify:logic": "tsx --conditions=react-server tools/verify_logic.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -46,6 +47,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

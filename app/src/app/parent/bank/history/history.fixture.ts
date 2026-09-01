@@ -10,7 +10,13 @@ export const sub = "들어오고 나간 것 전부";
 
 /** 🔴 아이가 한 것과 부모가 한 것을 구별해 보여준다. 섞이면 누가 무엇을 했는지 모른다 */
 export const byGuardianBadge = "부모님이 적음";
+/**
+ * 🔴 **목표와 적금을 가른다.** `MOVED_CODES` 가 넷으로 늘면서(적금이 더해짐)
+ *    적금 기록까지 「목표로 옮김」으로 나오고 있었다 — 부모가 위시리스트로 읽는다.
+ *    둘 다 「쓴 게 아니라 묶인 것」이지만 **묶인 곳이 다르다.**
+ */
 export const movedBadge = "목표로 옮김";
+export const lockedBadge = "적금에 넣음";
 export const reversedBadge = "되돌림";
 
 export const empty = {

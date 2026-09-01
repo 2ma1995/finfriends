@@ -587,6 +587,18 @@ model DevAuthUser {
   email        String
   /// scrypt · `salt:derivedKey`. 원문 비밀번호는 어디에도 저장하지 않는다
   passwordHash String   @map("password_hash")
+  /**
+   * 🔴 **연속으로 틀린 횟수** — 어긋남 대장 D54.
+   *
+   *    없어서 **비밀번호를 무한히 시도할 수 있었다.** 아이러니하게도 네 자리 PIN 은
+   *    다섯 번이면 잠그는데(`D42`) 부모 비밀번호는 안 막았다 —
+   *    뚫리면 아이 데이터 전체가 열린다. 아동 대상 서비스에서 그대로 둘 수 없다.
+   *
+   *    맞으면 0으로 되돌린다.
+   */
+  failedAttempts Int    @default(0) @map("failed_attempts")
+  /// 이 시각까지 잠긴다. 지나면 다시 시도할 수 있다
+  lockedUntil  DateTime? @map("locked_until") @db.Timestamptz(6)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   sessions DevAuthSession[]

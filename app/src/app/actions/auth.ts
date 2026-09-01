@@ -25,6 +25,12 @@ import { MODE_COOKIE } from "@/lib/session/device-mode";
 const MESSAGES: Record<Exclude<AuthResult, { ok: true }>["reason"], string> = {
   EMAIL_TAKEN: "이미 가입된 이메일이에요. 로그인해 주세요.",
   BAD_CREDENTIALS: "이메일이나 비밀번호가 맞지 않아요.",
+  /**
+   * 🔴 **계정이 있는지 알려주지 않는다.** 「그 계정이 잠겼다」로 적으면
+   *    공격자가 이메일 존재를 확인하는 수단이 된다 (어긋남 대장 D54).
+   *    잠긴 시간도 말하지 않는다 — 언제 다시 되는지 알면 그때 다시 돌린다.
+   */
+  LOCKED: "너무 여러 번 시도했어요. 잠시 뒤에 다시 해 주세요.",
   WEAK_PASSWORD: "비밀번호는 8자 이상이고 숫자를 하나 이상 넣어 주세요.",
   INVALID_EMAIL: "이메일 형식을 확인해 주세요.",
 };

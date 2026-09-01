@@ -642,6 +642,20 @@ export async function autoCompleteStaleMissions(
 
   for (const m of stale) {
     /**
+     * 🔴 **한 미션이 한 트랜잭션이다** (어긋남 대장 D54).
+     *
+     *    전에는 실천·별·용돈·상태를 **따로** 썼다. 중간에 죽으면
+     *    **별과 돈은 나갔는데 상태는 `PENDING`** 으로 남는다 —
+     *    다음에 화면을 열면 또 처리하려 하고, 멱등키가 별과 실천은 막지만
+     *    **상태는 영영 안 바뀐다.** 아이는 완료된 미션을 「기다리는 중」으로 계속 본다.
+     *
+     * 🔴 **미션 단위로 묶는다.** 스무 건을 한 트랜잭션에 넣으면 하나가 실패할 때
+     *    멀쩡한 열아홉이 함께 되돌아간다 — 그건 더 나쁘다.
+     *
+     * 🔴 사진 파기와 알림은 **밖에 둔다.** 실패해도 완료를 되돌릴 이유가 없고,
+     *    사진은 다음 판정에서 다시 지워진다.
+     */
+    /**
      * 🔴 **승인과 같은 일을 한다** — 실천을 남기고 별을 준다.
      *    다른 것은 `approvalMode` 뿐이다: `"auto"`.
      *    「누가 인정했나」가 이 제품의 근거이므로 그 한 글자가 남아야
@@ -650,34 +664,59 @@ export async function autoCompleteStaleMissions(
      * 🔴 **귀속 주기는 완료 시점이다.** 지금 시각으로 계산하면
      *    사흘 지나 자동 완료된 것이 **다음 달 나무를 부풀린다** (ACE-6.2).
      */
-    const credit = await prisma.practiceCredit.upsert({
-      where: { id: m.id },
-      create: {
-        id: m.id, childId: m.childId,
-        triggerCode: "MISSION_APPROVED", triggerPath: "PRACTICE", topic: m.topic,
-        approvalMode: "auto",
-        earnedAt: m.doneAt!, awardedAt: new Date(),
-        cycleId: m.cycleId ?? cycleIdOf(m.doneAt!),
-      },
-      update: {}, select: { id: true },
-    });
+    await prisma.$transaction(async (tx) => {
+      const credit = await tx.practiceCredit.upsert({
+        where: { id: m.id },
+        create: {
+          id: m.id, childId: m.childId,
+          triggerCode: "MISSION_APPROVED", triggerPath: "PRACTICE", topic: m.topic,
+          approvalMode: "auto",
+          earnedAt: m.doneAt!, awardedAt: new Date(),
+          cycleId: m.cycleId ?? cycleIdOf(m.doneAt!),
+        },
+        update: {}, select: { id: true },
+      });
 
-    await grantStar({
-      childId: m.childId, triggerCode: "MISSION_APPROVED", delta: m.reward,
-      idempotencyKey: `mission:${m.id}`, practiceId: credit.id,
-    });
+      // 🔴 별 원장은 「합이 잔액」이다. 같은 트랜잭션 안에서 마지막 잔액을 읽어야 어긋나지 않는다
+      const agg = await tx.starLedgerEntry.aggregate({
+        where: { childId: m.childId }, _sum: { delta: true },
+      });
+      const balanceAfter = (agg._sum.delta ?? 0) + m.reward;
+      try {
+        await tx.starLedgerEntry.create({
+          data: {
+            childId: m.childId, delta: m.reward, triggerCode: "MISSION_APPROVED",
+            balanceAfter, idempotencyKey: `mission:${m.id}`, practiceId: credit.id,
+          },
+        });
+      } catch (e) {
+        // 이미 지급된 것 — 오류가 아니다 (재처리)
+        if ((e as { code?: string }).code !== "P2002") throw e;
+      }
 
-    // 🔴 금액이 걸려 있으면 용돈으로 들어간다 — 승인과 같다 (REQ-FUNC-002)
-    if (m.payoutWon > 0) {
-      await recordAllowance(
-        m.childId, m.payoutWon, "TOPUP", `${m.title} — 미션을 하고 받았어요`,
-        `mission-payout:${m.id}`,
-      );
-    }
+      // 🔴 금액이 걸려 있으면 용돈으로 들어간다 — 승인과 같다 (REQ-FUNC-002)
+      if (m.payoutWon > 0) {
+        const bal = await tx.allowanceEntry.aggregate({
+          where: { childId: m.childId }, _sum: { delta: true },
+        });
+        try {
+          await tx.allowanceEntry.create({
+            data: {
+              childId: m.childId, delta: m.payoutWon, code: "TOPUP",
+              memo: `${m.title} — 미션을 하고 받았어요`,
+              idempotencyKey: `mission-payout:${m.id}`,
+              balanceAfter: (bal._sum.delta ?? 0) + m.payoutWon,
+            },
+          });
+        } catch (e) {
+          if ((e as { code?: string }).code !== "P2002") throw e;
+        }
+      }
 
-    await prisma.mission.update({
-      where: { id: m.id },
-      data: { state: "AUTO_APPROVED", decidedAt: new Date() },
+      await tx.mission.update({
+        where: { id: m.id },
+        data: { state: "AUTO_APPROVED", decidedAt: new Date() },
+      });
     });
 
     // 🔴 사진은 파기한다. 판정이 자동이어도 아동 이미지가 남으면 안 된다 (D32)

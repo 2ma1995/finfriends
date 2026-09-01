@@ -73,6 +73,21 @@ npm run dev          # http://localhost:3000
 
 ```
 
+## 🔴 검증은 사본을 만들지 않는다
+
+`verify_*.mjs` 일곱 개는 판정 로직을 **베껴** 갖고 있다. DB 불변식은 그렇게 봐도 되지만
+**계산 규칙을 베끼면 원본이 바뀌어도 검증이 통과한다.** 실제로 두 번 새어나갔다.
+
+- 나무를 4단계로 바꿨는데 검증은 3단계 사본으로 **통과**했다
+- `GUARDIAN_PREFIXES` 가 늘었을 때는 **좋아진 변경인데 실패**했다
+
+그래서 `verify_logic.ts` 를 뒀다 — **`modules/*` · `contracts/*` 를 직접 import** 한다.
+`server-only` 때문에 `--conditions=react-server` 로 돌려야 한다(`npm run verify:logic` 이 붙여 준다).
+
+**새 판정 규칙은 여기에 넣는다.** 사본을 하나 더 만들지 않는다.
+
+---
+
 ## 화면이 안 바뀔 때
 
 **둘 이상이 같은 저장소를 쓰면 띄워 둔 dev 서버가 낡는다.** 상대가 push 한 것을
@@ -120,6 +135,7 @@ node tools/verify_mission_loop.mjs  # 미션 승인 → 실천 → 승급 12건
 node tools/verify_bank_ledger.mjs   # 아이 통장 · 용돈 원장 21건
 node tools/verify_withdraw.mjs      # 탈퇴 · 파기 8건
 node tools/verify_cycle_audit.mjs   # 주기 전환 · 스냅샷 · 원장 정산 10건
+npm run verify:logic                # 🔴 순수 판정 — **실제 코드를 부른다** (사본이 아니다)
 npm run gate:origin                 # 오리진 분리 — 아이 화면에 부모 기능 0건
 ```
 

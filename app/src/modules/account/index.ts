@@ -212,7 +212,13 @@ export async function withdrawAccount(guardianId: string): Promise<{ ok: boolean
     // 미션 사진 — child_id 가 없어 미션 id 로 지운다. 남으면 아동 이미지가 남는다
     prisma.missionPhoto.deleteMany({ where: { missionId: { in: missionIds } } }),
 
-    // activity — 아이 단위
+    /**
+     * activity — 아이 단위.
+     *
+     * 🔴 **봉투 표 셋을 지웠다** (봉투 폐기 `D40` · 표 드롭). 없는 표를 지우려 하면
+     *    **탈퇴가 통째로 예외로 죽는다** — 한 트랜잭션이라 아무것도 안 지워진다.
+     *    검증이 스키마에서 표를 찾는 방식이라 이걸 잡았다.
+     */
     prisma.appEvent.deleteMany({ where: byChild }),
     prisma.cardTransaction.deleteMany({ where: byChild }),
     prisma.childItem.deleteMany({ where: byChild }),
