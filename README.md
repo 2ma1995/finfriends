@@ -80,6 +80,7 @@ node tools/verify_child.mjs      # 아이 프로필 19건
 node tools/verify_mission_loop.mjs  # 미션 승인 → 실천 → 승급 12건
 node tools/verify_bank_ledger.mjs   # 아이 통장 · 용돈 원장 21건
 node tools/verify_withdraw.mjs      # 탈퇴 · 파기 8건
+node tools/verify_cycle_audit.mjs   # 주기 전환 · 스냅샷 · 원장 정산 10건
 npm run gate:origin                 # 오리진 분리 — 아이 화면에 부모 기능 0건
 ```
 

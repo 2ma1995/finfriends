@@ -6,7 +6,9 @@ import { STAGE_LABEL, type Condition, type TreeSlotView } from "@/contracts/grow
 import { findChild } from "@/modules/consent";
 import { getTreeView } from "@/modules/growth";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { emptyState, engineNotice, stageNotice } from "./tree.fixture";
+import {
+  cycleNotice, emptyState, engineNotice, quarantineNotice, stageNotice,
+} from "./tree.fixture";
 
 // GRW-003 · UX-002 · REQ-FUNC-001 — 보호자가 여는 첫 화면
 export const metadata = { title: "성장 나무 · 핀프렌즈" };
@@ -117,7 +119,16 @@ export default async function ParentTreePage() {
         </Card>
       </div>
 
-      <p className="mt-3 text-[0.68em] leading-relaxed text-ink-mute">{stageNotice}</p>
+      {/* 🔴 정합성이 깨진 줄이 있으면 숨기지 않는다 (AC-012-3) */}
+      {view.quarantinedStars > 0 ? (
+        <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.76em] leading-relaxed text-ink-soft">
+          {quarantineNotice(view.quarantinedStars)}
+        </p>
+      ) : null}
+
+      {/* 🔴 매달 실천만 비워지는 이유를 적는다 — 안 적으면 「쉽게 올랐다」로 읽힌다 */}
+      <p className="mt-3 text-[0.68em] leading-relaxed text-ink-mute">{cycleNotice}</p>
+      <p className="mt-1 text-[0.68em] leading-relaxed text-ink-mute">{stageNotice}</p>
     </Screen>
   );
 }

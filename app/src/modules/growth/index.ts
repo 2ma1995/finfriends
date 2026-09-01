@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/db";
 import { getTopicProgress } from "@/modules/learning";
 import { countWaiting } from "@/modules/mission";
+import { reconcileStars } from "@/modules/star-ledger";
 import { TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
   STAGE_EMOJI, STAGE_LABEL, nextRule, stageFor, subjectParticle, topRule,
@@ -37,7 +38,9 @@ const PRACTICE_LABEL: Record<Topic, string> = {
  *    호출은 멱등이다. 이미 있으면 아무 일도 하지 않는다.
  */
 export async function ensureTreeStates(childId: string): Promise<void> {
-  const cycleStartedAt = new Date();
+  // 🔴 날짜 컬럼이다. 지금 시각을 그대로 넣으면 시간대에 따라 하루 밀려 저장된다
+  const now = new Date();
+  const cycleStartedAt = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   await prisma.treeState.createMany({
     data: ORDER.map((slot) => ({ childId, slot, cycleStartedAt })),
     skipDuplicates: true,
@@ -45,6 +48,18 @@ export async function ensureTreeStates(childId: string): Promise<void> {
 }
 
 export async function getTreeView(childId: string, childName: string): Promise<TreeView> {
+  /**
+   * 🔴 **읽기 전에 주기를 넘긴다.** 안 넘기면 지난달 실천이 이번 달 나무에 남아
+   *    나무가 한 번 열매나무가 되면 영원히 열매나무다 (`AC-030-3`).
+   *
+   * 🔴 **별 원장도 여기서 대조한다.** 「별 원장 정합성 오류 0%」가 허용 오차 0인
+   *    항목인데 재는 사람이 없었다 (`FR-012`). 어긋난 줄이 있을 때만 쓴다.
+   *
+   *    둘 다 `pg_cron` 이 붙으면 배치가 부르면 되고 이 함수는 안 바뀐다.
+   */
+  await rollCycleIfNeeded(childId);
+  const audit = await reconcileStars(childId);
+
   const [states, progress, practices, pendingApprovals] = await Promise.all([
     prisma.treeState.findMany({
       where: { childId },
@@ -123,6 +138,8 @@ export async function getTreeView(childId: string, childName: string): Promise<T
      *    한동안 그렇게 세어 「승인 대기 1건」이 거짓으로 떴다.
      */
     pendingApprovals,
+    /** 🔴 정합성이 깨진 줄이 있으면 숨기지 않는다 (`AC-012-3`) */
+    quarantinedStars: audit.totalQuarantined,
   };
 }
 
@@ -131,6 +148,47 @@ export async function getTreeView(childId: string, childName: string): Promise<T
 // ─────────────────────────────────────────────────────────────
 
 const YM = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+type SnapStage = { topic: Topic; label: string; stage: Stage };
+
+/**
+ * 전월 대비 변화 — `FR-040`.
+ *
+ * 🔴 **두 장이 있어야 만들어진다.** 한 장뿐이면 비교 대상이 없으므로 빈 배열이다.
+ *    「0 단계 변화」로 그리면 보호자는 **변화 없음이 아니라 고장**으로 읽는다 (`AC-E2`).
+ *
+ * 🔴 **오른 것만 보여주지 않는다.** 내려간 것도 그대로 적는다 —
+ *    좋은 소식만 남기면 이 화면은 성장 증거가 아니라 광고가 된다.
+ */
+function buildDeltas(snaps: readonly { yearMonth: string; finalStages: unknown; starsEarned: number }[]) {
+  if (snaps.length < 2) return [];
+  const [last, before] = snaps;
+  const beforeBy = new Map(
+    ((before.finalStages as SnapStage[]) ?? []).map((x) => [x.topic, x.stage]),
+  );
+
+  const out = ((last.finalStages as SnapStage[]) ?? []).flatMap((x) => {
+    const was = beforeBy.get(x.topic);
+    if (was === undefined || was === x.stage) return [];
+    return [{
+      label: x.label,
+      from: STAGE_LABEL[was],
+      to: STAGE_LABEL[x.stage],
+      improved: x.stage > was,
+    }];
+  });
+
+  // 별은 단계가 그대로여도 달라진다 — 아이가 별을 즉시 쓰면 이것만 남는 증거다 (AC-1.4)
+  if (last.starsEarned !== before.starsEarned) {
+    out.push({
+      label: "이번 달 별",
+      from: `${before.starsEarned}개`,
+      to: `${last.starsEarned}개`,
+      improved: last.starsEarned > before.starsEarned,
+    });
+  }
+  return out;
+}
 
 /**
  * 🔴 **월말 스냅샷 배치(GRW-004)가 아직 없다.** 그래서 `forest_snapshots` 는 비어 있고
@@ -142,7 +200,9 @@ const YM = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
 export async function getForestView(childId: string, childName: string): Promise<ForestView> {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const prevYm = YM(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  // 🔴 먼저 주기를 넘긴다. 안 넘기면 지난달 스냅샷이 없어 영원히 「다음 달부터」다
+  await rollCycleIfNeeded(childId);
 
   const [earned, spent, states, prev] = await Promise.all([
     prisma.starLedgerEntry.aggregate({
@@ -157,9 +217,11 @@ export async function getForestView(childId: string, childName: string): Promise
       where: { childId },
       select: { slot: true, stage: true },
     }),
-    prisma.forestSnapshot.findUnique({
-      where: { childId_yearMonth: { childId, yearMonth: prevYm } },
-      select: { deltaItems: true },
+    // 🔴 **두 달치를 읽는다.** 델타는 「지난달 − 그 전달」이라 한 장으로는 못 만든다
+    prisma.forestSnapshot.findMany({
+      where: { childId },
+      orderBy: { yearMonth: "desc" }, take: 2,
+      select: { yearMonth: true, finalStages: true, starsEarned: true },
     }),
   ]);
 
@@ -176,9 +238,133 @@ export async function getForestView(childId: string, childName: string): Promise
       const st = ((stageBy.get(topic) ?? 0) as Stage);
       return { label: TOPIC_LABEL[topic], stage: `${STAGE_EMOJI[st]} ${STAGE_LABEL[st]}` };
     }),
-    hasPrevMonth: prev !== null,
-    // 스냅샷의 델타는 배치가 만든다. 없으면 빈 배열이고 화면은 비교 자리를 대체 문구로 채운다
-    deltas: [],
+    hasPrevMonth: prev.length >= 1,
+    /**
+     * 🔴 **델타를 읽는 시점에 만든다.** 스냅샷에 저장해 두면 두 곳을 맞춰야 하고,
+     *    한쪽만 고쳐지면 「숲은 올랐다는데 나무는 그대로」가 된다.
+     *
+     * 🔴 비교할 앞 달이 없으면 **빈 배열이다.** 0으로 그리지 않는다 (`AC-E2`) —
+     *    0은 「변화 없음」이 아니라 「고장」으로 읽힌다.
+     */
+    deltas: buildDeltas(prev),
     noActivity: starsEarned === 0 && starsSpent === 0,
   };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 주기 전환 · 월말 스냅샷 — GRW-004 · AC-030-3 · FR-040 · 어긋남 대장 D39
+// ─────────────────────────────────────────────────────────────
+
+const monthStartOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+/** `practice_credits.cycleId` 형식 — 202609 */
+const cycleIdOf = (d: Date) => d.getFullYear() * 100 + (d.getMonth() + 1);
+
+/**
+ * 🔴 **`cycle_started_at` 은 `date` 컬럼이다** — 시각이 잘린다.
+ *    「2026-09-01 00:00 KST」로 넣으면 DB 에는 날짜만 남고, 읽을 때는
+ *    **UTC 자정**(`2026-09-01T00:00Z`)으로 돌아온다. 시각으로 비교하면
+ *    시간대 차이(KST +9)만큼 어긋나 **주기가 넘어갔는데 안 넘어간 것으로 보인다.**
+ *    그래서 **연·월 문자열로 견준다** — 날짜 컬럼에는 날짜의 방식으로 묻는다.
+ */
+const ymOf = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+
+/**
+ * 🔴 **날짜 컬럼에는 UTC 자정을 쓴다.** 로컬 자정(`new Date(2026, 8, 1)` = KST 9월 1일)을
+ *    넣으면 그 순간은 UTC 로 **8월 31일 15시**라, Postgres 가 날짜만 잘라 **8월 31일**을
+ *    저장한다 — 9월로 넘겼는데 8월로 적히는 것이다. 실제로 그랬다.
+ */
+const utcMonthStart = (d: Date) => new Date(Date.UTC(d.getFullYear(), d.getMonth(), 1));
+
+/**
+ * 주기가 바뀌었으면 **직전 주기를 숲에 확정하고 나무를 비운다.**
+ *
+ * 🔴 **없어서 두 가지가 망가져 있었다.**
+ *    ① `forest_snapshots` 가 0건이라 월간 숲이 **영원히 「다음 달부터」**였다
+ *    ② 나무가 한 번 열매나무가 되면 **영원히 열매나무**였다 — 3월 실천이 12월까지 남는다
+ *
+ * 🔴 **비우는 것은 실천뿐이다.** 학습·퀴즈는 그대로 둔다 (`D39`).
+ *    `completedLessons` 가 읽은 편의 **id 집합**이라 같은 편을 다시 읽어도 진도가 안 오르고,
+ *    콘텐츠 양이 한정돼 매달 15편을 새로 읽는 것은 불가능하다.
+ *    **매달 새로 해야 하는 것은 실천**이지 학습이 아니다 —
+ *    아이는 이미 아는 것이고 다시 증명할 것은 행동이다.
+ *
+ * 🔴 **`pg_cron` 이 붙으면 배치가 이 함수를 부르면 된다** (`ADR-T02`).
+ *    지금은 나무·숲 화면을 열 때 부른다. 함수를 그대로 두므로 옮길 때 화면은 안 바뀐다.
+ *
+ * 🔴 **여러 달을 건너뛰어도 한 달씩 만든다.** 두 달 쉬었다 돌아온 계정이
+ *    중간 달을 통째로 잃으면 숲의 「누적」이 거짓이 된다.
+ */
+export async function rollCycleIfNeeded(childId: string): Promise<number> {
+  const states = await prisma.treeState.findMany({
+    where: { childId },
+    select: { slot: true, cycleStartedAt: true },
+  });
+  if (states.length === 0) return 0;
+
+  const now = new Date();
+  const thisMonth = monthStartOf(now);
+  const oldest = states.reduce(
+    (min, s) => (s.cycleStartedAt < min ? s.cycleStartedAt : min), states[0].cycleStartedAt,
+  );
+  // 🔴 날짜 컬럼이므로 연·월로 견준다. 시각으로 비교하면 시간대만큼 어긋난다
+  if (ymOf(oldest) >= YM(thisMonth)) return 0;
+
+  // 지난 주기의 첫날 — UTC 로 읽어야 저장된 날짜와 같은 달이 나온다
+  const started = new Date(oldest.getUTCFullYear(), oldest.getUTCMonth(), 1);
+
+  const progress = await getTopicProgress(childId);
+  const progressBy = new Map(progress.map((p) => [p.topic, p]));
+
+  let made = 0;
+  for (let m = new Date(started); m < thisMonth; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
+    const ym = YM(m);
+    const next = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+
+    const exists = await prisma.forestSnapshot.findUnique({
+      where: { childId_yearMonth: { childId, yearMonth: ym } }, select: { id: true },
+    });
+    if (exists) continue;
+
+    // 그 주기에 인정된 실천만 센다 — 주기 귀속은 `cycleId` 가 갖고 있다
+    const practices = await prisma.practiceCredit.groupBy({
+      by: ["topic"], where: { childId, cycleId: cycleIdOf(m) }, _count: { _all: true },
+    });
+    const practiceBy = new Map(
+      practices.filter((x) => x.topic !== null).map((x) => [x.topic as Topic, x._count._all]),
+    );
+
+    const stars = await prisma.starLedgerEntry.aggregate({
+      where: { childId, createdAt: { gte: m, lt: next }, delta: { gt: 0 } }, _sum: { delta: true },
+    });
+
+    /**
+     * 🔴 **학습·퀴즈는 지금 값을 쓴다.** 주기별 학습 기록이 없어서다 —
+     *    `learning_progress` 는 누적이고 시점을 되돌릴 수 없다.
+     *    지난달 스냅샷의 학습 수가 실제보다 높게 잡힐 수 있다. 알고 남긴다.
+     */
+    const finalStages = ORDER.map((topic) => {
+      const pr = progressBy.get(topic);
+      const stage = stageFor(topic, pr?.completed ?? 0, pr?.quizCorrect ?? 0, practiceBy.get(topic) ?? 0);
+      return { topic, label: TOPIC_LABEL[topic], stage };
+    });
+
+    await prisma.forestSnapshot.create({
+      data: {
+        childId, yearMonth: ym,
+        finalStages,
+        // 델타는 읽을 때 앞 스냅샷과 견줘 만든다 — 여기 넣으면 두 곳을 맞춰야 한다
+        deltaItems: [],
+        starsEarned: stars._sum.delta ?? 0,
+      },
+    });
+    made++;
+  }
+
+  // 🔴 실천만 비운다. 단계는 읽는 시점에 계산하므로 저장값도 0으로 되돌린다
+  await prisma.treeState.updateMany({
+    where: { childId },
+    data: { stage: 0, practiceCount: 0, stallDays: 0, cycleStartedAt: utcMonthStart(now) },
+  });
+
+  return made;
 }

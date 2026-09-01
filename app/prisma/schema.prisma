@@ -392,6 +392,13 @@ model StarLedgerEntry {
   /// 🔴 중복 지급 0건을 보증하는 유일한 장치. 오프라인 큐가 재전송해도 한 번만 들어간다
   idempotencyKey String    @unique @map("idempotency_key")
   practiceId   String?     @unique @map("practice_id") @db.Uuid
+  /**
+   * 🔴 **정합성이 깨진 줄** — `FR-012` · `AC-012-3` · 어긋남 대장 D39.
+   *    누적합과 `balanceAfter` 가 어긋난 줄에 표시만 한다.
+   *    **잔액은 건드리지 않는다** — 「아동의 잔액은 감소하지 않으며」가 요구다.
+   *    아이가 잘못한 게 아닌데 별을 뺏으면 그 화면을 다시는 못 믿는다.
+   */
+  quarantinedAt DateTime?  @map("quarantined_at") @db.Timestamptz(6)
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   practice PracticeCredit? @relation(fields: [practiceId], references: [id])

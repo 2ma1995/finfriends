@@ -123,6 +123,12 @@ export type TreeView = {
   readonly noActivity: boolean;
   /** 승인 대기 미션 수. 조건부 슬롯이므로 0이면 화면에 자리도 없다 */
   readonly pendingApprovals: number;
+  /**
+   * 🔴 별 원장에서 **정합성이 깨진 줄** 수 (`FR-012` · `AC-012-3`).
+   *    0이면 화면에 자리가 없다. 있으면 **숨기지 않는다** —
+   *    보호자가 모르는 채로 두면 「별이 왜 이래」를 아이에게 묻게 된다.
+   */
+  readonly quarantinedStars: number;
 };
 
 // ─────────────────────────────────────────────────────────────
