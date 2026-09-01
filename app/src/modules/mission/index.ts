@@ -38,9 +38,10 @@ import {
 
 function bucketOf(state: string, doneAt: Date | null): MissionBucket {
   if (state === "REJECTED") return "REJECTED";
-  // 🔴 만료는 거절과 다른 자리다. 아이는 한 일을 했고 부모가 못 봤을 뿐이다 (AC-032-3)
+  // 🔴 `EXPIRED` 는 더 만들지 않는다. 옛 데이터가 남아 있어 분기는 유지한다 (D51)
   if (state === "EXPIRED") return "EXPIRED";
-  if (state === "APPROVED" || state === "BACKFILLED") return "DONE";
+  // 🔴 자동 완료도 **완료**다 — 별이 나갔으니 아이에게는 끝난 일이다
+  if (state === "APPROVED" || state === "BACKFILLED" || state === "AUTO_APPROVED") return "DONE";
   return doneAt ? "WAITING" : "TODO";
 }
 
@@ -66,6 +67,11 @@ function toView(r: {
     whenLabel: whenLabel(bucket === "TODO" ? null : (r.decidedAt ?? r.doneAt)),
     rejectReason: r.rejectReason,
     backfilled: r.state === "BACKFILLED",
+    /**
+     * 🔴 **부모가 칭찬한 것과 시간이 지나 완료된 것은 다른 말이다** (D51).
+     *    아이 화면이 구별해 말할 수 있게 값을 낸다 — 쓸지는 그 화면이 정한다.
+     */
+    autoDone: r.state === "AUTO_APPROVED",
     fromLesson: r.sourceId != null,
     /**
      * 🔴 **늘 `false` 로 박혀 있었다.** 아이가 사진을 올렸는지 화면이 알 길이 없어서
@@ -83,13 +89,17 @@ export async function getMissionBoard(childId: string): Promise<MissionBoardView
   /**
    * 🔴 **아이 화면에서도 만료를 처리한다.**
    *
-   *    승인 화면에서만 돌게 두면 **부모가 안 열면 영원히 안 만료된다** —
-   *    그런데 만료를 기다리는 사람은 아이다. 「기다리는 중」이 끝없이 떠 있는 것을
+   *    승인 화면에서만 돌게 두면 **부모가 안 열면 영원히 안 끝난다** —
+   *    그런데 끝나기를 기다리는 사람은 아이다. 「기다리는 중」이 끝없이 떠 있는 것을
    *    보는 쪽에서 끝나야 한다.
+   *
+   *    🔴 리마인드도 여기서 남긴다. 부모가 앱을 안 열어도 **알림은 쌓여 있어야** 한다 —
+   *    부모가 열었을 때 「그동안 이런 일이 있었다」를 보여주는 것이 알림함의 값이다.
    *
    *    `pg_cron` 이 붙으면 배치가 부르고 이 줄은 사라져도 된다 (`ADR-T02`).
    */
-  await expireStaleMissions({ childId });
+  await autoCompleteStaleMissions({ childId });
+  await remindStaleMissions({ childId });
 
   const rows = await prisma.mission.findMany({
     where: { childId },
@@ -563,30 +573,101 @@ export const REMIND_HOURS = 24;
  *
  * @param scope 아이 하나(`childId`) 또는 보호자 하나(`guardianId`)로 좁힌다
  */
-export async function expireStaleMissions(
+export async function autoCompleteStaleMissions(
   scope: { childId: string } | { guardianId: string },
 ): Promise<number> {
   const cutoff = new Date(Date.now() - EXPIRE_HOURS * 3600e3);
-  const where = {
-    ...scope,
-    state: "PENDING" as const,
-    doneAt: { not: null, lt: cutoff },
-  };
-
-  const stale = await prisma.mission.findMany({ where, select: { id: true } });
+  const stale = await prisma.mission.findMany({
+    where: { ...scope, state: "PENDING", doneAt: { not: null, lt: cutoff } },
+    select: { id: true, childId: true, guardianId: true, reward: true, payoutWon: true,
+              doneAt: true, topic: true, cycleId: true, title: true },
+  });
   if (stale.length === 0) return 0;
 
-  const ids = stale.map((m) => m.id);
-  await prisma.$transaction([
-    // 🔴 판정 없이 사라져도 사진은 남기지 않는다
-    prisma.missionPhoto.deleteMany({ where: { missionId: { in: ids } } }),
-    prisma.mission.updateMany({
-      where: { id: { in: ids } },
-      // 🔴 `decidedAt` 을 채운다 — 사진 파기 시각이자 「언제 끝났나」다
-      data: { state: "EXPIRED", decidedAt: new Date() },
-    }),
-  ]);
-  return ids.length;
+  for (const m of stale) {
+    /**
+     * 🔴 **승인과 같은 일을 한다** — 실천을 남기고 별을 준다.
+     *    다른 것은 `approvalMode` 뿐이다: `"auto"`.
+     *    「누가 인정했나」가 이 제품의 근거이므로 그 한 글자가 남아야
+     *    나중에 지표에서 가려낼 수 있다.
+     *
+     * 🔴 **귀속 주기는 완료 시점이다.** 지금 시각으로 계산하면
+     *    사흘 지나 자동 완료된 것이 **다음 달 나무를 부풀린다** (ACE-6.2).
+     */
+    const credit = await prisma.practiceCredit.upsert({
+      where: { id: m.id },
+      create: {
+        id: m.id, childId: m.childId,
+        triggerCode: "MISSION_APPROVED", triggerPath: "PRACTICE", topic: m.topic,
+        approvalMode: "auto",
+        earnedAt: m.doneAt!, awardedAt: new Date(),
+        cycleId: m.cycleId ?? cycleIdOf(m.doneAt!),
+      },
+      update: {}, select: { id: true },
+    });
+
+    await grantStar({
+      childId: m.childId, triggerCode: "MISSION_APPROVED", delta: m.reward,
+      idempotencyKey: `mission:${m.id}`, practiceId: credit.id,
+    });
+
+    // 🔴 금액이 걸려 있으면 용돈으로 들어간다 — 승인과 같다 (REQ-FUNC-002)
+    if (m.payoutWon > 0) {
+      await recordAllowance(
+        m.childId, m.payoutWon, "TOPUP", `${m.title} — 미션을 하고 받았어요`,
+        `mission-payout:${m.id}`,
+      );
+    }
+
+    await prisma.mission.update({
+      where: { id: m.id },
+      data: { state: "AUTO_APPROVED", decidedAt: new Date() },
+    });
+
+    // 🔴 사진은 파기한다. 판정이 자동이어도 아동 이미지가 남으면 안 된다 (D32)
+    await destroyPhoto(m.id);
+
+    // 🔴 부모에게 무슨 일이 있었는지 남긴다. 모르는 채로 두면 별이 왜 나갔는지 알 수 없다
+    await notifyOnce(m.guardianId, "MISSION_AUTO_DONE", m.id,
+      "기간이 지나서 완료되었습니다", `「${m.title}」`);
+  }
+  return stale.length;
+}
+
+/**
+ * 🔴 **같은 일로 두 번 알리지 않는다.** 화면을 열 때마다 판정하므로
+ *    막지 않으면 알림이 쌓인다. `(guardianId, kind, missionId)` unique 가 막는다.
+ */
+async function notifyOnce(
+  guardianId: string, kind: string, missionId: string | null, title: string, body: string,
+) {
+  try {
+    await prisma.notification.create({ data: { guardianId, kind, missionId, title, body } });
+  } catch (e) {
+    // 이미 알린 것 — 오류가 아니다
+    if ((e as { code?: string }).code !== "P2002") throw e;
+  }
+}
+
+/**
+ * 24시간 넘게 기다리는 미션을 **한 번씩** 알린다 — `FR-032` 「24h 미승인 → 리마인드 1회」.
+ *
+ * 🔴 **인앱 알림함이다.** 웹푸시·메일·알림톡이 없어 앱 밖으로 내보낼 방법이 없다 —
+ *    부모가 앱을 열어야 본다. 발송 채널이 붙으면 보낼 대상이 그대로 이 표가 된다.
+ */
+export async function remindStaleMissions(
+  scope: { childId: string } | { guardianId: string },
+): Promise<number> {
+  const cutoff = new Date(Date.now() - REMIND_HOURS * 3600e3);
+  const late = await prisma.mission.findMany({
+    where: { ...scope, state: "PENDING", doneAt: { not: null, lt: cutoff } },
+    select: { id: true, guardianId: true, title: true },
+  });
+  for (const m of late) {
+    await notifyOnce(m.guardianId, "MISSION_WAITING", m.id,
+      "미션을 확인해 주세요", `「${m.title}」 아이가 기다리고 있어요.`);
+  }
+  return late.length;
 }
 
 /** 24시간 넘게 기다리는 미션 수 — 승인 화면이 눈에 띄게 한다 */
@@ -596,5 +677,46 @@ export async function countOverdue(guardianId: string) {
       guardianId, state: "PENDING",
       doneAt: { not: null, lt: new Date(Date.now() - REMIND_HOURS * 3600e3) },
     },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 보호자 알림함 — 어긋남 대장 D51
+// ─────────────────────────────────────────────────────────────
+
+export type NotificationView = {
+  readonly id: string;
+  readonly kind: string;
+  readonly title: string;
+  readonly body: string;
+  readonly whenLabel: string;
+  readonly unread: boolean;
+};
+
+/** 안 읽은 알림 수 — 나무 화면이 배지로 보여준다 */
+export async function countUnread(guardianId: string) {
+  return prisma.notification.count({ where: { guardianId, readAt: null } });
+}
+
+export async function listNotifications(guardianId: string, take = 30): Promise<NotificationView[]> {
+  const rows = await prisma.notification.findMany({
+    where: { guardianId }, orderBy: { createdAt: "desc" }, take,
+    select: { id: true, kind: true, title: true, body: true, readAt: true, createdAt: true },
+  });
+  return rows.map((r) => ({
+    id: r.id, kind: r.kind, title: r.title, body: r.body,
+    whenLabel: whenLabel(r.createdAt) ?? "",
+    unread: r.readAt === null,
+  }));
+}
+
+/**
+ * 🔴 **읽음은 화면을 열 때 찍는다.** 각 줄에 「읽음」 버튼을 두면 아무도 안 누르고
+ *    배지가 영영 안 사라진다. 목록을 봤다는 것이 읽었다는 뜻이다.
+ */
+export async function markAllRead(guardianId: string) {
+  await prisma.notification.updateMany({
+    where: { guardianId, readAt: null },
+    data: { readAt: new Date() },
   });
 }

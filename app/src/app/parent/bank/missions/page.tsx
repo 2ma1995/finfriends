@@ -1,7 +1,8 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
-  countOverdue, expireStaleMissions, listPendingForGuardian, photoMissionIds,
+  autoCompleteStaleMissions, countOverdue, listPendingForGuardian, photoMissionIds,
+  remindStaleMissions,
 } from "@/modules/mission";
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
@@ -34,7 +35,8 @@ export default async function ParentMissionsPage({
    *    배치가 붙으면 같은 함수를 배치가 부르면 되고 이 화면은 안 바뀐다.
    *    먼저 만료시키고 목록을 읽어야 이미 끝난 것이 승인 대기에 안 남는다.
    */
-  await expireStaleMissions({ guardianId: g.guardianId });
+  await autoCompleteStaleMissions({ guardianId: g.guardianId });
+  await remindStaleMissions({ guardianId: g.guardianId });
 
   const [pendings, overdue] = await Promise.all([
     listPendingForGuardian(g.guardianId),

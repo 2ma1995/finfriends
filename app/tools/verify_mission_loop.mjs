@@ -123,20 +123,63 @@ try {
   })).map((m) => m.id);
   await prisma.$transaction([
     prisma.missionPhoto.deleteMany({ where: { missionId: { in: staleIds } } }),
-    prisma.mission.updateMany({ where: { id: { in: staleIds } }, data: { state: "EXPIRED", decidedAt: new Date() } }),
+    prisma.mission.updateMany({ where: { id: { in: staleIds } }, data: { state: "AUTO_APPROVED", decidedAt: new Date() } }),
   ]);
 
   const after = async (id) => (await prisma.mission.findUnique({ where: { id }, select: { state: true } }))?.state;
-  check("🔴 사흘 넘게 기다린 미션은 만료된다", (await after(stale.id)) === "EXPIRED", "기다림에 끝이 있어야 한다");
+  check("🔴 사흘 넘게 기다린 미션은 자동 완료된다", (await after(stale.id)) === "AUTO_APPROVED",
+    "기다림에 끝이 있어야 한다 (D51)");
+  check("🔴 자동 완료를 APPROVED 와 구별한다", (await after(stale.id)) !== "APPROVED",
+    "「누가 인정했나」가 이 제품의 근거다 — 합치면 못 가려낸다");
   check("어제 것은 그대로 기다린다", (await after(fresh.id)) === "PENDING", "72시간 전만 만료다");
-  check("🔴 만료는 거절이 아니다", (await after(stale.id)) !== "REJECTED", "아이는 한 일을 했고 부모가 못 봤을 뿐이다 (AC-032-3)");
+  check("자동 완료는 거절이 아니다", (await after(stale.id)) !== "REJECTED");
   check("🔴 만료돼도 사진은 남지 않는다", (await prisma.missionPhoto.count({ where: { missionId: stale.id } })) === 0);
-  check("만료에는 별이 붙지 않는다",
-    (await prisma.starLedgerEntry.count({ where: { childId: c.id, triggerCode: "MISSION_APPROVED" } })) === 1,
-    "확인하지 않은 것을 실천으로 인정하지 않는다");
+  /**
+   * 🔴 **자동 완료에도 별이 나간다** (D51 · 사용자 결정).
+   *    전에는 안 줬다 — 「확인하지 않은 것을 실천으로 인정하지 않는다」였다.
+   *    바뀐 규칙이므로 실천 기록의 `approvalMode` 로 구별해 둔다.
+   */
+  await prisma.practiceCredit.upsert({
+    where: { id: stale.id },
+    create: { id: stale.id, childId: c.id, triggerCode: "MISSION_APPROVED", triggerPath: "PRACTICE",
+              topic: "EARN", approvalMode: "auto", earnedAt: old4d, awardedAt: new Date(), cycleId: 202609 },
+    update: {},
+  });
+  const autoCredit = await prisma.practiceCredit.findUnique({
+    where: { id: stale.id }, select: { approvalMode: true },
+  });
+  check("🔴 자동 완료의 실천은 approvalMode=auto 다", autoCredit.approvalMode === "auto",
+    "부모가 본 것과 시간이 지난 것을 지표에서 가려낼 수 있어야 한다");
 
+  // 🔴 알림이 남는가 — 부모가 모르는 채로 두면 별이 왜 나갔는지 알 수 없다
+  await prisma.notification.create({
+    data: { guardianId: g.id, kind: "MISSION_AUTO_DONE", missionId: stale.id,
+            title: "기간이 지나서 완료되었습니다", body: `「${stale.title}」` },
+  });
+  check("🔴 자동 완료를 부모에게 알린다",
+    (await prisma.notification.count({ where: { guardianId: g.id, kind: "MISSION_AUTO_DONE" } })) === 1);
+
+  let dupNotice = false;
+  try {
+    await prisma.notification.create({
+      data: { guardianId: g.id, kind: "MISSION_AUTO_DONE", missionId: stale.id, title: "또", body: "또" },
+    });
+  } catch { dupNotice = true; }
+  check("🔴 같은 일로 두 번 알리지 않는다", dupNotice,
+    "화면을 열 때마다 판정하므로 막지 않으면 쌓인다");
+
+  await prisma.notification.deleteMany({ where: { guardianId: g.id } });
+
+  /**
+   * 🔴 이제 실천이 **둘**이다 — 부모 승인 1건 + 자동 완료 1건 (D51).
+   *    전에는 자동 만료가 실천을 남기지 않아 1건이었다.
+   */
   const cnt = await prisma.practiceCredit.count({ where: { childId: c.id, topic: "EARN" } });
-  check("승인이 실천을 남긴다", cnt === 1);
+  check("승인과 자동 완료가 각각 실천을 남긴다", cnt === 2, "부모 승인 1 + 자동 완료 1");
+  check("🔴 둘을 approvalMode 로 가려낼 수 있다",
+    (await prisma.practiceCredit.count({ where: { childId: c.id, approvalMode: "parent" } })) === 1
+    && (await prisma.practiceCredit.count({ where: { childId: c.id, approvalMode: "auto" } })) === 1,
+    "부모가 본 것과 시간이 지난 것");
   check("승인이 실천을 한 칸 올린다", stageFor("EARN", 5, 4, cnt + 1) === 1, "벌기는 실천 2회에 나무가 된다");
   check("earnedAt 은 아이가 한 시각", credit.earnedAt.getTime() === doneAt.getTime(), "소급 승인이면 awardedAt 과 다르다");
   check("🔴 귀속 주기는 완료 시점", credit.cycleId === 202608, "지급 시각으로 계산하면 다음 달 나무가 부풀려진다");
@@ -145,7 +188,7 @@ try {
   let dupStar = false;
   try { await prisma.starLedgerEntry.create({ data: { childId: c.id, delta: 1, triggerCode: "MISSION_APPROVED", balanceAfter: 2, idempotencyKey: `mission:${m.id}` } }); } catch { dupStar = true; }
   check("재승인 시 별 중복 차단", dupStar, "idempotency_key unique");
-  check("재승인 시 실천 중복 없음", (await prisma.practiceCredit.count({ where: { childId: c.id } })) === 1);
+  check("재승인 시 실천 중복 없음", (await prisma.practiceCredit.count({ where: { childId: c.id } })) === 2, "늘지 않는다");
 
   await prisma.starLedgerEntry.deleteMany({ where: { childId: c.id } });
   await prisma.practiceCredit.deleteMany({ where: { childId: c.id } });

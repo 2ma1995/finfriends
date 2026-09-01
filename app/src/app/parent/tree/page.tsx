@@ -5,9 +5,10 @@ import { TreeArt } from "@/components/parent/TreeArt";
 import { STAGE_LABEL, type Condition, type TreeSlotView } from "@/contracts/growth";
 import { findChild } from "@/modules/consent";
 import { getTreeView } from "@/modules/growth";
+import { countUnread } from "@/modules/mission";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import {
-  cycleNotice, emptyState, engineNotice, quarantineNotice, stageNotice,
+  alertsLabel, cycleNotice, emptyState, engineNotice, quarantineNotice, stageNotice,
 } from "./tree.fixture";
 
 // GRW-003 · UX-002 · REQ-FUNC-001 — 보호자가 여는 첫 화면
@@ -71,7 +72,10 @@ export default async function ParentTreePage() {
     );
   }
 
-  const view = await getTreeView(child.id, child.displayName);
+  const [view, unread] = await Promise.all([
+    getTreeView(child.id, child.displayName),
+    countUnread(guardian.guardianId),
+  ]);
 
   return (
     <Screen role="부모 화면" title="성장 나무" sub={`${view.childName} · ${view.cycleLabel}`}>
@@ -118,6 +122,23 @@ export default async function ParentTreePage() {
           <p className="mt-1 text-[0.84em] leading-relaxed text-ink-soft">{engineNotice.body}</p>
         </Card>
       </div>
+
+      {/*
+        🔴 **안 읽은 알림이 있을 때만 보인다.** 0이면 자리도 없다 —
+           빈 배지를 늘 띄우면 아무도 안 본다.
+        🔴 알림은 앱 안에서만 보인다(D51). 부모가 이 화면을 열어야 알게 되므로
+           **첫 화면 맨 위**가 그 자리다.
+      */}
+      {unread > 0 ? (
+        <Link
+          href="/parent/alerts"
+          className="mb-2 flex min-h-touch items-center justify-between rounded-card border border-primary-l bg-primary-bg px-3 text-[0.86em] font-bold text-primary-d"
+        >
+          <span>🔔 {alertsLabel(unread)}</span>
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
+
 
       {/* 🔴 정합성이 깨진 줄이 있으면 숨기지 않는다 (AC-012-3) */}
       {view.quarantinedStars > 0 ? (

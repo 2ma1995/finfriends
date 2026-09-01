@@ -54,3 +54,6 @@ export const cycleNotice =
  */
 export const quarantineNotice = (n: number) =>
   `별 기록 ${n}건에서 계산이 맞지 않아 표시해 뒀습니다. 아이의 별은 줄어들지 않으며, 확인 뒤 바로잡습니다.`;
+
+/** 🔴 안 읽은 알림이 있을 때만 보인다. 0이면 자리도 없다 */
+export const alertsLabel = (n: number) => `새 알림 ${n}건`;
