@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { currentChild } from "@/lib/session/current-child";
-import { breakEarly, request } from "@/modules/savings";
+import { breakEarly, payInstallment, request } from "@/modules/savings";
 import { revalidateMoney } from "@/lib/revalidate/money";
 
 /**
@@ -30,6 +30,9 @@ export async function requestSavingsAction(formData: FormData) {
     Number(formData.get("amount") ?? 0),
     Number(formData.get("months") ?? 0),
     Number(formData.get("wantedPct") ?? NaN),
+    String(formData.get("kind") ?? "INSTALLMENT") === "DEPOSIT" ? "DEPOSIT" : "INSTALLMENT",
+    Number(formData.get("perPeriod") ?? NaN),
+    Number(formData.get("periods") ?? NaN),
   );
   back(r.ok ? "asked=1" : `error=${r.reason}`);
 }
@@ -42,4 +45,14 @@ export async function breakSavingsAction(formData: FormData) {
   const a = await child();
   await breakEarly(a.childId, String(formData.get("planId") ?? ""));
   back("broke=1");
+}
+
+/**
+ * 「이번 주 넣기」 — 적금에만 있다.
+ * 🔴 **아이가 직접 넣는다.** 자동이면 아이가 아무것도 안 해도 되고, 그러면 실천이 아니다.
+ */
+export async function payInstallmentAction(formData: FormData) {
+  const a = await child();
+  const r = await payInstallment(a.childId, String(formData.get("planId") ?? ""));
+  back(r.ok ? "paid=1" : `error=${r.reason}`);
 }

@@ -73,7 +73,7 @@ export default async function ChildHomePage({
                    wear={room.wear} turn={turn} startEdit={startEdit}
                    sideAction={
                      <Link href="/child/shop"
-                           className="flex min-h-touch w-full items-center justify-center rounded-card border-2 border-primary bg-primary text-[0.88em] font-bold text-white">
+                           className="flex min-h-touch w-full items-center justify-center rounded-card border border-primary bg-primary text-[0.78em] font-bold text-white">
                        🛍 {shopLink}
                      </Link>
                    } />

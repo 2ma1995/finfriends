@@ -1,8 +1,10 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook, MOVED_CODES } from "@/modules/allowance";
-import { getClosed, getOpen, MAX_MONTHS, MIN_AMOUNT, WANTED_CHOICES } from "@/modules/savings";
-import { breakSavingsAction, requestSavingsAction } from "@/app/actions/savings";
+import {
+  getClosed, getOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, WANTED_CHOICES,
+} from "@/modules/savings";
+import { breakSavingsAction, payInstallmentAction, requestSavingsAction } from "@/app/actions/savings";
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel, interest,
   errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
@@ -119,21 +121,61 @@ export default async function ChildPassbookPage({
                 <input name="goal" required maxLength={30} placeholder={savings.goalPlaceholder}
                        className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.9em]" />
               </label>
+              {/* 🔴 학습 save-3 이 가르치는 두 가지. 이름과 동작이 어긋나면 배운 게 무너진다 */}
+              <div className="grid gap-1">
+                <span className="text-[0.72em] text-ink-mute">{savings.kindLabel}</span>
+                <ul className="grid grid-cols-2 gap-1.5">
+                  {(["INSTALLMENT", "DEPOSIT"] as const).map((k) => (
+                    <li key={k}>
+                      <label className="block cursor-pointer">
+                        <input type="radio" name="kind" value={k}
+                               defaultChecked={k === "INSTALLMENT"} className="peer sr-only" />
+                        <span className="grid min-h-touch place-items-center rounded-card border border-line bg-surface py-1 text-center text-[0.76em] peer-checked:border-primary peer-checked:bg-primary-bg">
+                          <b>{savings.kinds[k].label}</b>
+                          <span className="text-[0.86em] text-ink-mute">{savings.kinds[k].hint}</span>
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1">
+                  <span className="text-[0.72em] text-ink-mute">{savings.perPeriodLabel}</span>
+                  <input name="perPeriod" type="number" inputMode="numeric" step={1}
+                         min={MIN_PER_PERIOD} max={Math.max(MIN_PER_PERIOD, p.balance)}
+                         defaultValue={MIN_PER_PERIOD}
+                         className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[0.72em] text-ink-mute">{savings.periodsLabel}</span>
+                  <input name="periods" type="number" inputMode="numeric" step={1}
+                         min={MIN_PERIODS} max={MAX_PERIODS} defaultValue={12}
+                         className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                </label>
+              </div>
+
+              <details className="rounded-card border border-line-2 px-2 py-1">
+                <summary className="cursor-pointer text-[0.74em] text-ink-mute">
+                  {savings.kinds.DEPOSIT.label} — {savings.kinds.DEPOSIT.hint}
+                </summary>
+                <div className="mt-1.5 grid grid-cols-2 gap-2">
                 <label className="grid gap-1">
                   <span className="text-[0.72em] text-ink-mute">{savings.amountLabel}</span>
                   <input name="amount" type="number" inputMode="numeric" step={1}
-                         min={MIN_AMOUNT} max={Math.max(MIN_AMOUNT, p.balance)} required
-                         placeholder={String(MIN_AMOUNT)}
+                         min={MIN_AMOUNT} max={Math.max(MIN_AMOUNT, p.balance)}
+                         defaultValue={MIN_AMOUNT}
                          className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
                 </label>
                 <label className="grid gap-1">
                   <span className="text-[0.72em] text-ink-mute">{savings.monthsLabel}</span>
                   <input name="months" type="number" inputMode="numeric" step={1}
-                         min={1} max={MAX_MONTHS} defaultValue={3} required
+                         min={1} max={MAX_MONTHS} defaultValue={3}
                          className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
                 </label>
-              </div>
+                </div>
+              </details>
               {/* 🔴 「선택」이 아니라 「제안」이다. 정하는 사람을 **누르기 전에** 말한다 */}
               <div className="grid gap-1">
                 <span className="text-[0.72em] text-ink-mute">{savings.wantLabel}</span>
@@ -168,7 +210,11 @@ export default async function ChildPassbookPage({
             <b className="text-[0.9em]">{open.goal}</b>
             <b className="shrink-0 tabular-nums text-[0.9em]">{won(open.amount)}</b>
           </div>
-          <p className="mt-0.5 text-[0.74em] text-ink-mute">{open.months}달 · 이자 {open.interestPct}%</p>
+          <p className="mt-0.5 text-[0.74em] text-ink-mute">
+            {open.kind === "INSTALLMENT"
+              ? `${savings.kinds.INSTALLMENT.label} · 한 주 ${won(open.perPeriod ?? 0)} · 이자 ${open.interestPct}%`
+              : `${savings.kinds.DEPOSIT.label} · ${open.months}달 · 이자 ${open.interestPct}%`}
+          </p>
           {/* 🔴 바란 것과 다르면 그 사실을 말한다. 조용히 넘기면 「왜 물어봤지」가 된다 */}
           {open.wantedPct !== null ? (
             <p className={`mt-0.5 text-[0.74em] ${open.differs ? "text-star-d" : "text-primary-d"}`}>
@@ -190,6 +236,32 @@ export default async function ChildPassbookPage({
               <p className="mt-0.5 text-[0.82em] text-star-d">
                 {open.interestWon > 0 ? savings.willGet(open.interestWon) : savings.noInterest}
               </p>
+              {/* 🔴 적금은 아이가 매주 직접 넣는다. 자동이면 실천이 아니다 */}
+              {open.kind === "INSTALLMENT" ? (
+                <div className="mt-2">
+                  <div className="h-2 overflow-hidden rounded-full bg-line">
+                    <div className="h-full rounded-full bg-primary-l"
+                         style={{ width: `${(open.paidCount / (open.periods || 1)) * 100}%` }} />
+                  </div>
+                  <p className="mt-1 text-[0.76em] text-ink-mute">
+                    {savings.progress(open.paidCount, open.periods ?? 0)} · {won(open.paidSoFar)} 모음
+                  </p>
+                  {open.fullyPaid ? (
+                    <p className="mt-1 text-[0.84em] font-bold text-primary-d">{savings.allPaid}</p>
+                  ) : open.paidThisWeek ? (
+                    <p className="mt-1 text-[0.8em] text-ink-soft">{savings.paidThisWeek}</p>
+                  ) : (
+                    <form action={payInstallmentAction} className="mt-1.5">
+                      <input type="hidden" name="planId" value={open.id} />
+                      <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
+                        {savings.payLabel(open.perPeriod ?? 0)}
+                      </button>
+                      <p className="mt-1 text-[0.72em] text-ink-mute">{savings.skipOk}</p>
+                    </form>
+                  )}
+                </div>
+              ) : null}
+
               {/* 🔴 깨는 것을 막지 않는다. 아이 돈이다. 대신 대가를 먼저 말한다 */}
               {!open.matured ? (
                 <form action={breakSavingsAction} className="mt-2">

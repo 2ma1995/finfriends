@@ -38,8 +38,23 @@ export const interest = {
  *    아이가 실제 금융상품으로 오해하면 안 된다 (P-20 가입 중개 금지).
  */
 export const savings = {
-  title: "우리 집 적금",
+  title: "우리 집 저금",
   what: "정한 기간 동안 안 쓰고 두면 부모님이 이자를 주세요.",
+  /** 🔴 학습 `save-3` 이 가르치는 두 가지를 그대로 쓴다 */
+  kinds: {
+    DEPOSIT:     { label: "예금", hint: "목돈을 한 번에 넣고 두기" },
+    INSTALLMENT: { label: "적금", hint: "매주 조금씩 넣기" },
+  },
+  kindLabel: "어떻게 모을래요?",
+  perPeriodLabel: "한 주에 얼마",
+  periodsLabel: "몇 주 동안",
+  totalPreview: (won: number, n: number) => `${n}주 뒤에 ${won.toLocaleString("ko-KR")}원이 모여요`,
+  /** 🔴 아이가 직접 넣는다. 자동이면 실천이 아니다 */
+  payLabel: (n: number) => `이번 주 ${n.toLocaleString("ko-KR")}원 넣기`,
+  paidThisWeek: "이번 주는 넣었어요. 다음 주에 또 넣어요.",
+  progress: (paid: number, total: number) => `${total}주 중 ${paid}주 넣음`,
+  allPaid: "다 넣었어요! 부모님이 확인해 주실 거예요",
+  skipOk: "이번 주를 건너뛰어도 회차는 없어지지 않아요.",
   notBank: "은행 적금이 아니라 부모님과 하는 약속이에요.",
   noRate: "부모님이 이자를 정하면 신청할 수 있어요.",
   /**
@@ -81,6 +96,8 @@ export const errors: Record<string, string> = {
   BAD_AMOUNT: "1,000원부터 넣을 수 있어요.",
   BAD_MONTHS: "1달부터 12달까지 정할 수 있어요.",
   NOT_ENOUGH: "쓸 수 있는 돈보다 많이 넣을 수 없어요.",
+  PAID_THIS_WEEK: "이번 주는 이미 넣었어요. 다음 주에 또 넣어요.",
+  ALL_PAID: "다 넣었어요. 더 넣지 않아도 돼요.",
   NOT_FOUND: "찾을 수 없어요.",
 };
 

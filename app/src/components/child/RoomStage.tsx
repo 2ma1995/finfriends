@@ -144,10 +144,12 @@ export function RoomStage({
       ) : (
         <>
           <span className="text-[0.72em] text-ink-mute">끌어서 방을 돌려보기</span>
-          {/* 🔴 방을 바꾸는 두 가지를 나란히 둔다 — 꾸미기와 사기 */}
-          <div className={`grid w-full gap-1.5 ${sideAction ? "grid-cols-2" : ""}`}>
+          {/* 🔴 방을 바꾸는 두 가지를 나란히 둔다 — 꾸미기와 사기.
+              🔴 **높이는 44px 아래로 안 내린다** — 아이 손가락의 하한이다(--ff-touch).
+                 대신 글씨·테두리를 가볍게 하고 사이를 벌려 작아 보이게 한다 */}
+          <div className={`grid w-full gap-3 px-2 ${sideAction ? "grid-cols-2" : ""}`}>
             <button onClick={() => setEdit(true)}
-                    className="min-h-touch w-full rounded-card border-2 border-primary bg-primary-bg text-[0.88em] font-bold text-primary-d">
+                    className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-[0.78em] font-bold text-primary-d">
               🛠 방 꾸미기
             </button>
             {sideAction}

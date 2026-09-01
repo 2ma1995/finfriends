@@ -618,6 +618,17 @@ model CardTransaction {
   @@schema("activity")
 }
 
+/// 목돈이냐 조금씩이냐 — 어긋남 대장 D25.
+/// 🔴 학습 `save-3` 이 둘을 구별해 가르친다. 앱이 반대로 말하면 배운 것이 무너진다.
+enum SavingsKind {
+  /// 목돈을 한 번에 넣고 만기까지 둔다
+  DEPOSIT
+  /// 매주 조금씩 넣는다. 🔴 **아이가 직접 넣는다** — 자동이면 실천이 아니다
+  INSTALLMENT
+
+  @@schema("activity")
+}
+
 /// 우리 집 적금의 상태 — 어긋남 대장 D25.
 enum SavingsState {
   /// 아이가 신청했고 보호자를 기다린다
@@ -645,8 +656,18 @@ model SavingsPlan {
   guardianId   String       @map("guardian_id") @db.Uuid
   /// 왜 모으는지 — 목표가 없으면 금방 깬다
   goal         String
+  kind         SavingsKind  @default(DEPOSIT)
+  /// 예금이면 넣는 목돈, 적금이면 **다 넣었을 때의 합계**
   amount       Int
   months       Int
+  /// 적금일 때 한 회에 넣는 금액
+  perPeriod    Int?         @map("per_period")
+  /// 적금일 때 넣어야 하는 총 회차 (주 단위)
+  periods      Int?
+  /// 지금까지 넣은 회차
+  paidCount    Int          @default(0) @map("paid_count")
+  /// 마지막으로 넣은 시각 — 「이번 주에 이미 넣었나」를 본다
+  lastPaidAt   DateTime?    @map("last_paid_at") @db.Timestamptz(6)
   /// 🔴 **신청 시점 이자율을 박아 둔다.** 약속한 뒤에 조건이 바뀌면 그건 약속이 아니다.
   ///    정하는 것은 **보호자**다 — 이자는 보호자가 자기 돈으로 준다
   interestPct  Int          @default(0) @map("interest_pct")

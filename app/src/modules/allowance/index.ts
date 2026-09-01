@@ -206,10 +206,15 @@ export async function getWalletTotals(childId: string): Promise<WalletTotals> {
   const [free, saved, savings] = await Promise.all([
     getBalance(childId),
     prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } }),
-    prisma.savingsPlan.aggregate({ where: { childId, state: "ACTIVE" }, _sum: { amount: true } }),
+    // 🔴 **실제로 넣은 만큼**만 묶인 돈이다. 적금 약속 총액을 세면 아직 안 낸 돈까지 잡힌다
+    prisma.savingsPlan.findMany({
+      where: { childId, state: "ACTIVE" },
+      select: { kind: true, amount: true, perPeriod: true, paidCount: true },
+    }),
   ]);
   const setAside = saved._sum.savedAmount ?? 0;
-  const locked = savings._sum.amount ?? 0;
+  const locked = savings.reduce(
+    (n, s) => n + (s.kind === "INSTALLMENT" ? s.paidCount * (s.perPeriod ?? 0) : s.amount), 0);
   return { free, setAside, locked, total: free + setAside + locked };
 }
 
