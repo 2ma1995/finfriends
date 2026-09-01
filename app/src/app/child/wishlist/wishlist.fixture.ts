@@ -6,6 +6,13 @@ export const empty = {
 };
 
 export const addTitle = "갖고 싶은 것 적기";
+/**
+ * 🔴 **폼을 접어 두고 버튼만 둔다** (통장의 저금과 같은 이유).
+ *    갖고 싶은 것을 적는 것은 **가끔 하는 일**이지 매일 하는 일이 아닌데,
+ *    폼이 늘 펼쳐져 있으면 모은 돈보다 **적는 칸이 더 커 보인다.**
+ */
+export const addOpenLabel = "갖고 싶은 것 추가";
+export const closeLabel = "닫기";
 export const nameLabel = "무엇을";
 export const namePlaceholder = "예: 물감 세트";
 export const targetLabel = "얼마짜리";

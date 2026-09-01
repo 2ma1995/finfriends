@@ -10,7 +10,7 @@ import {
 import { requestSavingsAction } from "@/app/actions/savings";
 import { SavingsForm } from "@/components/child/SavingsForm";
 import { SavingsCard } from "@/components/child/SavingsCard";
-import { AddSavings } from "@/components/child/AddSavings";
+import { AddModal } from "@/components/child/AddModal";
 import {
   balanceTitle, card, consentRequired, historyTitle,
   errors, noDevice, notice, savedTitle, savings,
@@ -154,7 +154,7 @@ export default async function ChildPassbookPage({
            저금은 한 달에 한 번 시작하는 일이지 매일 하는 일이 아니다.
       */}
       {opens.length < MAX_OPEN ? (
-        <AddSavings label={savings.addLabel} title={savings.addTitle} closeLabel={savings.closeLabel}>
+        <AddModal label={savings.addLabel} title={savings.addTitle} closeLabel={savings.closeLabel}>
           {/* 🔴 모달 안은 이미 흰 바탕이다. 상자를 또 두르면 두 겹이 된다 */}
           <div>
           <p className="text-sub leading-relaxed">{savings.what}</p>
@@ -186,7 +186,7 @@ export default async function ChildPassbookPage({
             }}
           />
         </div>
-        </AddSavings>
+        </AddModal>
       ) : (
         <p className="mt-2 text-center text-cap text-ink-mute">{savings.full}</p>
       )}

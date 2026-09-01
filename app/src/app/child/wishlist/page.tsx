@@ -1,10 +1,12 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
+import { AddModal } from "@/components/child/AddModal";
 import { currentChild } from "@/lib/session/current-child";
 import { getWishlist, MAX_DEPOSIT, MAX_TARGET, MAX_WISHES, MIN_TARGET } from "@/modules/wishlist";
 import { getBalance } from "@/modules/allowance";
 import { addWishAction, depositAction, raiseRankAction, removeWishAction } from "@/app/actions/wishlist";
 import {
-  addLabel, addTitle, addedNotice, consentRequired, depositLabel, depositPlaceholder,
+  addLabel, addOpenLabel, addTitle, addedNotice, closeLabel, consentRequired,
+  depositLabel, depositPlaceholder,
   empty, errors, milestoneHint, nameLabel, namePlaceholder, noDevice, rankNotice, reachedLabel, remainingLabel,
   allStarsLabel, nextStarLabel, rankUpLabel, rankedNotice, removeLabel, savedNotice,
   targetLabel, targetPlaceholder,
@@ -130,10 +132,10 @@ export default async function ChildWishlistPage({
       )}
 
       {/* 🔴 이 폼이 없어서 화면이 읽기 전용이었다. 학습은 「여기 적어 두세요」라고 안내하는데 적을 데가 없었다 */}
+      {/* 🔴 **폼을 접어 둔다.** 늘 펼쳐 두면 모은 돈보다 적는 칸이 더 커 보인다 */}
       {!full ? (
-        <div className="mt-4 rounded-card bg-surface p-3.5">
-          <h2 className="mb-2 mt-7 text-title font-bold leading-none">{addTitle}</h2>
-          <form action={addWishAction} className="mt-2 grid gap-2">
+        <AddModal label={addOpenLabel} title={addTitle} closeLabel={closeLabel}>
+          <form action={addWishAction} className="grid gap-2">
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{nameLabel}</span>
               <input name="name" required maxLength={30} placeholder={namePlaceholder}
@@ -145,11 +147,11 @@ export default async function ChildWishlistPage({
                      min={MIN_TARGET} max={MAX_TARGET} step={1} required placeholder={targetPlaceholder}
                      className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-body font-bold tabular-nums" />
             </label>
-            <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
+            <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
               {addLabel}
             </button>
           </form>
-        </div>
+        </AddModal>
       ) : (
         <p className="mt-3 text-center text-cap text-ink-mute">{errors.TOO_MANY}</p>
       )}
