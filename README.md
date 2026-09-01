@@ -71,7 +71,46 @@ npm run dev          # http://localhost:3000
 
 ### 5. 확인
 
+```
+
+## 화면이 안 바뀔 때
+
+**둘 이상이 같은 저장소를 쓰면 띄워 둔 dev 서버가 낡는다.** 상대가 push 한 것을
+내 서버는 모른다. 오늘 이걸로 네 번 헤맸다 — 코드는 고쳐졌는데 화면이 옛것이었다.
+
 ```bash
+# 🔴 서버를 먼저 끈다. pull 중에 파일이 바뀌면 서버가 옛 코드를 물고 이상하게 죽는다
+kill $(lsof -nP -iTCP:3000 -sTCP:LISTEN -t)
+
+git pull --rebase origin main
+npm run db:up          # 안 돌린 마이그레이션이 있으면
+npm run db:generate    # 🔴 스키마가 바뀌면 필수 — 안 하면 `... is undefined` 로 죽는다
+rm -rf .next           # 컴파일 결과가 남아 옛 화면이 나오는 것을 막는다
+npm run dev
+```
+
+**증상으로 구별하는 법**
+
+| 증상 | 원인 |
+| --- | --- |
+| 고친 화면이 옛것으로 보인다 | `pull` 안 함 · `.next` 가 낡음 |
+| `Cannot read properties of undefined` | `db:generate` 안 함 (스키마가 바뀌었다) |
+| 지운 라우트가 200 을 준다 | 그 워크트리에 아직 파일이 있다 |
+| 파일에 없는 줄 번호에서 오류가 난다 | 서버가 리베이스 전 코드를 물고 있다 |
+
+**마이그레이션은 `npm run db:up` 으로 넣는다.** `psql` 로 직접 넣으면 표는 생기는데
+`_ff_applied` 에 기록이 안 남고, **새로 클론하는 사람이 DB 를 못 세운다.**
+
+```bash
+# 파일과 DB 가 맞는지 확인
+comm -3 <(ls app/prisma/migrations | sort) \
+        <(docker exec ff-dev-pg psql -U postgres -d finfriends -tAc \
+          "select name from public._ff_applied" | tr -d ' ' | sort)
+```
+
+---
+
+bash
 npm run build                    # prebuild 게이트 + 타입 검사 + 빌드
 npm run db:verify                # 스키마 규제 검사
 node tools/verify_auth.mjs       # 보호자 인증 13건
