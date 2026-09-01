@@ -12,3 +12,9 @@ app/tsconfig.tsbuildinfo
 app/.env
 app/.env.local
 app/src/generated/
+
+# 참고 자료 PDF — 저장소에 넣지 않는다
+# 금감원 교재 두 건(118MB · 70MB)이 들어 있다. GitHub 은 100MB 넘는 파일을 거부하므로
+# 하나는 아예 올라가지 않고, 실수로 커밋되면 push 자체가 막힌다.
+# 학습 콘텐츠의 출처 자료이고 코드가 읽지 않는다 — 필요하면 각자 내려받는다.
+resources/
