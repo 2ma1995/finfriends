@@ -44,7 +44,12 @@ export const consentRequired = { title: "보호자 동의가 필요해요", body
  * 🔴 **「그만해」가 아니다.** 오늘 몫을 다 한 것은 잘한 것이고, 내일 또 온다고 닫는다.
  */
 export const todayBadge = "오늘 읽을 이야기";
-export const lockedBadge = "내일 열려요";
+/**
+ * 🔴 **「내일 열려요」를 전부에 붙이고 있었다.** 다섯 편이 남았는데 다섯 개가
+ *    다 내일 열린다고 말하면 거짓이고, 아이는 내일 와서 하나만 열린 걸 보고
+ *    **말이 틀렸다는 걸 안다.** 한 번 틀린 말을 하면 다음 말도 안 믿는다.
+ */
+export const lockedBadge = (days: number) => (days <= 1 ? "내일 열려요" : `${days}일 뒤에 열려요`);
 export const readDoneToday = "오늘 읽기는 다 했어요. 내일 새 이야기가 와요.";
 export const dailyRule = "이야기는 하루에 한 편씩 열려요.";
 

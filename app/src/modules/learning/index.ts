@@ -64,10 +64,27 @@ export async function getLessonList(childId: string, topic: Topic, now = new Dat
   const all = lessonsOf(topic);
   const todayId = readToday ? null : (all.find((l) => !done.has(l.id))?.id ?? null);
 
+  /**
+   * 🔴 **며칠 뒤에 열리는지 센다.** 예전엔 잠긴 편이 **전부 「내일 열려요」**였다 —
+   *    다섯 편이 남았는데 다섯 개가 다 내일 열린다고 말하면 거짓이고,
+   *    아이는 내일 와서 하나만 열린 걸 보고 **말이 틀렸다는 걸 안다.**
+   *
+   *    하루에 한 편이므로 **안 읽은 것 중 몇 번째냐가 곧 며칠 뒤**다.
+   *    오늘 몫이 남아 있으면 그 한 편은 오늘 것이고, 그다음이 1일 뒤다.
+   */
+  const queue = all.filter((l) => !done.has(l.id) && l.id !== todayId).map((l) => l.id);
+
   return {
     lessons: all.map((l) => {
       const read = done.has(l.id);
-      return { ...l, read, today: l.id === todayId, locked: !read && l.id !== todayId };
+      const at = queue.indexOf(l.id);
+      return {
+        ...l, read,
+        today: l.id === todayId,
+        locked: !read && l.id !== todayId,
+        /** 며칠 뒤에 열리나 — 잠긴 편만 값을 갖는다 */
+        opensInDays: at >= 0 ? at + 1 : 0,
+      };
     }),
     todayId,
     readToday,

@@ -13,6 +13,13 @@ export const source = {
   lesson: "배워서 한 것",
 };
 
+/**
+ * 🔴 **지난 미션은 딴 화면이다** (사용자 지적). 끝난 것이 여기 쌓이면
+ *    **오늘 할 것이 매일 아래로 밀린다** — 아이가 매일 여는 화면이다.
+ */
+export const pastLink = "지난 미션 보기";
+export const pastEmpty = { title: "아직 지난 미션이 없어요", body: "미션을 끝내면 여기에 쌓여요" };
+
 export const sections = {
   todo: "오늘 할 수 있는 것",
   waiting: "부모님 확인을 기다려요",

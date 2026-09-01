@@ -49,7 +49,7 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
               <span className="flex-1">
                 <b className={`block text-[0.88em] ${l.locked ? "text-ink-mute" : ""}`}>{l.title}</b>
                 <span className="text-[0.72em] text-ink-mute">
-                  {i + 1}편{l.today ? ` · ${todayBadge}` : l.locked ? ` · ${lockedBadge}` : ""}
+                  {i + 1}편{l.today ? ` · ${todayBadge}` : l.locked ? ` · ${lockedBadge(l.opensInDays)}` : ""}
                 </span>
               </span>
               {l.read ? <span className="text-[0.76em] text-primary-d">✓ {readLabel}</span>
