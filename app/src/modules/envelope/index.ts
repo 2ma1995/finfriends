@@ -2,7 +2,10 @@ import "server-only";
 import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { getBalance } from "@/modules/allowance";
-import { categoryOf } from "@/contracts/plan";
+import { CATEGORIES, categoryOf } from "@/contracts/plan";
+
+/** 우리가 아는 업종 — 🔴 실제 카드의 MCC 를 이 넷으로 접는 표는 아직 없다 (`DAT-004`) */
+const KNOWN: string[] = CATEGORIES.map((c) => c.code);
 
 /**
  * 봉투형 소비 관리 — `FR-020` · `FR-021`. 어긋남 대장 D32.
@@ -18,6 +21,8 @@ import { categoryOf } from "@/contracts/plan";
  */
 
 export const MAX_ENVELOPES = 6;
+/** 봉투에 붙일 수 있는 그림 — 아이가 고르는 것이지 적는 것이 아니다 */
+export const EMOJIS = ["🍬", "🖊", "📚", "🎁", "🧸", "⚽", "🎨", "📦"] as const;
 
 export type EnvelopeView = {
   readonly id: string;
@@ -246,4 +251,90 @@ export async function recentSpends(childId: string, take = 10) {
     envelopeName: r.envelopeId ? names.get(r.envelopeId)?.name ?? "그 밖에" : "그 밖에",
     envelopeEmoji: r.envelopeId ? names.get(r.envelopeId)?.emoji ?? "📦" : "📦",
   }));
+}
+
+export type EditResult =
+  | { ok: true }
+  | { ok: false; reason: "TOO_MANY" | "BAD_NAME" | "NOT_FOUND" | "IS_DEFAULT" | "TAKEN" };
+
+/**
+ * 봉투를 고친다 — 이름 · 그림 · **맡는 업종**.
+ *
+ * 🔴 **한 업종은 한 봉투만 맡는다.** 둘이 같은 업종을 맡으면 결제가 어느 쪽으로 갈지
+ *    코드가 먼저 찾은 쪽으로 정해진다 — 아이가 이유를 알 수 없다.
+ *    그래서 다른 봉투에서 **떼어 온다**.
+ * 🔴 **미분류 봉투는 업종을 갖지 않는다.** 나머지를 전부 받는 자리라 업종을 붙이면
+ *    「나머지」의 뜻이 사라진다.
+ */
+export async function editEnvelope(
+  childId: string, id: string,
+  input: { name?: string; emoji?: string; categories?: string[] },
+): Promise<EditResult> {
+  const e = await prisma.envelope.findFirst({ where: { id, childId }, select: { id: true, isDefault: true } });
+  if (!e) return { ok: false, reason: "NOT_FOUND" };
+
+  const name = input.name?.trim();
+  if (name !== undefined && (name.length === 0 || name.length > 12)) return { ok: false, reason: "BAD_NAME" };
+
+  const cats = e.isDefault ? [] : (input.categories ?? []).filter((c) => KNOWN.includes(c));
+
+  await prisma.$transaction(async (tx) => {
+    // 🔴 다른 봉투가 맡고 있던 업종을 떼어 온다. 겹치면 결제가 어디로 갈지 모른다
+    if (cats.length > 0) {
+      const others = await tx.envelope.findMany({
+        where: { childId, id: { not: id } }, select: { id: true, categories: true },
+      });
+      for (const o of others) {
+        const left = o.categories.filter((c) => !cats.includes(c));
+        if (left.length !== o.categories.length) {
+          await tx.envelope.update({ where: { id: o.id }, data: { categories: left } });
+        }
+      }
+    }
+    await tx.envelope.update({
+      where: { id },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(input.emoji ? { emoji: input.emoji } : {}),
+        ...(input.categories !== undefined && !e.isDefault ? { categories: cats } : {}),
+      },
+    });
+  });
+  return { ok: true };
+}
+
+/** 🔴 봉투를 새로 만든다. 업종은 나중에 붙인다 — 안 붙이면 아무 결제도 안 걸린다 */
+export async function addEnvelope(childId: string, name: string, emoji: string): Promise<EditResult> {
+  const clean = name.trim();
+  if (!clean || clean.length > 12) return { ok: false, reason: "BAD_NAME" };
+
+  const n = await prisma.envelope.count({ where: { childId } });
+  if (n >= MAX_ENVELOPES) return { ok: false, reason: "TOO_MANY" };
+
+  const last = await prisma.envelope.findFirst({
+    where: { childId }, orderBy: { rank: "desc" }, select: { rank: true },
+  });
+  await prisma.envelope.create({
+    data: { childId, name: clean, emoji: emoji || "📦", rank: (last?.rank ?? 0) + 1 },
+  });
+  return { ok: true };
+}
+
+/**
+ * 봉투를 지운다.
+ * 🔴 **미분류 봉투는 못 지운다.** 지우면 업종을 못 고른 결제가 갈 곳이 없어진다.
+ * 🔴 담아 둔 돈은 사라지지 않는다 — 봉투는 표시용 구획이라 지우면 그냥 「안 담은 돈」이 된다.
+ *    쓴 기록은 남긴다. 지우면 지난 소비가 사라진다.
+ */
+export async function removeEnvelope(childId: string, id: string): Promise<EditResult> {
+  const e = await prisma.envelope.findFirst({ where: { id, childId }, select: { id: true, isDefault: true } });
+  if (!e) return { ok: false, reason: "NOT_FOUND" };
+  if (e.isDefault) return { ok: false, reason: "IS_DEFAULT" };
+
+  await prisma.$transaction([
+    // 쓴 기록은 남기고 봉투만 끊는다 — 「그 밖에」로 읽힌다
+    prisma.envelopeSpend.updateMany({ where: { childId, envelopeId: id }, data: { envelopeId: null } }),
+    prisma.envelope.delete({ where: { id } }),
+  ]);
+  return { ok: true };
 }

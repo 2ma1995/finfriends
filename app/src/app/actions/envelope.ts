@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { currentChild } from "@/lib/session/current-child";
-import { allocate, settlePayment } from "@/modules/envelope";
+import { addEnvelope, allocate, editEnvelope, removeEnvelope, settlePayment } from "@/modules/envelope";
 import { revalidateMoney } from "@/lib/revalidate/money";
 import { getTxn, attach } from "@/modules/card";
 
@@ -55,4 +55,30 @@ export async function settleAction(formData: FormData) {
   if (r.ok) await attach(childId, t!.id, t!.id);
 
   back(r.ok ? (r.within ? "spent=1" : `over=${r.overBy}`) : `error=${r.reason}`);
+}
+
+/**
+ * 봉투 고치기 — 이름 · 그림 · **맡는 업종**.
+ * 🔴 업종을 안 붙이면 **아무 결제도 그 봉투로 안 간다.** 화면이 그 사실을 말한다.
+ */
+export async function editEnvelopeAction(formData: FormData) {
+  const childId = await child();
+  const r = await editEnvelope(childId, String(formData.get("id") ?? ""), {
+    name: String(formData.get("name") ?? ""),
+    emoji: String(formData.get("emoji") ?? ""),
+    categories: formData.getAll("categories").map(String),
+  });
+  back(r.ok ? "edited=1" : `error=${r.reason}`);
+}
+
+export async function addEnvelopeAction(formData: FormData) {
+  const childId = await child();
+  const r = await addEnvelope(childId, String(formData.get("name") ?? ""), String(formData.get("emoji") ?? "📦"));
+  back(r.ok ? "added=1" : `error=${r.reason}`);
+}
+
+export async function removeEnvelopeAction(formData: FormData) {
+  const childId = await child();
+  const r = await removeEnvelope(childId, String(formData.get("id") ?? ""));
+  back(r.ok ? "removed=1" : `error=${r.reason}`);
 }

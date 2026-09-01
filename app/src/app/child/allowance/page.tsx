@@ -1,9 +1,13 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook, MOVED_CODES } from "@/modules/allowance";
-import { getBoard, recentSpends } from "@/modules/envelope";
+import { getBoard, MAX_ENVELOPES, recentSpends } from "@/modules/envelope";
 import { getUnmatched } from "@/modules/card";
-import { allocateAction, settleAction } from "@/app/actions/envelope";
+import {
+  addEnvelopeAction, allocateAction, editEnvelopeAction, removeEnvelopeAction, settleAction,
+} from "@/app/actions/envelope";
+import { EMOJIS } from "@/modules/envelope";
+import { CATEGORIES, categoryOf } from "@/contracts/plan";
 import {
   getClosed, getOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, WANTED_CHOICES,
 } from "@/modules/savings";
@@ -23,7 +27,8 @@ export default async function ChildPassbookPage({
   searchParams,
 }: {
   searchParams: Promise<{ asked?: string; broke?: string; error?: string;
-                          saved?: string; spent?: string; over?: string }>;
+                          saved?: string; spent?: string; over?: string;
+                          edited?: string; added?: string; removed?: string }>;
 }) {
   const access = await currentChild();
   if (!access.ok) {
@@ -94,9 +99,12 @@ export default async function ChildPassbookPage({
         {board.unallocated > 0 ? envelope.unallocated(board.unallocated) : envelope.allDone}
       </p>
 
-      {sp.saved || sp.spent ? (
+      {sp.saved || sp.spent || sp.edited || sp.added || sp.removed ? (
         <div className="mb-1.5"><Card tone="grow">
-          <p className="text-[0.86em]">{sp.saved ? envelope.saved : envelope.spent}</p>
+          <p className="text-[0.86em]">
+            {sp.saved ? envelope.saved : sp.spent ? envelope.spent
+             : sp.edited ? envelope.edited : sp.added ? envelope.added : envelope.removed}
+          </p>
         </Card></div>
       ) : null}
       {/* 🔴 넘긴 것을 벌처럼 말하지 않는다. 결제는 됐다는 사실을 함께 말한다 (AC-021-2) */}
@@ -131,12 +139,104 @@ export default async function ChildPassbookPage({
               {e.overBy > 0 ? envelope.over(e.overBy) : envelope.remaining(e.remaining)}
               {e.spent > 0 ? ` · 쓴 돈 ${won(e.spent)}` : ""}
             </p>
+            {/* 🔴 업종을 안 붙이면 **아무 결제도 이 봉투로 안 온다.** 그 사실을 말한다 */}
+            <p className="mt-0.5 text-[0.7em] text-ink-mute">
+              {e.isDefault ? envelope.defaultCats
+               : e.categories.length === 0 ? envelope.noCats
+               : e.categories.map((c) => `${categoryOf(c).icon} ${categoryOf(c).label}`).join(" · ")}
+            </p>
           </div>
         ))}
         <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
           {envelope.save}
         </button>
       </form>
+
+      {/* 🔴 평소엔 접어 둔다. 봉투를 고치는 일은 자주 하는 일이 아니다 */}
+      <details className="mt-2 rounded-card border border-line-2 px-2.5 py-2">
+        <summary className="cursor-pointer text-[0.78em] font-bold text-ink-soft">
+          {envelope.editTitle}
+        </summary>
+
+        <ul className="mt-2 grid gap-2">
+          {board.envelopes.map((e) => (
+            <li key={e.id} className="rounded-card border border-line bg-surface p-2.5">
+              <form action={editEnvelopeAction} className="grid gap-1.5">
+                <input type="hidden" name="id" value={e.id} />
+
+                <div className="flex gap-1.5">
+                  <label className="w-20">
+                    <span className="sr-only">{envelope.emojiLabel}</span>
+                    <select name="emoji" defaultValue={e.emoji}
+                            className="min-h-touch w-full rounded-card border border-line bg-surface px-1 text-center text-[1em]">
+                      {EMOJIS.map((x) => <option key={x} value={x}>{x}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex-1">
+                    <span className="sr-only">{envelope.nameLabel}</span>
+                    <input name="name" defaultValue={e.name} maxLength={12} required
+                           className="min-h-touch w-full rounded-card border border-line bg-surface px-2 text-[0.86em]" />
+                  </label>
+                </div>
+
+                {/* 🔴 미분류 봉투는 업종을 안 갖는다 — 나머지를 받는 자리다 */}
+                {e.isDefault ? (
+                  <p className="text-[0.72em] text-ink-mute">{envelope.defaultCats}</p>
+                ) : (
+                  <>
+                    <span className="text-[0.72em] text-ink-mute">{envelope.catsLabel}</span>
+                    <ul className="grid grid-cols-4 gap-1">
+                      {CATEGORIES.map((c) => (
+                        <li key={c.code}>
+                          <label className="block cursor-pointer">
+                            <input type="checkbox" name="categories" value={c.code}
+                                   defaultChecked={e.categories.includes(c.code)} className="peer sr-only" />
+                            <span className="grid min-h-touch place-items-center rounded-card border border-line bg-surface text-center text-[0.62em] peer-checked:border-primary peer-checked:bg-primary-bg peer-checked:font-bold">
+                              <span className="text-[1.5em]">{c.icon}</span>{c.label}
+                            </span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                <button className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-[0.8em] font-bold text-primary-d">
+                  {envelope.editSave}
+                </button>
+              </form>
+
+              {!e.isDefault ? (
+                <form action={removeEnvelopeAction} className="mt-1">
+                  <input type="hidden" name="id" value={e.id} />
+                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.76em] text-ink-mute">
+                    {envelope.remove}
+                  </button>
+                </form>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+
+        {board.envelopes.length < MAX_ENVELOPES ? (
+          <form action={addEnvelopeAction} className="mt-2 flex gap-1.5">
+            <label className="w-20">
+              <span className="sr-only">{envelope.emojiLabel}</span>
+              <select name="emoji" defaultValue="📦"
+                      className="min-h-touch w-full rounded-card border border-line bg-surface px-1 text-center text-[1em]">
+                {EMOJIS.map((x) => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </label>
+            <input name="name" maxLength={12} required placeholder={envelope.addTitle}
+                   className="min-h-touch flex-1 rounded-card border border-line bg-surface px-2 text-[0.86em]" />
+            <button className="min-h-touch shrink-0 rounded-card bg-primary px-3 text-[0.8em] font-bold text-white">
+              {envelope.addLabel}
+            </button>
+          </form>
+        ) : null}
+
+        <p className="mt-1.5 text-[0.7em] text-ink-mute">{envelope.removeNotice}</p>
+      </details>
 
       {/* 🔴 실제 웹훅이 없다. 예시 거래로 흐름을 세우고 그 사실을 밝힌다 */}
       {txns.length > 0 ? (
