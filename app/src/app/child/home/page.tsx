@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Screen, Empty } from "@/components/shared/Screen";
-import { LiveStars } from "@/components/child/LiveStars";
+import { MoneyHUD } from "@/components/child/MoneyHUD";
 import { RoomStage } from "@/components/child/RoomStage";
 import { CATEGORIES, byCategory } from "@/contracts/items";
 import { emptyRoom, itemsLabel, shopLink, todo, todoTitle } from "./room.fixture";
 import { getRoom, placedItems } from "@/modules/items";
+import { getBalance } from "@/modules/allowance";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
 import { getTourState } from "@/modules/onboarding";
@@ -45,9 +46,10 @@ export default async function ChildHomePage({
   const tour = await getTourState(access.childId);
   if (!tour.finished && !tour.skipped) redirect("/child/welcome");
 
-  const [board, room] = await Promise.all([
+  const [board, room, allowance] = await Promise.all([
     getMissionBoard(access.childId),
     getRoom(access.childId),
+    getBalance(access.childId),
   ]);
   const placed = placedItems(room);
   const badge = (href: string) =>
@@ -64,7 +66,7 @@ export default async function ChildHomePage({
         </p>
       ) : null}
 
-      <LiveStars balance={room.stars} />
+      <MoneyHUD stars={room.stars} allowance={allowance} />
 
       <div className="mt-3 rounded-card border border-line bg-surface py-3">
         <RoomStage items={placed} layout={room.layout} characterId={room.characterId}
