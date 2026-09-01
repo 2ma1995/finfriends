@@ -6,8 +6,9 @@ import { getMissionBoard } from "@/modules/mission";
 import { hasPlanToday } from "@/modules/plan";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
-  claim, claimed, consentRequired, done, hint, intro, missionDiff, missionNone,
-  needsLesson, noDevice, nudge, quizDone, quizRule, quizToday,
+  claim, claimed, comeTomorrow, consentRequired, done, hint, intro, lessonWaiting,
+  missionDiff, missionNone, needsLesson, noDevice, nudge,
+  practicedToday as practicedTodayLabel, quizDone, quizRule, quizToday,
   readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
 } from "./practice.fixture";
 
@@ -92,7 +93,14 @@ export default async function ChildPracticePage({
               ) : (
                 <>
                   <p className="mt-1.5 flex-1 text-[0.78em] font-bold leading-relaxed">{c.task}</p>
-                  {c.state === "WAITING" ? (
+                  {/* 🔴 **오늘 몫은 끝났다** (D47). 다음 편 버튼을 그리면 눌러도 서버가 막는다 —
+                         눌리지 않는 버튼이 제일 나쁘다. 「그만해」가 아니라 「내일 또」로 닫는다 */}
+                  {c.practicedToday && c.state !== "WAITING" && c.state !== "DONE" ? (
+                    <p className="mt-1 grid min-h-touch place-items-center text-center text-[0.74em] leading-tight text-primary-d">
+                      <b>✓ {practicedTodayLabel}</b>
+                      <span className="text-[0.9em] text-ink-mute">{comeTomorrow}</span>
+                    </p>
+                  ) : c.state === "WAITING" ? (
                     <p className="mt-1 grid min-h-touch place-items-center text-[0.76em] text-ink-soft">{waiting}</p>
                   ) : c.state === "DONE" ? (
                     <p className="mt-1 grid min-h-touch place-items-center text-[0.76em] font-bold text-primary-d">{done}</p>
@@ -132,6 +140,14 @@ export default async function ChildPracticePage({
                 <Link href="/child/plan/new"
                       className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-[0.78em] font-bold text-star-d">
                   📝 {nudge.spend}
+                </Link>
+              ) : null}
+
+              {/* 🔴 **읽기가 실천보다 먼저다.** 오늘 읽을 편이 남았으면 그렇게 말한다 (D47) */}
+              {!c.needsLesson && !c.viaSavings && c.lessonToday ? (
+                <Link href={`/child/learn/${slug}`}
+                      className="mt-1.5 grid min-h-touch place-items-center rounded-card border border-primary-l bg-primary-bg text-[0.72em] font-bold text-primary-d">
+                  📖 {lessonWaiting}
                 </Link>
               ) : null}
 

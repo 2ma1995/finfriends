@@ -5,6 +5,20 @@ import { record as recordAllowance } from "@/modules/allowance";
 import { findLesson } from "@/contracts/lessons";
 import { isPracticeOpen } from "@/contracts/learning";
 import { TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
+import { kstDay } from "@/modules/attendance";
+
+/** KST 오늘의 시작을 UTC 로 — 서버가 어디서 돌든 아이가 사는 하루의 경계다 */
+function kstDayStart(now = new Date()) {
+  return new Date(Date.parse(`${kstDay(now)}T00:00:00.000Z`) - 9 * 60 * 60 * 1000);
+}
+
+/** 이 영역에서 오늘 이미 실천을 올렸나 — 화면과 서버가 같은 답을 낸다 */
+export async function practicedToday(childId: string, topic: Topic, now = new Date()) {
+  const n = await prisma.mission.count({
+    where: { childId, topic, sourceId: { not: null }, doneAt: { gte: kstDayStart(now) } },
+  });
+  return n > 0;
+}
 import {
   OPEN_LIMIT, REWARD_MAX, REWARD_MIN, TITLE_MAX,
   PAYOUT_MAX,
@@ -342,6 +356,24 @@ export async function claimPractice(childId: string, guardianId: string, lessonI
   if (!lesson) return false;
   // 🔴 실천이 닫힌 영역은 서버에서 막는다. 화면만 감추면 요청은 그대로 통한다 (§6.6)
   if (!isPracticeOpen(lesson.topic)) return false;
+
+  /**
+   * 🔴 **영역마다 하루 하나다** (D47). 없으면 아이가 읽어 둔 편을 하루에 몰아
+   *    올릴 수 있다 — 실제로 tester 의 「벌기」에 실천이 네 건 쌓여 있었다.
+   *    「매일 조금씩」이 리듬인데 몰아 하면 그 리듬이 사라진다.
+   *
+   * 🔴 **다시 하기는 막지 않는다.** 오늘 올린 **그 편**을 다시 누르는 것은
+   *    아래에서 「이미 했다」로 조용히 통과한다 — 오류가 아니다.
+   */
+  const claimedToday = await prisma.mission.findFirst({
+    where: {
+      childId, topic: lesson.topic, sourceId: { not: null },
+      doneAt: { gte: kstDayStart() },
+      NOT: { sourceId: lessonId },
+    },
+    select: { id: true },
+  });
+  if (claimedToday) return false;
 
   const exist = await prisma.mission.findFirst({
     where: { childId, sourceId: lessonId },

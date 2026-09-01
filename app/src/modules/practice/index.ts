@@ -1,6 +1,7 @@
 import "server-only";
 import { lessonsOf } from "@/contracts/lessons";
 import { isPracticeOpen, TOPIC_ICON, TOPIC_LABEL, type Topic } from "@/contracts/learning";
+import { practicedToday } from "@/modules/mission";
 import { getLessonList } from "@/modules/learning";
 import { getPracticeState, type PracticeState } from "@/modules/mission";
 import { getOpen } from "@/modules/savings";
@@ -33,6 +34,10 @@ export type PracticeCell = {
   readonly quizIndex: number;
   /** 아직 아무 편도 안 읽었다 — 먼저 배워야 한다 */
   readonly needsLesson: boolean;
+  /** 🔴 이 영역에서 **오늘 실천을 이미 올렸다** — 하루 하나다 (D47) */
+  readonly practicedToday: boolean;
+  /** 🔴 오늘 읽을 편이 남았나 — 읽을거리도 하루 하나다 (D47) */
+  readonly lessonToday: boolean;
 };
 
 const ORDER: readonly Topic[] = ["EARN", "SPEND", "SAVE", "GROW"];
@@ -43,7 +48,7 @@ export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
 
   return Promise.all(ORDER.map(async (topic) => {
     const slug = SLUG[topic];
-    const [{ lessons }, quizDone] = await Promise.all([
+    const [{ lessons, todayId }, quizDone] = await Promise.all([
       getLessonList(childId, topic),
       answeredToday(childId, slug),
     ]);
@@ -53,6 +58,9 @@ export async function getTodayBoard(childId: string): Promise<PracticeCell[]> {
       topic, label: TOPIC_LABEL[topic], icon: TOPIC_ICON[topic],
       quizDone, quizIndex: todayIndex(slug),
       needsLesson: read.length === 0,
+      // 🔴 읽을거리 · 문제 · 실천 **각각 하루 하나**가 이 제품의 리듬이다 (D47)
+      practicedToday: await practicedToday(childId, topic),
+      lessonToday: todayId !== null,
     };
 
     // 🔴 불리기는 미션이 아니라 **적금**으로 실천한다

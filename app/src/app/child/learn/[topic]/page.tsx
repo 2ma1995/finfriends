@@ -6,8 +6,8 @@ import { currentChild } from "@/lib/session/current-child";
 import { getLessonList } from "@/modules/learning";
 
 import { quizTotal } from "@/modules/quiz";
-import { consentRequired, noDevice, practiceCta, practiceHint,
-         quizLabel, readLabel } from "../learn.fixture";
+import { consentRequired, dailyRule, lockedBadge, noDevice, practiceCta, practiceHint,
+         quizLabel, readDoneToday, readLabel, todayBadge } from "../learn.fixture";
 
 // LRN-001 — 한 영역의 학습 편 목록
 const TOPICS: Record<string, Topic> = { earn: "EARN", spend: "SPEND", save: "SAVE", grow: "GROW" };
@@ -26,7 +26,7 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
     );
   }
 
-  const { lessons, quizCorrect } = await getLessonList(access.childId, topic);
+  const { lessons, quizCorrect, readToday } = await getLessonList(access.childId, topic);
   const allRead = lessons.every((l) => l.read);
 
 
@@ -34,22 +34,51 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
     <Screen role="아이 화면" title={`${TOPIC_ICON[topic]} ${TOPIC_LABEL[topic]}`}
             sub={`${lessons.filter((l) => l.read).length} / ${lessons.length}편`}
             back={{ href: "/child/learn", label: "배우기" }}>
+      {/* 🔴 오늘 몫을 다 했으면 먼저 말한다 — 목록만 회색이면 「고장났나」로 읽힌다 */}
+      {readToday ? (
+        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-[0.82em] font-bold text-primary-d">
+          {readDoneToday}
+        </p>
+      ) : null}
+
       <ol className="grid gap-1.5">
-        {lessons.map((l, i) => (
-          <li key={l.id}>
-            <Link href={`/child/learn/${slug}/${l.id}`}
-                  className={`flex min-h-touch items-center gap-2 rounded-card border px-3 py-2 ${
-                    l.read ? "border-line bg-surface" : "border-primary-l bg-primary-bg"}`}>
-              <span className="text-[1.3em]">{l.emoji}</span>
+        {lessons.map((l, i) => {
+          const body = (
+            <>
+              <span className={`text-[1.3em] ${l.locked ? "opacity-40 grayscale" : ""}`}>{l.emoji}</span>
               <span className="flex-1">
-                <b className="block text-[0.88em]">{l.title}</b>
-                <span className="text-[0.72em] text-ink-mute">{i + 1}편</span>
+                <b className={`block text-[0.88em] ${l.locked ? "text-ink-mute" : ""}`}>{l.title}</b>
+                <span className="text-[0.72em] text-ink-mute">
+                  {i + 1}편{l.today ? ` · ${todayBadge}` : l.locked ? ` · ${lockedBadge}` : ""}
+                </span>
               </span>
-              {l.read ? <span className="text-[0.76em] text-primary-d">✓ {readLabel}</span> : null}
-            </Link>
-          </li>
-        ))}
+              {l.read ? <span className="text-[0.76em] text-primary-d">✓ {readLabel}</span>
+                      : l.locked ? <span className="text-[0.9em]">🔒</span> : null}
+            </>
+          );
+          /*
+            🔴 **잠긴 편은 링크가 아니다.** 회색으로만 칠하고 링크를 두면 눌리고,
+               눌러서 열리면 하루 한 편이 아니게 된다. 주소로 직접 와도
+               상세 화면이 서버에서 다시 막는다 (§6.6).
+          */
+          return (
+            <li key={l.id}>
+              {l.locked ? (
+                <div aria-disabled className="flex min-h-touch items-center gap-2 rounded-card border border-dashed border-line-2 bg-transparent px-3 py-2">
+                  {body}
+                </div>
+              ) : (
+                <Link href={`/child/learn/${slug}/${l.id}`}
+                      className={`flex min-h-touch items-center gap-2 rounded-card border px-3 py-2 ${
+                        l.read ? "border-line bg-surface" : "border-primary-l bg-primary-bg"}`}>
+                  {body}
+                </Link>
+              )}
+            </li>
+          );
+        })}
       </ol>
+      <p className="mt-1.5 text-center text-[0.72em] text-ink-mute">{dailyRule}</p>
 
       {/* 🔴 퀴즈는 **읽은 다음**에 온다. 배우기 화면이 곧장 퀴즈로 뛰던 것이 이 화면의 오류였다 */}
       <Link href={`/child/quiz/${slug}?n=1`}

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/db";
 import { isPracticeOpen, TOPIC_ICON, TOPIC_LABEL, type Topic, type TopicProgressView } from "@/contracts/learning";
 import { LESSONS, findLesson, lessonsOf } from "@/contracts/lessons";
+import { kstDay } from "@/modules/attendance";
 
 /**
  * 학습 진도 — LRN-001.
@@ -39,17 +40,51 @@ export async function getTopicProgress(childId: string): Promise<TopicProgressVi
   });
 }
 
-/** 한 영역의 편 목록 — 어디까지 읽었는지 함께 준다 */
-export async function getLessonList(childId: string, topic: Topic) {
+/**
+ * 한 영역의 편 목록 — 🔴 **오늘 읽을 수 있는 것은 하나다** (D47).
+ *
+ * 「매일 조금씩」이 이 제품의 리듬이다. 목록을 통째로 열어 두면 하루에 다 읽고,
+ * 다 읽고 나면 **그 영역은 다음 날 열 이유가 없어진다.**
+ *
+ *   read     이미 읽은 편 — **다시 읽을 수 있다.** 복습을 막지 않는다
+ *   today    오늘 읽을 한 편 — 안 읽은 것 중 **맨 앞** 하나
+ *   locked   나머지 — 회색으로 보이되 **왜 잠겼는지** 화면이 말한다
+ *
+ * 🔴 **오늘 이미 새 편을 읽었으면 `today` 가 없다.** 그날은 읽기가 끝난 것이고
+ *    남은 것은 문제와 실천이다.
+ */
+export async function getLessonList(childId: string, topic: Topic, now = new Date()) {
   const row = await prisma.learningProgress.findUnique({
     where: { childId_topic: { childId, topic } },
-    select: { completedLessons: true, quizCorrect: true },
+    select: { completedLessons: true, quizCorrect: true, lastReadDay: true },
   });
   const done = new Set(row?.completedLessons ?? []);
+  const readToday = row?.lastReadDay === kstDay(now);
+
+  const all = lessonsOf(topic);
+  const todayId = readToday ? null : (all.find((l) => !done.has(l.id))?.id ?? null);
+
   return {
-    lessons: lessonsOf(topic).map((l) => ({ ...l, read: done.has(l.id) })),
+    lessons: all.map((l) => {
+      const read = done.has(l.id);
+      return { ...l, read, today: l.id === todayId, locked: !read && l.id !== todayId };
+    }),
+    todayId,
+    readToday,
     quizCorrect: row?.quizCorrect ?? 0,
   };
+}
+
+/**
+ * 이 편을 지금 열어도 되나 — 🔴 **화면과 서버가 같은 답을 내야 한다.**
+ *    목록에서 회색으로 만들어도 주소를 직접 치면 그대로 열린다 (SRS-Tech §6.6).
+ */
+export async function canOpenLesson(childId: string, lessonId: string, now = new Date()) {
+  const lesson = findLesson(lessonId);
+  if (!lesson) return false;
+  const { lessons } = await getLessonList(childId, lesson.topic, now);
+  const l = lessons.find((x) => x.id === lessonId);
+  return l ? !l.locked : false;
 }
 
 export function getLesson(id: string) {
@@ -73,10 +108,13 @@ export async function markLessonRead(childId: string, lessonId: string) {
   done.add(lessonId);
 
   const next = Array.from(done);
+  // 🔴 **새 편을 읽은 날만 찍는다.** 다시 읽기는 위에서 이미 돌아갔으므로 여기 안 온다 —
+  //    복습으로 날짜가 밀리면 「오늘 읽을 편」이 영영 안 나온다
+  const day = kstDay();
   await prisma.learningProgress.upsert({
     where: { childId_topic: { childId, topic: lesson.topic } },
-    create: { childId, topic: lesson.topic, completedLessons: next, completedCount: next.length },
-    update: { completedLessons: next, completedCount: next.length },
+    create: { childId, topic: lesson.topic, completedLessons: next, completedCount: next.length, lastReadDay: day },
+    update: { completedLessons: next, completedCount: next.length, lastReadDay: day },
   });
   return true;
 }

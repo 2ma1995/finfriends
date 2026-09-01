@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { TOPIC_LABEL } from "@/contracts/learning";
 import { currentChild } from "@/lib/session/current-child";
-import { getLesson, getLessonList, nextLesson } from "@/modules/learning";
+import { getLesson, getLessonList } from "@/modules/learning";
 import { finishLessonAction } from "@/app/actions/learn";
-import { consentRequired, finishLabel, lastFinishLabel, noDevice, tryTitle } from "../../learn.fixture";
+import { consentRequired, finishLabel, lockedLesson, noDevice, tryTitle } from "../../learn.fixture";
 
 // LRN-001 — 학습 한 편. 🔴 한 편은 화면 하나를 넘지 않는다
 export default async function LessonPage({ params }: { params: Promise<{ topic: string; lessonId: string }> }) {
@@ -22,8 +22,21 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
   }
 
   const { lessons } = await getLessonList(access.childId, lesson.topic);
+
+  /**
+   * 🔴 **목록에서 회색으로 만든 것을 서버가 다시 본다** (SRS-Tech §6.6).
+   *    화면만 감추면 주소를 직접 치는 것으로 그대로 열린다 — 하루 한 편이 아니게 된다.
+   */
+  const here = lessons.find((l) => l.id === lesson.id);
+  if (here?.locked) {
+    return (
+      <Screen role="아이 화면" title={TOPIC_LABEL[lesson.topic]} back={{ href: `/child/learn/${slug}`, label: "목록" }}>
+        <Empty emoji="🔒" title={lockedLesson.title} body={lockedLesson.body} />
+      </Screen>
+    );
+  }
+
   const at = lessons.findIndex((l) => l.id === lesson.id);
-  const last = nextLesson(lesson.id) === null;
 
   return (
     <Screen role="아이 화면" title={TOPIC_LABEL[lesson.topic]}
@@ -55,7 +68,7 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
       <form action={finishLessonAction} className="mt-3">
         <input type="hidden" name="lessonId" value={lesson.id} />
         <button className="min-h-touch w-full rounded-card bg-primary text-[0.92em] font-bold text-white">
-          {last ? lastFinishLabel : finishLabel}
+          {finishLabel}
         </button>
       </form>
     </Screen>

@@ -281,6 +281,9 @@ model LearningProgress {
   /// 🔴 읽은 편의 id. 개수만 세면 같은 편을 다시 읽어도 진도가 오른다
   completedLessons String[]    @default([]) @map("completed_lessons")
   quizCorrect    Int           @default(0) @map("quiz_correct")
+  /// 🔴 **새 편을 마지막으로 읽은 날** (KST `YYYY-MM-DD`). 읽을거리도 하루 하나다 (D47).
+  ///    `updatedAt` 은 퀴즈로도 갱신돼서 「오늘 읽었나」를 못 묻는다
+  lastReadDay    String?       @map("last_read_day")
   updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([childId, topic])

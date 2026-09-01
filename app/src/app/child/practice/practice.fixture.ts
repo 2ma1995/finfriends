@@ -10,6 +10,16 @@ export const needsLesson = "먼저 한 편 읽어요";
 export const readFirst = "배우러 가기 →";
 
 export const claim = "해봤어요";
+/**
+ * 🔴 **영역마다 하루 하나다** (D47). 읽을거리 · 문제 · 실천이 각각 하루 한 개 —
+ *    그게 「매일 조금씩」이라는 이 제품의 리듬이다. 몰아 하면 리듬이 사라진다.
+ *
+ * 🔴 **「그만해」로 들리면 안 된다.** 다 한 것은 잘한 것이고, 내일 또 온다는 말로 닫는다.
+ */
+export const practicedToday = "오늘 실천 다 했어요";
+export const comeTomorrow = "내일 새 이야기가 와요";
+/** 오늘 읽을 편이 남았을 때 — 실천보다 읽기가 먼저다 */
+export const lessonWaiting = "오늘 읽을 이야기가 있어요";
 export const waiting = "부모님 확인 중";
 export const done = "✓ 별 받았어요";
 export const rejected = "다시 해볼까요?";
