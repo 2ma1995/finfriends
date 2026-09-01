@@ -79,3 +79,9 @@ export const live = {
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
 export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };
+
+/**
+ * 🔴 **보러 나갔을 때만 뜨는 줄.** 「돌아가기」가 아니라 **어디로** 돌아가는지 적는다 —
+ *    아이가 지금 어디에 있는지 잊었을 수 있다.
+ */
+export const tourReturnLabel = "처음이지? 로 돌아가기";
