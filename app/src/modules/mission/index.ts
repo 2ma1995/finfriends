@@ -202,6 +202,14 @@ export async function approveMission(guardianId: string, missionId: string) {
       state: late ? "BACKFILLED" : "APPROVED", decidedAt: new Date(),
     },
   });
+
+  /**
+   * 🔴 **판정 즉시 사진을 파기한다** (`AC-032-1` · `AC-032-2`).
+   *    파기가 이 기능의 값이다 — 안 지우면 넣지 말았어야 할 기능이 된다.
+   *    지운 시각은 따로 안 적는다. **`decidedAt` 이 곧 파기 시각**이다 —
+   *    판정과 파기가 같은 순간이므로 컬럼을 하나 더 두면 두 값을 맞춰야 한다.
+   */
+  await destroyPhoto(m.id);
   return true;
 }
 
@@ -216,7 +224,10 @@ export async function rejectMission(guardianId: string, missionId: string, reaso
       state: "REJECTED", decidedAt: new Date(), rejectReason: reason.trim() || null,
     },
   });
-  return r.count === 1;
+  if (r.count !== 1) return false;
+  // 🔴 **반려도 판정이다.** 승인만 지우면 반려된 미션에 사진이 남는다
+  await destroyPhoto(missionId);
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -351,4 +362,86 @@ export async function claimPractice(childId: string, guardianId: string, lessonI
     },
   });
   return true;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 미션 사진 — FR-032 · 어긋남 대장 D32
+//
+// 🔴 **판정과 함께 사라진다.** 승인·반려 즉시, 그리고 72시간 만료에서 지운다.
+//    `AC-032-2` 의 검증이 「스토리지 스캔 0건」이다.
+//
+// 🔴 이전 사양에서는 이 기능이 **제외**였다 — 아동 이미지 리스크 때문이다.
+//    새 SRS 가 「판정 즉시 파기」를 조건으로 달아 다시 넣었고 사용자가 승인했다.
+//    **파기가 이 기능의 값이다.** 파기를 빼면 넣지 말았어야 할 기능이 된다.
+// ─────────────────────────────────────────────────────────────
+
+/** 받아들이는 형식. 🔴 목록에 없는 것은 받지 않는다 — 임의 바이트가 들어오면 그것도 저장된다 */
+const PHOTO_MIME = ["image/jpeg", "image/png", "image/webp"] as const;
+/** 🔴 5MB. 아이 폰 사진 한 장이고, 넘으면 브라우저가 아니라 서버가 거절한다 */
+export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
+export type AttachPhotoResult =
+  | { ok: true }
+  | { ok: false; reason: "NOT_FOUND" | "BAD_MIME" | "TOO_LARGE" | "EMPTY" };
+
+/**
+ * 미션에 사진을 붙인다 — **아이가 부른다.**
+ *
+ * 🔴 **내 아이의 미션이어야 한다.** `childId` 를 함께 건다 —
+ *    미션 id 만 믿으면 남의 아이 미션에 사진을 붙일 수 있다.
+ * 🔴 **「했어요」를 누른 미션에만** 붙는다. 판정을 기다리는 것이 아니면 볼 사람이 없다.
+ * 🔴 **한 장이다.** 다시 올리면 덮어쓴다 — 여러 장을 허용하면 「보고 지운다」가 흐려진다.
+ */
+export async function attachPhoto(
+  childId: string, missionId: string, bytes: Uint8Array, mime: string,
+): Promise<AttachPhotoResult> {
+  if (!PHOTO_MIME.includes(mime as (typeof PHOTO_MIME)[number])) return { ok: false, reason: "BAD_MIME" };
+  if (bytes.byteLength === 0) return { ok: false, reason: "EMPTY" };
+  if (bytes.byteLength > PHOTO_MAX_BYTES) return { ok: false, reason: "TOO_LARGE" };
+
+  const m = await prisma.mission.findFirst({
+    where: { id: missionId, childId, state: "PENDING", doneAt: { not: null } },
+    select: { id: true },
+  });
+  if (!m) return { ok: false, reason: "NOT_FOUND" };
+
+  const buf = Buffer.from(bytes);
+  await prisma.missionPhoto.upsert({
+    where: { missionId },
+    create: { missionId, bytes: buf, mime, byteSize: buf.byteLength },
+    update: { bytes: buf, mime, byteSize: buf.byteLength, createdAt: new Date() },
+  });
+  return { ok: true };
+}
+
+/**
+ * 보호자가 볼 사진 한 장. 🔴 **내 아이의 미션인지 먼저 확인한다.**
+ *    조회 자체가 인가 지점이다 — 미션 id 는 화면에 노출되는 값이다.
+ */
+export async function readPhoto(guardianId: string, missionId: string) {
+  const m = await prisma.mission.findFirst({
+    where: { id: missionId, guardianId }, select: { id: true },
+  });
+  if (!m) return null;
+  const p = await prisma.missionPhoto.findUnique({
+    where: { missionId }, select: { bytes: true, mime: true },
+  });
+  return p ? { bytes: Buffer.from(p.bytes), mime: p.mime } : null;
+}
+
+/** 어느 미션에 사진이 붙어 있나 — 승인 화면이 자리를 만들지 정한다 */
+export async function photoMissionIds(missionIds: readonly string[]) {
+  if (missionIds.length === 0) return new Set<string>();
+  const rows = await prisma.missionPhoto.findMany({
+    where: { missionId: { in: [...missionIds] } }, select: { missionId: true },
+  });
+  return new Set(rows.map((r) => r.missionId));
+}
+
+/**
+ * 🔴 **파기.** 판정한 순간 부른다. 없으면 아무 일도 하지 않는다 —
+ *    사진이 없는 미션도 정상이므로 실패로 취급하지 않는다.
+ */
+export async function destroyPhoto(missionId: string) {
+  await prisma.missionPhoto.deleteMany({ where: { missionId } });
 }

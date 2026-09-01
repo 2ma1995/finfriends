@@ -260,6 +260,30 @@ model LearningProgress {
 ///    영원히 0이고, 별을 받는 주된 길(MISSION_APPROVED)이 막힌다.
 ///
 /// 🔴 `cycleId` 는 **완료 시점 주기**다. 지연 승인이 다음 주기 나무를 부풀리지 않게(ACE-6.2).
+/// 미션 사진 — `FR-032` · 어긋남 대장 D32.
+///
+/// 🔴 **판정과 함께 사라진다.** 보호자가 승인·반려를 누르는 순간, 그리고 72시간 만료
+///    배치에서 지운다. `AC-032-2` 의 검증이 「스토리지 스캔 0건」이라 **파기를 증명할 수
+///    있어야** 한다 — 파일이면 지웠는지 확인이 어렵고 표면 한 줄로 셀 수 있다.
+///
+/// 🔴 이전 사양에서는 이 기능이 **제외**였다(아동 이미지 리스크). 새 SRS 가 「판정 즉시
+///    파기」를 조건으로 달아 다시 넣었고, 사용자가 리스크를 듣고 승인했다.
+///
+/// 🔴 `activity` 에 둔다. 아이 얼굴이 들어갈 수 있지만 **미션에 잠깐 붙는 증거**이고
+///    `mission_id` 로만 잡으므로 `identity` 와 조인하지 않는다 (`REQ-NF-009`).
+///    `CON-07`(아동 이미지 서버 미보관)은 **영구 보관 금지**로 읽는다 — 판정까지가 한계다.
+model MissionPhoto {
+  missionId String   @id @map("mission_id") @db.Uuid
+  bytes     Bytes
+  /// image/jpeg · image/png · image/webp 만 받는다
+  mime      String
+  byteSize  Int      @map("byte_size")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("mission_photos")
+  @@schema("activity")
+}
+
 model Mission {
   id          String        @id @default(uuid()) @db.Uuid
   childId     String        @map("child_id") @db.Uuid
