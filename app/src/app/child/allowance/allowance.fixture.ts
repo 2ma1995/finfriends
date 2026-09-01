@@ -3,13 +3,6 @@
 // 두 자료(금감원 익힘책 · 슬기로운 생활금융)가 **가장 강조하는 실천이 용돈기입장 쓰기**다.
 // 날짜 · 내용 · 들어온 돈 · 나간 돈 · 남은 돈 다섯 칸을 그대로 옮겼다.
 
-/**
- * 🔴 이자를 **정액 비례**로 말하는 기준 단위 (`AC-031-5`).
- *    「10,000원 모으면 ○○원」이 저학년이 잡을 수 있는 유일한 감각이다.
- */
-export const UNIT = 10_000;
-export const perUnit = (pct: number) => Math.floor((UNIT * pct) / 100);
-
 export const title = "내 통장";
 export const totalTitle = "내 돈";
 export const balanceTitle = "쓸 수 있는 돈";
@@ -46,7 +39,10 @@ export const savings = {
   kindLabel: "어떻게 모을래요?",
   perPeriodLabel: "한 주에 얼마",
   periodsLabel: "몇 주 동안",
-  totalPreview: (won: number, n: number) => `${n}주 뒤에 ${won.toLocaleString("ko-KR")}원이 모여요`,
+  /** 🔴 자리표시자만 둔다. 숫자는 폼이 채운다 — 함수는 클라이언트로 못 넘긴다 */
+  totalPreview: "{n}주 동안 모으면 {won}원이 돼요",
+  depositPreview: "{won}원을 {n}달 동안 두는 거예요",
+  interestPreview: "끝나면 {won}원을 더 받아요",
   /** 🔴 아이가 직접 넣는다. 자동이면 실천이 아니다 */
   payLabel: (n: number) => `이번 주 ${n.toLocaleString("ko-KR")}원 넣기`,
   paidThisWeek: "이번 주는 넣었어요. 다음 주에 또 넣어요.",
@@ -60,20 +56,19 @@ export const savings = {
    * 🔴 **고르게 해놓고 무시하면 안 된다.** 그래서 「선택」이 아니라 「제안」이다 —
    *    누르기 전에 정하는 사람이 누구인지 먼저 말한다.
    */
-  wantLabel: "이자는 얼마면 좋겠어요?",
+  wantLabel: "끝나면 얼마를 더 받고 싶어요?",
   /**
    * 🔴 **아이 화면에 `%` 를 쓰지 않는다** (`AC-031-5`). 저학년은 퍼센트를 못 읽는다 —
    *    「5%」는 아무 감각도 안 준다. **정액 비례**로 말한다: 「10,000원 모으면 500원」.
    */
-  wantNotice: (pct: number) =>
-    `지금은 ${UNIT.toLocaleString("ko-KR")}원에 ${perUnit(pct).toLocaleString("ko-KR")}원을 받아요. 더 받고 싶으면 말해 볼 수 있어요.`,
+  /** 🔴 진행 중인 저금은 **실제 받을 금액**으로 말한다. `%` 는 쓰지 않는다 (AC-031-5) */
+  wantNotice: "지금 우리 집에서 정한 만큼이에요. 더 받고 싶으면 말해 볼 수 있어요.",
   wantNoRate: "아직 우리 집 이자가 없어요. 얼마면 좋겠는지 말해 보세요.",
   /** 🔴 갖고 싶은 것에 넣어 둔 돈에는 이자가 안 붙는다. 위의 이자 칸을 없앴으므로 여기서 말한다 */
   onlyOnSavings: "이자는 저금한 돈에만 붙어요.",
   wantWho: "얼마로 할지는 부모님이 정해요.",
-  wantedShown: (pct: number) => `${UNIT.toLocaleString("ko-KR")}원에 ${perUnit(pct).toLocaleString("ko-KR")}원을 바랐어요`,
-  gaveInstead: (pct: number) =>
-    `부모님이 ${UNIT.toLocaleString("ko-KR")}원에 ${perUnit(pct).toLocaleString("ko-KR")}원으로 해주셨어요`,
+  wantedShown: (won: number) => `${won.toLocaleString("ko-KR")}원을 바랐어요`,
+  gaveInstead: (won: number) => `부모님이 ${won.toLocaleString("ko-KR")}원으로 해주셨어요`,
   sameAsWanted: "바란 대로 해주셨어요!",
 
   goalLabel: "무엇을 위해",
