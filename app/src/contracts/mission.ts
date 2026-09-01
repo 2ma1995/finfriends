@@ -2,7 +2,7 @@ import type { Topic } from "./learning";
 
 /** 미션 계약 — CTR-002 의 일부 */
 
-export type MissionState = "PENDING" | "APPROVED" | "BACKFILLED" | "REJECTED";
+export type MissionState = "PENDING" | "APPROVED" | "BACKFILLED" | "REJECTED" | "EXPIRED";
 
 /** 아이 화면에서 미션이 놓이는 자리 */
 export type MissionBucket =
@@ -13,7 +13,18 @@ export type MissionBucket =
   /** 승인됨 — 별을 받았다 */
   | "DONE"
   /** 거절됨 — 사유를 보여준다. 「미실천」과 구별한다 */
-  | "REJECTED";
+  | "REJECTED"
+  /**
+   * 🔴 **72시간 동안 아무도 판정하지 않았다** — `FR-032` · `AC-032-3`.
+   *
+   *    **거절이 아니다.** 아이는 「했어요」를 눌렀고 부모가 못 봤을 뿐이다.
+   *    「확인하지 못했어요」로 말한다 — 「거절」로 보이면 아이는 한 일을
+   *    부정당한 것으로 읽는다.
+   *
+   *    「미실천」으로 집계되지 않으나 **WPA 분모에서는 빠지지 않는다.**
+   *    부모가 못 본 것도 이 제품이 책임질 몫이다.
+   */
+  | "EXPIRED";
 
 export type MissionView = {
   readonly id: string;

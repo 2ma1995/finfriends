@@ -7,12 +7,25 @@ import {
 import {
   acceptLabel, acceptedNotice, activeTitle, completeLabel, completeNotice, daysLeft,
   doneNotice, empty, errors, houseLabel, interestPreview, maturedLabel, needLogin,
+  annualLabel, annualNote, annualUnknown, benchmark,
   notice, pctCarryNote, pctLabel, reasonPlaceholder, rejectLabel, rejectedNotice, requestedTitle,
   title, wantedLabel, wantedMore,
 } from "./savings.fixture";
 
 // D25 — 보호자가 적금을 받아들이고 만기를 처리한다
 export const metadata = { title: "우리 집 적금 · 핀프렌즈" };
+/**
+ * 연 환산 이율 — `FR-031` 「부모 앱에 연 환산 이율을 병기」.
+ *
+ * 🔴 **단순 환산이다.** 「3개월에 5%」 → 연 20%. 복리가 아니라 기간 비례로 편다 —
+ *    아이와 하는 약속에 복리를 쓰면 설명할 수 없는 숫자가 된다.
+ * 🔴 기간이 없거나 0이면 **환산하지 않는다.** 없는 값을 0으로 그리지 않는다.
+ */
+function annualPct(interestPct: number, months: number): number | null {
+  if (!Number.isFinite(months) || months <= 0) return null;
+  return Math.round((interestPct * 12) / months * 10) / 10;
+}
+
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
 export default async function ParentSavingsPage({
@@ -90,6 +103,25 @@ export default async function ParentSavingsPage({
                     <span className="text-[0.8em]">%</span>
                   </label>
                   <p className="text-[0.74em] text-ink-mute">{interestPreview(s.interestWon)}</p>
+                  {/*
+                    🔴 아이는 「한 주에 500원」을 보고 부모는 연 환산을 본다 (FR-031).
+                       숫자 하나만 보면 후한지 박한지 알 수 없어 견줄 기준을 함께 둔다.
+                  */}
+                  {(() => {
+                    const a = annualPct(s.interestPct, s.months);
+                    return a === null ? (
+                      <p className="text-[0.74em] text-ink-mute">{annualUnknown}</p>
+                    ) : (
+                      <div className="rounded-card border border-line bg-surface px-2.5 py-1.5">
+                        <div className="flex items-baseline justify-between gap-2 text-[0.78em]">
+                          <span className="text-ink-mute">{annualLabel}</span>
+                          <b className="tabular-nums">약 {a}%</b>
+                        </div>
+                        <p className="mt-0.5 text-[0.7em] leading-relaxed text-ink-mute">{benchmark}</p>
+                        <p className="mt-0.5 text-[0.7em] leading-relaxed text-ink-mute">{annualNote}</p>
+                      </div>
+                    );
+                  })()}
                   {/* 🔴 이 숫자가 이 한 건에만 쓰이는 게 아니라는 것을 말한다 (D28-b) */}
                   <p className="text-[0.74em] leading-relaxed text-ink-mute">{pctCarryNote}</p>
                   <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
