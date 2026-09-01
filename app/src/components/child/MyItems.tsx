@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { CATEGORIES, byCategory, type Category } from "@/contracts/items";
 
 /**
@@ -19,13 +18,12 @@ import { CATEGORIES, byCategory, type Category } from "@/contracts/items";
  *    3D 방(`RoomStage`)이 통째로 다시 뜬다. 카테고리 하나 보려다 방이 껌뻑인다.
  */
 export function MyItems({
-  owned, placedCount, title, shopLabel, emptyCat, hint,
+  owned, placedCount, title, emptyCat, hint,
 }: {
   owned: readonly string[];
   placedCount: number;
   /** 🔴 `{n}` 은 놓은 개수. 숫자는 여기가 채운다 — 문구는 fixture 가 갖는다 */
   title: string;
-  shopLabel: string;
   emptyCat: string;
   hint: string;
 }) {
@@ -35,12 +33,12 @@ export function MyItems({
 
   return (
     <>
-      <div className="mt-3 flex items-baseline justify-between gap-2">
-        <h2 className="text-[0.82em] font-bold">{title.replace("{n}", String(placedCount))}</h2>
-        <Link href="/child/shop" className="text-[0.72em] text-primary-d underline underline-offset-2">
-          {shopLabel} →
-        </Link>
-      </div>
+      {/*
+        🔴 **상점으로 가는 길을 여기 두지 않는다.** 방 안에 🛍 버튼이 이미 있다 —
+           「내 아이템」은 **가진 것을 보는 자리**이고, 옆에 사러 가는 길을 붙이면
+           그 자리가 다시 상점 입구가 된다. 한 화면에 같은 문이 둘일 이유도 없다.
+      */}
+      <h2 className="mt-3 text-[0.82em] font-bold">{title.replace("{n}", String(placedCount))}</h2>
 
       {/*
         🔴 **일곱을 한 줄에 넣는다.** 좁은 폰에서 두 줄로 접히면 「작게 한 줄」이 아니게 된다.
@@ -87,12 +85,10 @@ export function MyItems({
             ))}
           </ul>
         ) : (
-          /* 🔴 **빈 칸도 말한다.** 아무것도 안 나오면 아이는 「고장났나」로 읽는다 */
+          /* 🔴 **빈 칸도 말한다.** 아무것도 안 나오면 아이는 「고장났나」로 읽는다.
+                 다만 **사러 가라고 밀지 않는다** — 없다는 사실만 말하고 끝낸다 */
           <p className="mt-1.5 rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-[0.74em] text-ink-mute">
-            {emptyCat}{" "}
-            <Link href={`/child/shop?c=${open}`} className="font-bold text-primary-d underline underline-offset-2">
-              {shopLabel} →
-            </Link>
+            {emptyCat}
           </p>
         )
       ) : (

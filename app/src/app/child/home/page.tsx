@@ -128,8 +128,7 @@ export default async function ChildHomePage({
 
       {/* 🔴 한 줄로 접어 두고 고른 것만 아래에 편다 — **가진 것만** 보여준다 */}
       <MyItems owned={room.owned} placedCount={placed.length}
-               title={itemsTitle} shopLabel={shopLink}
-               emptyCat={emptyCategory} hint={myItemsHint} />
+               title={itemsTitle} emptyCat={emptyCategory} hint={myItemsHint} />
 
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{todoTitle}</h2>
       <ul className="grid gap-1.5">
