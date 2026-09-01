@@ -11,6 +11,8 @@ import { CARD_STEPS } from "@/contracts/account";
 import { clearPinAction, setPinAction } from "@/app/actions/child-mode-pin";
 import { saveSchoolEndAction } from "@/app/actions/parent-schedule";
 import { getSchedule, toClock } from "@/modules/schedule";
+import { PushOptIn } from "@/components/parent/PushOptIn";
+import { countSubscriptions } from "@/lib/push";
 import {
   cardNotice, deviceNotice, notCollected, pinChangeLabel, pinClearLabel, pinClearNotice,
   pinDone, pinErrors, pinLabel, pinNotice, pinSetLabel,
@@ -48,6 +50,13 @@ export default async function ParentMyPage({
   const child = await findChild(guardian.guardianId);
   const schedule = child ? await getSchedule(child.id) : null;
   const schoolClock = schedule ? toClock(schedule.schoolEndMin) : null;
+
+  /**
+   * 🔴 공개 키는 화면에 나가야 한다 — 브라우저가 구독할 때 쓴다. **비밀이 아니다.**
+   *    비밀 키(`VAPID_PRIVATE_KEY`)는 서버에만 있고 여기로 내려보내지 않는다.
+   */
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+  const pushDevices = await countSubscriptions(guardian.guardianId);
 
   return (
     <Screen role="부모 화면" title="내 정보">
@@ -252,6 +261,14 @@ export default async function ParentMyPage({
             ) : null}
           </Card>
         </div>
+      </section>
+
+      {/* ── 폰 알림 ── D56 */}
+      <section className="mt-4">
+        <h2 className="mb-1.5 text-[0.74em] tracking-[0.06em] text-ink-mute">폰 알림</h2>
+        <Card>
+          <PushOptIn publicKey={vapidPublicKey} deviceCount={pushDevices} />
+        </Card>
       </section>
 
       {/* ── 받지 않는 것 ── */}

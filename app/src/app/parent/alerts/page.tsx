@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { Screen, Empty } from "@/components/shared/Screen";
 import { listNotifications, markAllRead } from "@/modules/mission";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { empty, inAppNotice, readNotice, title } from "./alerts.fixture";
+import Link from "next/link";
+import { countSubscriptions } from "@/lib/push";
+import { empty, pushNotice, readNotice, title } from "./alerts.fixture";
 
 /**
  * 보호자 알림함 — 어긋남 대장 D51.
@@ -20,6 +22,8 @@ export default async function ParentAlertsPage() {
   if (!guardian) redirect("/login");
 
   const list = await listNotifications(guardian.guardianId);
+  // 🔴 이 보호자가 푸시를 받는 기기가 있나. 없으면 화면이 「앱 안에서만」이라고 말해야 한다
+  const pushOn = (await countSubscriptions(guardian.guardianId)) > 0;
   // 🔴 목록을 읽은 **뒤에** 찍는다. 먼저 찍으면 이번 화면에서 새 알림 표시가 사라진다
   await markAllRead(guardian.guardianId);
 
@@ -46,8 +50,20 @@ export default async function ParentAlertsPage() {
         </ul>
       )}
 
-      {/* 🔴 폰으로 안 간다는 것을 말한다. 안 적으면 못 받은 줄 안다 */}
-      <p className="mt-3 text-cap leading-relaxed text-ink-mute">{inAppNotice}</p>
+      {/* 🔴 켠 부모와 안 켠 부모에게 다른 문구를 보인다 (D56).
+          하나로 두면 반드시 한쪽에 거짓이 된다 — 전에는 「폰으로는 안 갑니다」로 못박혀 있었다 */}
+      <p className="mt-3 text-cap leading-relaxed text-ink-mute">
+        {pushOn ? (
+          pushNotice.on
+        ) : (
+          <>
+            {pushNotice.off}{" "}
+            <Link href="/parent/mypage" className="underline decoration-line-2">
+              켜러 가기
+            </Link>
+          </>
+        )}
+      </p>
       <p className="mt-1 text-cap leading-relaxed text-ink-mute">{readNotice}</p>
     </Screen>
   );

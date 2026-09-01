@@ -320,6 +320,33 @@ model LearningProgress {
 /// 🔴 `activity` 에 둔다. 아이 얼굴이 들어갈 수 있지만 **미션에 잠깐 붙는 증거**이고
 ///    `mission_id` 로만 잡으므로 `identity` 와 조인하지 않는다 (`REQ-NF-009`).
 ///    `CON-07`(아동 이미지 서버 미보관)은 **영구 보관 금지**로 읽는다 — 판정까지가 한계다.
+/// 웹 푸시 구독 — 어긋남 대장 D56.
+///
+/// 🔴 **보호자 것만이다.** 아이 기기에 푸시를 보내지 않는다 —
+///    알림은 부모가 판정하라고 보내는 것이고, 아이에게 「부모가 안 봤다」를 알릴 이유가 없다.
+///
+/// 🔴 **기기마다 한 줄이다.** 부모가 폰과 태블릿을 같이 쓰면 둘 다 받아야 한다.
+///    `endpoint` 가 그 기기를 가리키는 유일한 값이라 그것으로 잡는다.
+///
+/// 🔴 **키를 그대로 저장한다.** `p256dh` · `auth` 는 브라우저가 준 공개 재료이고
+///    이것 없이는 그 기기로 암호화해 보낼 수 없다. 비밀이 아니지만
+///    **다른 사람 것을 쓰면 그 사람에게 알림이 간다** — 보호자 단위로 묶는다.
+model PushSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  guardianId String   @map("guardian_id") @db.Uuid
+  /// 브라우저가 준 푸시 주소. 기기를 가리키는 유일한 값이다
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  /// 마지막으로 보내기 성공한 시각. 죽은 구독을 찾는 단서다
+  lastSentAt DateTime? @map("last_sent_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([guardianId])
+  @@map("push_subscriptions")
+  @@schema("identity")
+}
+
 /// 보호자 알림 — 어긋남 대장 D51.
 ///
 /// 🔴 **인앱 알림함이다.** 웹푸시·메일·알림톡이 없어 앱 밖으로 내보낼 방법이 없다.

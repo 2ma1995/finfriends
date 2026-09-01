@@ -24,6 +24,7 @@ import { EXPIRE_HOURS, REMIND_HOURS } from "@/modules/mission";
 import { MAX_TOPUP, MOVED_CODES } from "@/modules/allowance";
 import { eul, i as iParticle, josa } from "@/lib/korean";
 import { isGuardianPath } from "@/lib/session/device-mode";
+import { pushEnabled, saveSubscription } from "@/lib/push";
 
 let failed = 0;
 const check = (n: string, ok: boolean, d = "") => {
@@ -174,5 +175,94 @@ check("  미션 단위로 묶는다", /for \(const m of stale\)[\s\S]{0,900}?\$t
 /** 🔴 탈퇴도 한 트랜잭션이어야 한다 — 절반만 지워진 계정이 남으면 안 된다 */
 check("🔴 탈퇴가 트랜잭션이다", /\$transaction\(\[/.test(src("modules/account/index.ts")));
 
-console.log(failed === 0 ? "\n전건 통과" : `\n실패 ${failed}건`);
-process.exit(failed === 0 ? 0 : 1);
+// ── 웹 푸시 (D56) ──
+
+/**
+ * 🔴 **알림함이 원본이고 푸시는 사본이다.** 푸시 발송이 알림 생성을 막으면 안 된다 —
+ *    푸시 서버가 잠깐 죽었을 때 미션 승인 흐름 전체가 멈춘다.
+ */
+check("🔴 푸시 발송이 알림 생성 뒤에 온다",
+  /prisma\.notification\.create[\s\S]{0,700}?await sendToGuardian/.test(mission),
+  "먼저 보내면 발송이 실패할 때 알림함에 줄이 안 남는다");
+check("  발송 실패를 삼킨다", /await sendToGuardian\([\s\S]{0,400}?\} catch \{/.test(mission),
+  "던지면 푸시 서버가 죽었을 때 승인 흐름이 멈춘다");
+check("🔴 이미 알린 것에는 푸시도 안 보낸다",
+  /code !== "P2002"\) throw e;\s*\n\s*return;/.test(mission),
+  "중복 알림에 푸시를 보내면 부모 폰에 같은 알림이 두 번 뜬다");
+
+const push = src("lib/push/index.ts");
+check("🔴 죽은 구독을 지운다", /code === 404 \|\| code === 410/.test(push),
+  "안 지우면 매번 실패하는 줄이 영원히 쌓인다 — 실제로 FCM 은 410, 모질라는 404 를 준다");
+check("  한 기기가 실패해도 나머지에 보낸다", /Promise\.allSettled/.test(push),
+  "`Promise.all` 이면 첫 실패에서 나머지 기기가 못 받는다");
+check("  주인이 바뀌면 옮긴다", /update: \{ guardianId/.test(push),
+  "기기를 다른 보호자가 쓰기 시작했는데 안 옮기면 엉뚱한 사람에게 알림이 간다");
+check("🔴 푸시 본문에 이름·금액을 넣지 않는다",
+  !/sendToGuardian\([\s\S]{0,300}?(childName|payoutWon|displayName)/.test(mission),
+  "푸시는 잠금화면에 뜬다 — 폰을 든 사람은 누구나 읽는다");
+
+/** 🔴 키가 없어도 앱이 돌아야 한다 — 새 팀원의 `.env` 에는 VAPID 키가 없다 */
+check("🔴 키 없음을 오류로 만들지 않는다", typeof pushEnabled() === "boolean",
+  "키가 없으면 푸시만 빠지고 알림함은 그대로 돌아야 한다");
+
+/**
+ * 🔴 **문에서 값을 검사한다** — 실제 함수를 부른다.
+ *    Server Action 은 공개 엔드포인트다 (§6.6 ②).
+ */
+const P256_OK = "BLcjyaIuQmgFoK91YWezVxb5L8cXArrclrb5jMj9I_IsY0gGMrXzjhJuXRATZOCqPl4jXkvGiHNTpR9Hmjt9G-Q";
+const FAKE_G = "00000000-0000-0000-0000-000000000000";
+/**
+ * 🔴 이 실행기(`tsx --conditions=react-server`)는 **top-level await 를 못 받는다**
+ *    (`ERR_REQUIRE_ASYNC_MODULE`). DB 를 부르는 검사는 함수로 감싸고
+ *    마무리 보고를 그 뒤로 옮긴다.
+ */
+async function asyncChecks() {
+for (const [label, bad] of [
+  ["http 주소", { endpoint: "http://나쁜주소", keys: { p256dh: P256_OK, auth: "YWJjZGVmZ2hpamtsbW5v" } }],
+  ["빈 키", { endpoint: "https://fcm.googleapis.com/x", keys: { p256dh: "", auth: "" } }],
+  /**
+   * 🔴 길이(65바이트)와 접두(0x04)는 맞지만 **곡선 위에 없는** 값이다.
+   *    저장하면 발송 때마다 암호화가 로컬에서 터지고 HTTP 상태가 없어
+   *    「죽은 구독」으로도 안 잡혀 영원히 남는다 — 실제로 그 상태를 만들어 보고 넣은 검사다.
+   */
+  ["곡선 밖 키", { endpoint: "https://fcm.googleapis.com/x", keys: { p256dh: "BEl6" + "A".repeat(83), auth: "YWJjZGVmZ2hpamtsbW5v" } }],
+] as const) {
+  const r = await saveSubscription(FAKE_G, bad);
+  check(`  ${label} 를 막는다`, r.ok === false, "화면이 보낸 값을 믿지 않는다");
+}
+}
+
+/**
+ * 🔴 **서비스 워커가 fetch 를 가로채지 않는다.** 이 앱은 잔액·미션 상태처럼
+ *    낡으면 안 되는 숫자를 보여준다 — 워커가 캐시를 돌려주면 부모와 아이가
+ *    다른 잔액을 본다 (D21 과 같은 사고).
+ */
+const sw = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
+check("🔴 서비스 워커가 fetch 를 가로채지 않는다", !/addEventListener\(\s*["']fetch["']/.test(sw),
+  "캐시를 돌려주면 부모와 아이가 다른 잔액을 본다");
+check("  push 와 notificationclick 만 듣는다",
+  (sw.match(/self\.addEventListener\(\s*"(\w+)"/g) ?? []).length === 4,
+  "install·activate·push·notificationclick 넷이다");
+
+/**
+ * 🔴 **비밀 키가 화면으로 내려가지 않는다.** `NEXT_PUBLIC_` 접두가 붙은 것만
+ *    브라우저로 간다 — 비밀 키에 그 접두가 붙으면 **누구나 우리 이름으로 푸시를 보낸다.**
+ */
+check("🔴 비밀 키가 브라우저로 안 간다",
+  !/NEXT_PUBLIC_VAPID_PRIVATE/.test(push + src("app/parent/mypage/page.tsx")),
+  "붙으면 누구나 우리 이름으로 푸시를 보낼 수 있다");
+check("  화면은 공개 키만 받는다", /publicKey/.test(src("components/parent/PushOptIn.tsx")) &&
+  !/VAPID_PRIVATE_KEY/.test(src("components/parent/PushOptIn.tsx")));
+
+/** 🔴 구독 등록은 세션에서 보호자를 꺼낸다 — 인자로 받으면 남의 집 알림을 받는다 */
+const pushAction = src("app/actions/push.ts");
+check("🔴 구독 등록이 세션에서 보호자를 꺼낸다",
+  /requireGuardian\(\)/.test(pushAction) && !/guardianId: string/.test(pushAction),
+  "인자로 받으면 아무나 남의 보호자 id 에 자기 기기를 붙인다");
+
+asyncChecks()
+  .catch((e) => { console.error(e); failed += 1; })
+  .finally(() => {
+    console.log(failed === 0 ? "\n전건 통과" : `\n실패 ${failed}건`);
+    process.exit(failed === 0 ? 0 : 1);
+  });

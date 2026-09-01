@@ -238,8 +238,19 @@ export async function withdrawAccount(guardianId: string): Promise<{ ok: boolean
     prisma.wishlist.deleteMany({ where: byChild }),
     prisma.allowanceEntry.deleteMany({ where: byChild }),
     prisma.mission.deleteMany({ where: { guardianId } }),
+    /**
+     * 🔴 **알림도 지운다** (어긋남 대장 D58). D51 에서 표를 만들고 **파기 목록에 안 넣었다.**
+     *    제목·본문에 미션 이름이 그대로 들어 있어서 남으면 아이 기록이 남는다.
+     *    `child_id` 가 없고 `guardian_id` 로만 걸려 있어 아이 단위 정리에서 빠졌다.
+     */
+    prisma.notification.deleteMany({ where: { guardianId } }),
 
     // identity
+    /**
+     * 🔴 **푸시 구독도 지운다** (D56 · D58). 안 지우면 브라우저 기기 주소가 남는다.
+     *    보낼 알림이 없어져도 **기기를 가리키는 값 자체가 개인정보**다.
+     */
+    prisma.pushSubscription.deleteMany({ where: { guardianId } }),
     prisma.childInvite.deleteMany({ where: { guardianId } }),
     prisma.deviceSession.deleteMany({ where: { guardianId } }),
     prisma.childAccount.deleteMany({ where: { guardianId } }),

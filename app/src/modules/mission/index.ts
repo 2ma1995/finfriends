@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { sendToGuardian } from "@/lib/push";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
 import { findLesson } from "@/contracts/lessons";
@@ -733,6 +734,20 @@ export async function autoCompleteStaleMissions(
  * 🔴 **같은 일로 두 번 알리지 않는다.** 화면을 열 때마다 판정하므로
  *    막지 않으면 알림이 쌓인다. `(guardianId, kind, missionId)` unique 가 막는다.
  */
+/**
+ * 알림 한 줄 + 폰으로 밀어 보내기 — 어긋남 대장 D51 · D56.
+ *
+ * 🔴 **여기가 유일한 알림 생성 지점이다.** 세 종류(`MISSION_WAITING_NEW` ·
+ *    `MISSION_WAITING` · `MISSION_AUTO_DONE`)가 모두 이 함수를 거치므로
+ *    푸시도 여기 한 곳에만 붙인다. 각 호출부에 흩으면 새 알림을 추가할 때 빠뜨린다.
+ *
+ * 🔴 **표에 줄이 남는 것이 「알렸다」의 정의다.** 푸시는 그것을 폰에 띄우는 수단이다 —
+ *    실패해도 던지지 않는다. 반대로 하면 푸시 서버가 잠깐 죽었을 때
+ *    미션 승인 흐름 전체가 멈춘다.
+ *
+ * 🔴 **중복 알림에는 푸시도 안 보낸다.** `P2002` 로 잡히는 경우는 이미 알린 것이다.
+ *    그때 푸시를 보내면 부모 폰에 같은 알림이 두 번 뜬다.
+ */
 async function notifyOnce(
   guardianId: string, kind: string, missionId: string | null, title: string, body: string,
 ) {
@@ -741,6 +756,25 @@ async function notifyOnce(
   } catch (e) {
     // 이미 알린 것 — 오류가 아니다
     if ((e as { code?: string }).code !== "P2002") throw e;
+    return;
+  }
+
+  /**
+   * 🔴 **본문에 아이 이름·금액을 넣지 않는다.** 푸시는 잠금화면에 뜬다 —
+   *    폰을 든 사람은 누구나 읽는다. 미션 제목까지가 한계다.
+   *
+   * 🔴 tag 를 미션 단위로 묶는다. 한 미션에 리마인드가 여러 번 가도
+   *    잠금화면에 한 줄만 남는다 — 쌓이면 부모가 알림을 아예 끈다.
+   */
+  try {
+    await sendToGuardian(guardianId, {
+      title,
+      body,
+      url: "/parent/alerts",
+      tag: missionId ? `mission:${missionId}` : `kind:${kind}`,
+    });
+  } catch {
+    // 알림함에는 이미 남았다. 푸시 실패가 흐름을 멈추게 하지 않는다
   }
 }
 
