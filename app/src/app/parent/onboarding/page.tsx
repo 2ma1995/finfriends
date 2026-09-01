@@ -3,14 +3,20 @@ import { redirect } from "next/navigation";
 import { Screen } from "@/components/shared/Screen";
 import { readOnboardingProgress } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { buildSteps, readyForChild, reassurance, readyNotice } from "./onboarding.fixture";
+import { allDoneNotice, buildSteps, plannedNotice, readyForChild, reassurance, readyNotice } from "./onboarding.fixture";
 
 // CON-003 — 보호자 온보딩 6단계 (4단계 자녀 초대는 SRS 다이어그램 A의 P4 · 원장 T17)
 export const metadata = { title: "시작하기 · 핀프렌즈" };
 
-export default async function ParentOnboardingPage() {
+export default async function ParentOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ planned?: string }>;
+}) {
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
+
+  const sp = await searchParams;
 
   // 🔴 단계 상태를 화면이 정하지 않는다. 하드코딩하면 화면은 「완료」인데 DB 는 비어 있게 된다
   const progress = await readOnboardingProgress(guardian.guardianId);
@@ -18,9 +24,18 @@ export default async function ParentOnboardingPage() {
   const done = steps.filter((s) => s.state === "done").length;
   const current = steps.find((s) => s.state === "current");
   const ready = readyForChild(steps);
+  // 🔴 여섯 단계가 다 끝났으면 **다음 로그인부터 나무로 간다** — 그 사실을 여기서 말한다 (D43)
+  const allDone = done === steps.length;
 
   return (
     <Screen role="부모 화면" title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/parent/tree", label: "성장 나무" }}>
+      {/* 🔴 적었을 때만 말한다. 매번 띄우면 무시하게 된다 */}
+      {sp.planned ? (
+        <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-[0.84em] font-bold text-primary-d">
+          {plannedNotice}
+        </p>
+      ) : null}
+
       <ol className="grid gap-1.5">
         {steps.map((s) => (
           <li key={s.n}
@@ -69,7 +84,7 @@ export default async function ParentOnboardingPage() {
       ) : null}
 
       <p className="mt-2 text-center text-[0.76em] leading-relaxed text-ink-soft">
-        {ready ? readyNotice : reassurance}
+        {allDone ? allDoneNotice : ready ? readyNotice : reassurance}
       </p>
     </Screen>
   );
