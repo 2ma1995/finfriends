@@ -54,7 +54,7 @@ export default async function ChildPlanListPage({
       <Link href="/child/allowance"
             className="mb-2 flex min-h-touch items-center justify-center gap-1 rounded-card border border-line bg-sand px-3 text-center">
         <b className="text-[0.86em]">쓸 수 있는 용돈 {won(allowance)}</b>
-        <span className="text-[0.74em] text-ink-mute">· 기입장 보기 →</span>
+        <span className="text-[0.74em] text-ink-mute">· 내 통장 →</span>
       </Link>
 
       <Link href="/child/plan/new"

@@ -161,3 +161,53 @@ export async function reversedKeys(childId: string) {
   });
   return new Set(rows.map((r) => r.idempotencyKey.slice("adjust:".length)));
 }
+
+/**
+ * ── 아이 통장 ──────────────────────────────────────────
+ *
+ * 🔴 **아이도 자기 통장을 봐야 한다.** 보호자 화면(`/parent/bank`)에는 카드 상태와
+ *    이자가 있는데 아이 화면에는 없었다. 「불리기」에서 **이자를 배우는데 정작 자기
+ *    이자를 못 보면** 그 학습은 남의 이야기로 끝난다.
+ *
+ * 🔴 **결합 조회를 하지 않는다** (REQ-NF-009 · S3). 보호자 행은 `guardianId` 로 **따로**
+ *    읽어 애플리케이션 계층에서 합친다 — Prisma 관계를 타지 않는다 (ADR-T03).
+ */
+
+export type CardStage = "NONE" | "REQUESTED" | "VERIFIED" | "SHIPPING" | "ACTIVE";
+
+export type PassbookView = {
+  readonly balance: number;
+  /** 목표에 넣어 둔 돈 — 이자가 붙는 대상 */
+  readonly savedWon: number;
+  /** 🔴 보호자가 정한 이자율. 없으면 아직 안 정한 것이다 */
+  readonly interestPct: number | null;
+  /** 🔴 **아직 받은 게 아니다.** 지금 기준으로 「한 번 줄 때」 얼마인지만 보여준다 */
+  readonly interestWon: number;
+  readonly card: CardStage;
+  readonly history: readonly AllowanceEntryView[];
+};
+
+export async function getPassbook(
+  childId: string, guardianId: string,
+): Promise<PassbookView> {
+  const [balance, history, saved, guardian] = await Promise.all([
+    getBalance(childId),
+    getHistory(childId, 30),
+    prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } }),
+    // 🔴 조인이 아니라 별도 조회다. 두 스키마를 코드에서 합친다
+    prisma.guardianAccount.findUnique({
+      where: { id: guardianId },
+      select: { savingsInterestPct: true, mockCardStatus: true },
+    }),
+  ]);
+
+  const savedWon = saved._sum.savedAmount ?? 0;
+  const pct = guardian?.savingsInterestPct ?? null;
+
+  return {
+    balance, savedWon, interestPct: pct,
+    interestWon: pct === null ? 0 : Math.floor((savedWon * pct) / 100),
+    card: (guardian?.mockCardStatus as CardStage) ?? "NONE",
+    history,
+  };
+}
