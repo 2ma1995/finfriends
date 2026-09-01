@@ -6,8 +6,9 @@ import { getMissionBoard } from "@/modules/mission";
 import { hasPlanToday } from "@/modules/plan";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
-  claim, claimed, consentRequired, done, hint, needsLesson, noDevice, nudge, quizDone, quizToday,
-  parentMissions, readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
+  claim, claimed, consentRequired, done, hint, intro, missionDiff, missionNone,
+  needsLesson, noDevice, nudge, quizDone, quizToday,
+  readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
 } from "./practice.fixture";
 
 // 오늘의 실천 — 네 영역을 한 화면에. 🔴 「오늘 하나」가 실천을 만든다
@@ -48,6 +49,9 @@ export default async function ChildPracticePage({
           {claimed}
         </p>
       ) : null}
+      {/* 🔴 **미션과 실천이 아이 눈에 똑같다.** 들어오자마자 다르다고 말한다 */}
+      <p className="mb-2 text-[0.78em] leading-relaxed text-ink-mute">{intro}</p>
+
       {/* 🔴 네 영역을 **한 화면에 나란히** 둔다 — 무엇이 남았는지 한눈에 보여야 고른다 */}
       <ul className="grid grid-cols-2 gap-2">
         {cells.map((c) => {
@@ -109,11 +113,21 @@ export default async function ChildPracticePage({
                    쓰기 — 오늘 세운 계획이 없을 때
                    `transform` 만 쓰므로 옆 칸을 밀지 않는다 (`.ff-nudge`)
               */}
-              {c.topic === "EARN" && missionsLeft > 0 ? (
-                <Link href="/child/missions"
-                      className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-[0.78em] font-bold text-star-d">
-                  🎯 {nudge.earn.replace("{n}", String(missionsLeft))}
-                </Link>
+              {/* 🔴 **미션 입구는 여기 하나다.** 예전엔 화면 아래에도 같은 링크가 있어서
+                     🎯 버튼이 둘이었다 — 아이는 둘이 다른 곳인 줄 안다.
+                     남았으면 흔들고, 없으면 가만히 있지만 **자리는 늘 같다** */}
+              {c.topic === "EARN" ? (
+                missionsLeft > 0 ? (
+                  <Link href="/child/missions"
+                        className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-[0.78em] font-bold text-star-d">
+                    🎯 {nudge.earn.replace("{n}", String(missionsLeft))}
+                  </Link>
+                ) : (
+                  <Link href="/child/missions"
+                        className="mt-1.5 grid min-h-touch place-items-center rounded-card border border-line-2 bg-surface text-[0.74em] text-ink-soft">
+                    🎯 {missionNone}
+                  </Link>
+                )
               ) : c.topic === "SPEND" && !plannedToday ? (
                 <Link href="/child/plan/new"
                       className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-[0.78em] font-bold text-star-d">
@@ -132,13 +146,9 @@ export default async function ChildPracticePage({
         })}
       </ul>
 
-      {/* 🔴 부모가 만든 미션은 **금액이 걸려 있다.** 여기 실천과 다른 흐름이라 따로 보낸다 */}
-      <Link href="/child/missions"
-            className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card border border-line bg-surface text-[0.84em] font-bold text-primary-d">
-        🎯 {parentMissions}
-      </Link>
-
-      <p className="mt-2 text-center text-[0.78em] text-ink-mute">{hint}</p>
+      <p className="mt-3 text-center text-[0.78em] text-ink-mute">{hint}</p>
+      {/* 🔴 미션이 왜 다른지 — 아이에게 제일 큰 차이는 **돈이 붙는다**는 것이다 */}
+      <p className="mt-1 text-center text-[0.74em] text-primary-d">🎯 {missionDiff}</p>
     </Screen>
   );
 }

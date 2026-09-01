@@ -6,6 +6,12 @@
  * 아이는 둘이 다른 곳인 줄 안다. 미션·배우기·내 별·상점은 탭에 있다.
  */
 export const todo = [
+  /**
+   * 🔴 **홈에 미션 신호가 아예 없었다.** 아래 `badge()` 가 `/child/missions` 를
+   *    찾는데 이 목록에 없어서 **늘 null 이었다** — 죽은 코드였다는 뜻이고,
+   *    아이는 홈에서 「할 미션이 있다」를 알 길이 없었다.
+   */
+  { href: "/child/missions", emoji: "🎯", label: "부모님이 준 미션" },
   // 🔴 봉투를 접고 되돌아온 자리 (D41). 아이가 소비를 적는 길은 다시 계획 카드다
   { href: "/child/plan", emoji: "📝", label: "쓸 계획 적기" },
   { href: "/child/practice", emoji: "✋", label: "실천하기" },

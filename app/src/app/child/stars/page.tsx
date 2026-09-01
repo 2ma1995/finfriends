@@ -28,7 +28,7 @@ export default async function ChildStarsPage() {
 
       {wallet.entries.length === 0 ? (
         <div className="mt-3">
-          <Empty emoji="🌱" title="아직 별이 없어요" body="첫 실천 하나면 별이 생겨요" hint="미션을 하나 만들어 보세요" />
+          <Empty emoji="🌱" title="아직 별이 없어요" body="첫 실천 하나면 별이 생겨요" hint="배우고 「해봤어요」를 누르면 첫 별이 붙어요" />
         </div>
       ) : (
         <ul className="mt-3 grid gap-1.5">

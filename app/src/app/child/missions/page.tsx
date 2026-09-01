@@ -4,18 +4,24 @@ import { getMissionBoard } from "@/modules/mission";
 import type { MissionView } from "@/contracts/mission";
 import { markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
-  backfilledNotice, consentRequired, doneLabel, empty, noDevice, photoLabel, photoNotice,
-  rejectedPrefix, sections, undoLabel, waitingNotice,
+  backfilledNotice, consentRequired, doneLabel, empty, intro, noDevice, photoLabel,
+  photoNotice, rejectedPrefix, sections, undoLabel, waitingNotice,
 } from "./missions.fixture";
 
 // PRC-001 — 미션. 🔴 아이가 하는 일은 「했어요」 하나뿐이다. 승인은 보호자가 한다
 export const metadata = { title: "미션 · 핀프렌즈" };
 
 function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
+  /**
+   * 🔴 **지금 할 것이 가장 안 눈에 띄었다.** 기다림·완료·거절은 각각 색이 있는데
+   *    정작 **해야 할 것(`TODO`)만 무색**이었다 — 화면에서 제일 밋밋한 칸이
+   *    제일 급한 칸이었다는 뜻이다.
+   */
   const tone =
     m.bucket === "WAITING" ? "border-star bg-star-bg"
     : m.bucket === "REJECTED" ? "border-miss-line bg-miss-bg"
     : m.bucket === "DONE" ? "border-primary-l/50 bg-primary-bg"
+    : m.bucket === "TODO" ? "border-primary bg-surface shadow-[0_1px_0_var(--ff-primary-l)]"
     : "border-line bg-surface";
 
   return (
@@ -91,6 +97,9 @@ export default async function ChildMissionsPage() {
 
   return (
     <Screen role="아이 화면" title="미션">
+      {/* 🔴 **미션과 실천이 아이 눈에 똑같다.** 이 화면이 무엇인지 먼저 말한다 */}
+      <p className="mb-2 text-[0.78em] leading-relaxed text-ink-mute">{intro}</p>
+
       {nothing ? <Empty emoji="🎯" {...empty} /> : null}
 
       {board.todo.length > 0 ? (
