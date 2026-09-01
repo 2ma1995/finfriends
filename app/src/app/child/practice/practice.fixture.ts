@@ -83,8 +83,15 @@ export const nudge = {
 export const creditsLabel = "이번 달 실천 {n}번";
 export const creditsNone = "이번 달 실천 아직 없어요";
 
-/** 불리기 칸 — 저금이 곧 실천이다 (D25) */
+/**
+ * 불리기 칸 — 저금이 곧 실천이다 (`D25`).
+ *
+ * 🔴 **진행 중이면 「실천 중」이라고 말한다.** 다른 셋과 같은 말을 써야 한다 —
+ *    저금을 들고 있는데 「실천 아직 없어요」가 뜨면 아이는 **화면이 틀렸다**고 느낀다.
+ *    가입할 때 ⭐1 이 이미 나갔으므로 「별 받았어요」도 같이 말한다.
+ */
 export const savingsStage = {
   ASKED: "부모님이 보고 계세요",
-  GOING: "✓ 저금 실천 중",
+  GOING: "✓ 불리기 실천 중",
 };
+export const savingsStarred = "⭐ 별 받았어요";

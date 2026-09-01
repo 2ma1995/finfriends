@@ -10,7 +10,7 @@ import {
   done, hint, intro, lessonWaiting,
   missionDiff, missionNone, needsLesson, noDevice, nudge,
   practicedToday as practicedTodayLabel, quizDone, quizRule, quizToday,
-  readFirst, rejected, savingsCta, savingsNone, savingsStage, sub, title, waiting,
+  readFirst, rejected, savingsCta, savingsNone, savingsStage, savingsStarred, sub, title, waiting,
 } from "./practice.fixture";
 
 // 오늘의 실천 — 네 영역을 한 화면에. 🔴 「오늘 하나」가 실천을 만든다
@@ -58,8 +58,11 @@ export default async function ChildPracticePage({
       <ul className="grid grid-cols-2 gap-2">
         {cells.map((c) => {
           const slug = SLUG[c.topic];
+          /* 🔴 불리기는 `state` 를 안 쓴다(미션이 아니다). **저금이 돌면 완료색**이다 —
+                 다른 셋이 실천을 마쳤을 때와 같은 초록이어야 아이가 같은 것으로 읽는다 */
           const tone =
-            c.state === "WAITING" ? "border-star bg-star-bg"
+            c.savingsStage === "GOING" ? "border-primary-l/60 bg-primary-bg"
+            : c.state === "WAITING" ? "border-star bg-star-bg"
             : c.state === "DONE" ? "border-primary-l/60 bg-primary-bg"
             : c.state === "REJECTED" ? "border-miss-line bg-miss-bg"
             : "border-line bg-surface";
@@ -72,9 +75,13 @@ export default async function ChildPracticePage({
               </div>
               {/* 🔴 **네 칸이 같은 말을 한다.** 나무가 세는 값과 같은 값이다 —
                      미션이든 회고든 위시리스트든 저금이든, 쌓였으면 여기 보인다 */}
+              {/* 🔴 **저금이 돌고 있으면 「없어요」라고 말하지 않는다.** 가입할 때 ⭐1 이
+                     이미 나갔다 — 실천 기록이 없더라도 아이 눈엔 실천한 것이 맞다 */}
               <div className={`text-[0.62em] leading-none ${
-                c.credits > 0 ? "font-bold text-primary-d" : "text-ink-mute"}`}>
-                {c.credits > 0 ? creditsLabel.replace("{n}", String(c.credits)) : creditsNone}
+                c.credits > 0 || c.savingsStage === "GOING" ? "font-bold text-primary-d" : "text-ink-mute"}`}>
+                {c.credits > 0 ? creditsLabel.replace("{n}", String(c.credits))
+                 : c.savingsStage === "GOING" ? savingsStarred
+                 : creditsNone}
               </div>
 
               {/* 🔴 안 배웠으면 실천할 것이 없다. 배우러 보낸다 */}
@@ -91,7 +98,7 @@ export default async function ChildPracticePage({
                 <>
                   {/* 🔴 다른 셋처럼 **어디까지 왔는지** 먼저 말한다 */}
                   {c.savingsStage === "GOING" || c.savingsStage === "ASKED" ? (
-                    <p className={`mt-1.5 text-[0.76em] font-bold ${
+                    <p className={`mt-1.5 text-[0.78em] font-bold ${
                       c.savingsStage === "GOING" ? "text-primary-d" : "text-star-d"}`}>
                       {savingsStage[c.savingsStage]}
                     </p>
