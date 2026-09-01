@@ -557,6 +557,10 @@ enum AllowanceCode {
   PLAN_SPEND
   /// 보호자가 잘못 적은 것을 고쳤다 (±)
   ADJUST
+  /// 우리 집 적금으로 묶었다 (−)
+  SAVINGS_LOCK
+  /// 적금이 끝나 돌아왔다 — 원금(+이자) (+)
+  SAVINGS_RELEASE
 
   @@schema("activity")
 }
@@ -611,5 +615,49 @@ model CardTransaction {
 
   @@index([childId, occurredAt(sort: Desc)])
   @@map("card_transactions")
+  @@schema("activity")
+}
+
+/// 우리 집 적금의 상태 — 어긋남 대장 D25.
+enum SavingsState {
+  /// 아이가 신청했고 보호자를 기다린다
+  REQUESTED
+  /// 보호자가 받아들였다. 돈이 묶인다
+  ACTIVE
+  /// 만기까지 지켰다 — 원금 + 이자
+  DONE
+  /// 🔴 만기 전에 깼다. 원금만 돌아오고 **이자는 없다** — 자료가 가르치는 그대로다
+  BROKEN
+  REJECTED
+
+  @@schema("activity")
+}
+
+/// 우리 집 적금 — 어긋남 대장 D25.
+///
+/// 🔴 **외부 금융기관 가입을 중개하지 않는다** (P-20 · REQ-NF-012).
+///    외부 링크도 API 호출도 없다. **부모와 아이의 약속**이고 이자는 부모가 자기 돈으로 준다.
+/// 🔴 이게 「불리기」 실천을 여는 유일한 길이다 — SAVINGS_JOINED(⭐1)·SAVINGS_DONE(⭐10)이
+///    정의만 돼 있고 쓰는 곳이 없었다.
+model SavingsPlan {
+  id           String       @id @default(uuid()) @db.Uuid
+  childId      String       @map("child_id") @db.Uuid
+  guardianId   String       @map("guardian_id") @db.Uuid
+  /// 왜 모으는지 — 목표가 없으면 금방 깬다
+  goal         String
+  amount       Int
+  months       Int
+  /// 🔴 **신청 시점 이자율을 박아 둔다.** 약속한 뒤에 조건이 바뀌면 그건 약속이 아니다
+  interestPct  Int          @default(0) @map("interest_pct")
+  state        SavingsState @default(REQUESTED)
+  requestedAt  DateTime     @default(now()) @map("requested_at") @db.Timestamptz(6)
+  startedAt    DateTime?    @map("started_at") @db.Timestamptz(6)
+  maturesAt    DateTime?    @map("matures_at") @db.Timestamptz(6)
+  closedAt     DateTime?    @map("closed_at") @db.Timestamptz(6)
+  rejectReason String?      @map("reject_reason")
+
+  @@index([childId, state])
+  @@index([guardianId, state])
+  @@map("savings_plans")
   @@schema("activity")
 }

@@ -32,6 +32,47 @@ export const interest = {
   zero: "목표에 돈을 넣으면 이자가 붙어요.",
 };
 
+/**
+ * 우리 집 적금 — D25.
+ * 🔴 **은행 적금이 아니다.** 부모님과 하는 약속이고 이자도 부모님이 준다.
+ *    아이가 실제 금융상품으로 오해하면 안 된다 (P-20 가입 중개 금지).
+ */
+export const savings = {
+  title: "우리 집 적금",
+  what: "정한 기간 동안 안 쓰고 두면 부모님이 이자를 주세요.",
+  notBank: "은행 적금이 아니라 부모님과 하는 약속이에요.",
+  noRate: "부모님이 이자를 정하면 신청할 수 있어요.",
+  goalLabel: "무엇을 위해",
+  goalPlaceholder: "예: 자전거",
+  amountLabel: "얼마를",
+  monthsLabel: "몇 달 동안",
+  ask: "부모님께 신청하기",
+  waiting: "부모님이 보고 계세요",
+  waitingBody: "받아 주시면 그때부터 돈이 묶여요",
+  active: (days: number) => `${days}일 더 지나면 끝나요`,
+  matured: "다 됐어요! 부모님이 확인해 주실 거예요",
+  willGet: (won: number) => `끝나면 이자 ${won.toLocaleString("ko-KR")}원을 받아요`,
+  noInterest: "이번엔 이자가 없어요",
+  breakLabel: "지금 깨기",
+  /** 🔴 누르기 전에 대가를 말한다. 자료가 가르치는 그대로다 */
+  breakWarn: "지금 깨면 이자를 못 받아요. 넣은 돈만 돌아와요.",
+  brokeNotice: "적금을 깼어요. 넣은 돈이 돌아왔어요.",
+  askedNotice: "신청했어요. 부모님이 보시면 시작돼요.",
+  doneBadge: "끝까지 지켰어요 ⭐",
+  brokenBadge: "중간에 깼어요",
+  rejectedBadge: "이번엔 안 됐어요",
+  lockedTitle: "적금에 넣은 돈",
+};
+
+export const errors: Record<string, string> = {
+  ALREADY_OPEN: "이미 하고 있는 적금이 있어요. 하나씩 해요.",
+  BAD_GOAL: "무엇을 위해 모으는지 적어 주세요.",
+  BAD_AMOUNT: "1,000원부터 넣을 수 있어요.",
+  BAD_MONTHS: "1달부터 12달까지 정할 수 있어요.",
+  NOT_ENOUGH: "쓸 수 있는 돈보다 많이 넣을 수 없어요.",
+  NOT_FOUND: "찾을 수 없어요.",
+};
+
 export const historyTitle = "들어오고 나간 돈";
 export const empty = {
   title: "아직 기록이 없어요",

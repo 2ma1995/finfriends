@@ -1,16 +1,23 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook, MOVED_CODES } from "@/modules/allowance";
+import { getClosed, getOpen, MAX_MONTHS, MIN_AMOUNT } from "@/modules/savings";
+import { breakSavingsAction, requestSavingsAction } from "@/app/actions/savings";
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel, interest,
-  movedLabel, noDevice, notice, outLabel, savedTitle, setAsideNotice, title, totalTitle,
+  errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
+  setAsideNotice, title, totalTitle,
 } from "./allowance.fixture";
 
 // D18 · D20 — 아이 통장. 🔴 두 자료가 가장 강조하는 실천이 용돈기입장 쓰기다
 export const metadata = { title: "내 통장 · 핀프렌즈" };
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-export default async function ChildPassbookPage() {
+export default async function ChildPassbookPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ asked?: string; broke?: string; error?: string }>;
+}) {
   const access = await currentChild();
   if (!access.ok) {
     return (
@@ -20,7 +27,12 @@ export default async function ChildPassbookPage() {
     );
   }
 
-  const p = await getPassbook(access.childId, access.guardianId);
+  const sp = await searchParams;
+  const [p, open, closed] = await Promise.all([
+    getPassbook(access.childId, access.guardianId),
+    getOpen(access.childId),
+    getClosed(access.childId, 3),
+  ]);
   const stage = card[p.card];
 
   return (
@@ -32,15 +44,21 @@ export default async function ChildPassbookPage() {
         <b className="mt-0.5 block text-title tabular-nums">{won(p.total)}</b>
       </div>
 
-      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-        <div className="rounded-card border border-line bg-surface px-3 py-2 text-center">
-          <div className="text-[0.7em] text-ink-mute">{balanceTitle}</div>
-          <b className="mt-0.5 block text-[1.05em] tabular-nums">{won(p.balance)}</b>
+      <div className={`mt-1.5 grid gap-1.5 ${p.locked > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+        <div className="rounded-card border border-line bg-surface px-2 py-2 text-center">
+          <div className="text-[0.68em] text-ink-mute">{balanceTitle}</div>
+          <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.balance)}</b>
         </div>
-        <div className="rounded-card border border-line bg-sand px-3 py-2 text-center">
-          <div className="text-[0.7em] text-ink-mute">{savedTitle}</div>
-          <b className="mt-0.5 block text-[1.05em] tabular-nums">{won(p.savedWon)}</b>
+        <div className="rounded-card border border-line bg-sand px-2 py-2 text-center">
+          <div className="text-[0.68em] text-ink-mute">{savedTitle}</div>
+          <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.savedWon)}</b>
         </div>
+        {p.locked > 0 ? (
+          <div className="rounded-card border border-primary-l bg-primary-bg px-2 py-2 text-center">
+            <div className="text-[0.68em] text-ink-mute">{savings.lockedTitle}</div>
+            <b className="mt-0.5 block text-[0.98em] tabular-nums">{won(p.locked)}</b>
+          </div>
+        ) : null}
       </div>
       {p.savedWon > 0 ? (
         <p className="mt-1 text-center text-[0.74em] text-ink-mute">{setAsideNotice}</p>
@@ -72,6 +90,107 @@ export default async function ChildPassbookPage() {
           )}
         </Card>
       </div>
+
+      {/* 🔴 「불리기」 실천을 여는 유일한 길 — SAVINGS_JOINED · SAVINGS_DONE (D25).
+          은행 적금이 아니라 부모님과 하는 약속이다 (P-20 가입 중개 금지) */}
+      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{savings.title}</h2>
+      {sp.error ? (
+        <div className="mb-1.5"><Card tone="miss">
+          <p className="text-[0.86em]">{errors[sp.error] ?? errors.NOT_FOUND}</p>
+        </Card></div>
+      ) : null}
+      {sp.asked || sp.broke ? (
+        <div className="mb-1.5"><Card tone="grow">
+          <p className="text-[0.86em]">{sp.asked ? savings.askedNotice : savings.brokeNotice}</p>
+        </Card></div>
+      ) : null}
+
+      {open === null ? (
+        <div className="rounded-card border border-line bg-surface p-3">
+          <p className="text-[0.86em] leading-relaxed">{savings.what}</p>
+          <p className="mt-1 text-[0.74em] text-ink-mute">{savings.notBank}</p>
+
+          {p.interestPct === null ? (
+            <p className="mt-2 text-[0.82em] text-ink-mute">{savings.noRate}</p>
+          ) : (
+            <form action={requestSavingsAction} className="mt-2 grid gap-2">
+              <label className="grid gap-1">
+                <span className="text-[0.72em] text-ink-mute">{savings.goalLabel}</span>
+                <input name="goal" required maxLength={30} placeholder={savings.goalPlaceholder}
+                       className="min-h-touch rounded-card border border-line bg-surface px-3 text-[0.9em]" />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1">
+                  <span className="text-[0.72em] text-ink-mute">{savings.amountLabel}</span>
+                  <input name="amount" type="number" inputMode="numeric" step={1}
+                         min={MIN_AMOUNT} max={Math.max(MIN_AMOUNT, p.balance)} required
+                         placeholder={String(MIN_AMOUNT)}
+                         className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[0.72em] text-ink-mute">{savings.monthsLabel}</span>
+                  <input name="months" type="number" inputMode="numeric" step={1}
+                         min={1} max={MAX_MONTHS} defaultValue={3} required
+                         className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
+                </label>
+              </div>
+              <button disabled={p.balance < MIN_AMOUNT}
+                      className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white disabled:opacity-40">
+                {savings.ask}
+              </button>
+            </form>
+          )}
+        </div>
+      ) : (
+        <div className={`rounded-card border p-3 ${
+          open.state === "REQUESTED" ? "border-star bg-star-bg" : "border-primary-l bg-primary-bg"}`}>
+          <div className="flex items-baseline justify-between gap-2">
+            <b className="text-[0.9em]">{open.goal}</b>
+            <b className="shrink-0 tabular-nums text-[0.9em]">{won(open.amount)}</b>
+          </div>
+          <p className="mt-0.5 text-[0.74em] text-ink-mute">{open.months}달 · 이자 {open.interestPct}%</p>
+
+          {open.state === "REQUESTED" ? (
+            <p className="mt-1.5 text-[0.84em] text-ink-soft">
+              {savings.waiting} · {savings.waitingBody}
+            </p>
+          ) : (
+            <>
+              <p className="mt-1.5 text-[0.86em] font-bold text-primary-d">
+                {open.matured ? savings.matured : savings.active(open.daysLeft ?? 0)}
+              </p>
+              <p className="mt-0.5 text-[0.82em] text-star-d">
+                {open.interestWon > 0 ? savings.willGet(open.interestWon) : savings.noInterest}
+              </p>
+              {/* 🔴 깨는 것을 막지 않는다. 아이 돈이다. 대신 대가를 먼저 말한다 */}
+              {!open.matured ? (
+                <form action={breakSavingsAction} className="mt-2">
+                  <input type="hidden" name="planId" value={open.id} />
+                  <p className="mb-1 text-[0.74em] text-miss">{savings.breakWarn}</p>
+                  <button className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-[0.8em] text-ink-soft">
+                    {savings.breakLabel}
+                  </button>
+                </form>
+              ) : null}
+            </>
+          )}
+        </div>
+      )}
+
+      {closed.length > 0 ? (
+        <ul className="mt-1.5 grid gap-1">
+          {closed.map((c) => (
+            <li key={c.id} className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
+              <span className="flex-1 text-[0.82em]">{c.goal}</span>
+              <span className="text-[0.72em] text-ink-mute">
+                {c.state === "DONE" ? savings.doneBadge
+                 : c.state === "BROKEN" ? savings.brokenBadge : savings.rejectedBadge}
+              </span>
+              <b className="shrink-0 tabular-nums text-[0.8em]">{won(c.amount)}</b>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{historyTitle}</h2>
       {p.history.length === 0 ? <Empty emoji="📒" {...empty} /> : (

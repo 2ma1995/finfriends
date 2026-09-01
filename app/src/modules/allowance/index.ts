@@ -39,7 +39,7 @@ function whenLabel(at: Date, now = new Date()) {
 }
 
 /** 🔴 목표로 옮긴 것은 **쓴 게 아니다.** 같은 「나감」으로 보이면 아이가 없어진 줄 안다 */
-export const MOVED_CODES = ["WISH_SET_ASIDE", "WISH_RELEASE"];
+export const MOVED_CODES = ["WISH_SET_ASIDE", "WISH_RELEASE", "SAVINGS_LOCK", "SAVINGS_RELEASE"];
 
 const LABEL: Record<string, string> = {
   TOPUP: "용돈을 받았어요",
@@ -47,6 +47,8 @@ const LABEL: Record<string, string> = {
   WISH_RELEASE: "목표에서 되돌렸어요",
   PLAN_SPEND: "썼어요",
   ADJUST: "고쳤어요",
+  SAVINGS_LOCK: "적금에 넣었어요",
+  SAVINGS_RELEASE: "적금이 끝났어요",
 };
 
 export async function getHistory(childId: string, take = 20): Promise<AllowanceEntryView[]> {
@@ -71,7 +73,9 @@ export type MoveResult =
   | { ok: true; balance: number; duplicated: boolean }
   | { ok: false; reason: "NOT_ENOUGH" | "BAD_AMOUNT" };
 
-type Code = "TOPUP" | "WISH_SET_ASIDE" | "WISH_RELEASE" | "PLAN_SPEND" | "ADJUST";
+type Code =
+  | "TOPUP" | "WISH_SET_ASIDE" | "WISH_RELEASE" | "PLAN_SPEND" | "ADJUST"
+  | "SAVINGS_LOCK" | "SAVINGS_RELEASE";
 
 /**
  * 장부에 한 줄 적는다.
@@ -192,23 +196,29 @@ export type WalletTotals = {
   readonly free: number;
   /** 목표에 떼어 둔 돈 — 여전히 아이 돈이다 */
   readonly setAside: number;
+  /** 🔴 적금으로 묶인 돈 — 이것도 아이 돈이다. 만기까지 못 꺼낼 뿐이다 */
+  readonly locked: number;
   /** 아이가 가진 돈 전체 */
   readonly total: number;
 };
 
 export async function getWalletTotals(childId: string): Promise<WalletTotals> {
-  const [free, saved] = await Promise.all([
+  const [free, saved, savings] = await Promise.all([
     getBalance(childId),
     prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } }),
+    prisma.savingsPlan.aggregate({ where: { childId, state: "ACTIVE" }, _sum: { amount: true } }),
   ]);
   const setAside = saved._sum.savedAmount ?? 0;
-  return { free, setAside, total: free + setAside };
+  const locked = savings._sum.amount ?? 0;
+  return { free, setAside, locked, total: free + setAside + locked };
 }
 
 export type PassbookView = {
   /** 지금 바로 쓸 수 있는 돈 */
   readonly balance: number;
-  /** 🔴 가진 돈 전체 = 쓸 수 있는 돈 + 목표에 떼어 둔 돈 */
+  /** 적금으로 묶인 돈 */
+  readonly locked: number;
+  /** 🔴 가진 돈 전체 = 쓸 수 있는 돈 + 목표에 떼어 둔 돈 + 적금 */
   readonly total: number;
   /** 목표에 넣어 둔 돈 — 이자가 붙는 대상 */
   readonly savedWon: number;
@@ -223,10 +233,9 @@ export type PassbookView = {
 export async function getPassbook(
   childId: string, guardianId: string,
 ): Promise<PassbookView> {
-  const [balance, history, saved, guardian] = await Promise.all([
-    getBalance(childId),
+  const [totals, history, guardian] = await Promise.all([
+    getWalletTotals(childId),
     getHistory(childId, 30),
-    prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } }),
     // 🔴 조인이 아니라 별도 조회다. 두 스키마를 코드에서 합친다
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
@@ -234,11 +243,11 @@ export async function getPassbook(
     }),
   ]);
 
-  const savedWon = saved._sum.savedAmount ?? 0;
   const pct = guardian?.savingsInterestPct ?? null;
+  const savedWon = totals.setAside;
 
   return {
-    balance, savedWon, total: balance + savedWon, interestPct: pct,
+    balance: totals.free, savedWon, locked: totals.locked, total: totals.total, interestPct: pct,
     interestWon: pct === null ? 0 : Math.floor((savedWon * pct) / 100),
     card: (guardian?.mockCardStatus as CardStage) ?? "NONE",
     history,
