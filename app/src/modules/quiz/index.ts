@@ -159,6 +159,31 @@ const BANK: Record<string, { topic: Topic; questions: QuizQuestion[] }> = {
 };
 
 export const QUIZ_TOPICS = Object.keys(BANK);
+
+/**
+ * 오늘의 문제 번호 — 🔴 **하루에 한 문제**다.
+ *
+ * 🔴 날짜에서 계산한다. DB 에 「오늘 뭐 냈지」를 적어 두면 자정 경계·기기 시간대마다
+ *    어긋난다. 같은 날이면 누가 언제 열어도 같은 문제가 나와야 한다.
+ * 🔴 영역마다 다른 문제가 나오게 슬러그를 섞는다 — 안 그러면 네 영역이 늘 같은 번호다.
+ */
+export function todayIndex(slug: string, now = new Date()) {
+  const total = quizTotal(slug);
+  if (total <= 0) return 1;
+  const day = Math.floor(now.getTime() / 864e5);
+  const salt = [...slug].reduce((n, ch) => n + ch.charCodeAt(0), 0);
+  return ((day + salt) % total) + 1;
+}
+
+/** 오늘 문제를 이미 맞혔나 — 별 원장이 답을 갖고 있다 (같은 멱등키) */
+export async function answeredToday(childId: string, slug: string, now = new Date()) {
+  const n = todayIndex(slug, now);
+  const row = await prisma.starLedgerEntry.findUnique({
+    where: { idempotencyKey: `quiz:${childId}:${slug}:${n}` },
+    select: { id: true },
+  });
+  return row !== null;
+}
 export const quizTotal = (slug: string) => BANK[slug]?.questions.length ?? 0;
 export const quizTopic = (slug: string) => BANK[slug]?.topic ?? "EARN";
 export const quizTitle = (slug: string) => `${TOPIC_LABEL[quizTopic(slug)]} 퀴즈`;

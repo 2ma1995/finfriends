@@ -32,6 +32,7 @@ const ROUTES = {
       { href: "/child/home",           name: "내 방",        task: "UX-003" },
       { href: "/child/missions",       name: "미션",         task: "PRC-001" },
       { href: "/child/learn",          name: "배우기",       task: "LRN-001" },
+      { href: "/child/practice",       name: "실천하기",     task: "PRC-001" },
       { href: "/child/quiz/spend",     name: "퀴즈",         task: "LRN-001" },
       { href: "/child/plan",           name: "계획 카드",     task: "PLN-002" },
       { href: "/child/allowance",      name: "내 통장",       task: "D18" },

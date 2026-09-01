@@ -11,6 +11,9 @@ export const continueLabel = "이어보기";
 export const doneLabel = "다 봤어요";
 export const readLabel = "읽었어요";
 export const quizLabel = "퀴즈 풀기";
+/** 🔴 실천은 한 화면에 모은다 — 영역마다 흩어 놓으면 아이가 네 군데를 돌아다녀야 한다 */
+export const practiceCta = "실천하기";
+export const practiceHint = "네 가지 실천을 한 화면에서 봐요";
 export const tryTitle = "오늘 해볼 것";
 /** 🔴 별은 지식이 아니라 **행동**에 붙는다. 퀴즈를 틀려도 이 길은 열려 있다 (D16) */
 export const practice = {

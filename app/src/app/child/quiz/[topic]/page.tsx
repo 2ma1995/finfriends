@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
-import { getQuiz, QUIZ_TOPICS, quizTitle } from "@/modules/quiz";
+import { answeredToday, getQuiz, QUIZ_TOPICS, quizTitle, todayIndex } from "@/modules/quiz";
 import { submitAnswer } from "@/app/actions/quiz";
 import {
-  backToTopic, consentRequired, correctLabel, doneLabel, explainTitle, nextLabel,
-  noDevice, starNotice, wrongLabel, wrongNotice, wrongPractice,
+  backToPractice, consentRequired, correctLabel, doneToday, explainTitle,
+  noDevice, starNotice, todayLabel, tomorrow, wrongLabel, wrongNotice, wrongPractice,
 } from "./quiz.fixture";
 
 // LRN-001 — 퀴즈. 🔴 맞히면 **별이 DB 에 남는다**
@@ -16,7 +16,7 @@ export default async function ChildQuizPage({
   params, searchParams,
 }: {
   params: Promise<{ topic: string }>;
-  searchParams: Promise<{ n?: string; r?: string; star?: string }>;
+  searchParams: Promise<{ r?: string; star?: string }>;
 }) {
   const access = await currentChild();
   const { topic } = await params;
@@ -29,18 +29,30 @@ export default async function ChildQuizPage({
   }
 
   const sp = await searchParams;
-  // 🔴 문항 번호와 총 수를 지어내지 않는다. 총 수는 문항 은행이 센다
-  const q = getQuiz(topic, Number(sp.n ?? 1));
+  /**
+   * 🔴 **하루에 한 문제다.** 번호를 URL 로 고르게 두면 하루에 네 문제를 다 풀 수 있다 —
+   *    「매일 조금씩」이 이 제품의 리듬인데 하루에 몰아 풀면 그 리듬이 사라진다.
+   *    번호는 **날짜에서 계산한다**.
+   */
+  const q = getQuiz(topic, todayIndex(topic));
   const answered = sp.r === "o" || sp.r === "x";
   const correct = sp.r === "o";
-  const last = q.index >= q.total;
+  const alreadyDone = !answered && (await answeredToday(access.childId, topic));
 
   return (
-    <Screen role="아이 화면" title={quizTitle(topic)} sub={`${q.index} / ${q.total}문제`}
-            back={{ href: `/child/learn/${topic}`, label: "목록" }}>
-      <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-line">
-        <div className="h-full rounded-full bg-primary-l" style={{ width: `${(q.index / q.total) * 100}%` }} />
-      </div>
+    <Screen role="아이 화면" title={quizTitle(topic)} sub={todayLabel}
+            back={{ href: "/child/practice", label: "실천하기" }}>
+      {/* 🔴 오늘 이미 맞혔으면 다시 풀 게 없다. 같은 문제를 또 내면 별이 안 붙어 아이가 혼란스럽다 */}
+      {alreadyDone ? (
+        <>
+          <Card tone="grow"><p className="text-[0.9em] leading-relaxed">{doneToday}</p></Card>
+          <Link href="/child/practice"
+                className="mt-2 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
+            {backToPractice}
+          </Link>
+        </>
+      ) : (
+      <>
 
       <Card><p className="text-[1em] font-bold leading-relaxed">{q.question}</p></Card>
 
@@ -78,18 +90,15 @@ export default async function ChildQuizPage({
             </Card>
           </div>
 
-          <Link href={last ? `/child/learn/${topic}` : `/child/quiz/${topic}?n=${q.index + 1}`}
-                className="mt-2 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
-            {last ? doneLabel : nextLabel}
+          {/* 🔴 「다음 문제」가 없다. 하루에 한 문제다 */}
+          <p className="mt-2 text-center text-[0.8em] text-ink-mute">{tomorrow}</p>
+          <Link href="/child/practice"
+                className="mt-1 block min-h-touch rounded-card bg-primary text-center text-[0.9em] font-bold leading-[44px] text-white">
+            {backToPractice}
           </Link>
-
-          {last ? (
-            <Link href="/child/learn"
-                  className="mt-2 block min-h-touch text-center text-[0.78em] leading-[44px] text-ink-mute underline underline-offset-2">
-              {backToTopic}
-            </Link>
-          ) : null}
         </>
+      )}
+      </>
       )}
     </Screen>
   );

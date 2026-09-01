@@ -11,9 +11,11 @@ export const wrongLabel = "다시 볼까요";
 export const wrongNotice = "괜찮아요. 별은 그대로예요.";
 export const wrongPractice = "배운 걸 해보면 별을 받을 수 있어요.";
 export const starNotice = "⭐ 1개를 받았어요";
-export const nextLabel = "다음 문제";
-export const doneLabel = "다 풀었어요";
-export const backToTopic = "배우기로 돌아가기";
+/** 🔴 하루에 한 문제다. 「다음 문제」를 두면 하루에 몰아 푼다 */
+export const todayLabel = "오늘의 문제";
+export const tomorrow = "내일 또 새 문제가 나와요.";
+export const doneToday = "오늘 문제는 다 풀었어요. 내일 또 만나요!";
+export const backToPractice = "실천하러 가기";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
 export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };
