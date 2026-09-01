@@ -107,7 +107,7 @@ export function PushOptIn({ publicKey, deviceCount }: { publicKey: string; devic
       {state === "on" ? (
         <button
           type="button" onClick={turnOff} disabled={busy}
-          className="min-h-touch w-full rounded-card border border-line text-[0.82em] text-ink-soft disabled:opacity-50"
+          className="min-h-touch w-full rounded-card border border-line-2 bg-surface text-sub text-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
           이 기기 알림 끄기
         </button>
@@ -115,13 +115,18 @@ export function PushOptIn({ publicKey, deviceCount }: { publicKey: string; devic
         <button
           type="button" onClick={turnOn}
           disabled={busy || state === "unsupported" || state === "blocked"}
-          className="min-h-touch w-full rounded-card bg-primary text-[0.86em] text-white disabled:bg-line-2 disabled:text-ink-mute"
+          /**
+           * 🔴 **못 누르는 것은 못 누르게 보여야 한다.** `bg-line-2` 로 회색이 되고
+           *    `cursor-not-allowed` 로 커서까지 바뀐다 — 색만 바꾸면 데스크톱에서
+           *    여전히 눌리는 것처럼 보여서 부모가 계속 누른다.
+           */
+          className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white disabled:cursor-not-allowed disabled:bg-line-2 disabled:font-normal disabled:text-ink-mute"
         >
           {LABEL[state]}
         </button>
       )}
 
-      <p className="mt-1.5 text-[0.74em] leading-relaxed text-ink-mute">
+      <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">
         {state === "on"
           ? `아이가 미션을 끝내면 이 기기 잠금화면에 뜹니다.${deviceCount > 1 ? ` 지금 ${deviceCount}개 기기가 받고 있어요.` : ""}`
           : state === "blocked"
@@ -130,7 +135,7 @@ export function PushOptIn({ publicKey, deviceCount }: { publicKey: string; devic
               ? "아이폰은 이 화면을 홈 화면에 추가한 뒤에 켤 수 있어요."
               : "아이가 미션을 끝냈을 때와 24시간 동안 확인하지 않았을 때만 보냅니다. 광고는 보내지 않아요."}
       </p>
-      {note ? <p className="mt-1 text-[0.74em] text-miss">{note}</p> : null}
+      {note ? <p className="mt-1 text-cap text-miss">{note}</p> : null}
     </div>
   );
 }

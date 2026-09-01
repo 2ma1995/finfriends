@@ -265,10 +265,12 @@ export default async function ParentMyPage({
 
       {/* ── 폰 알림 ── D56 */}
       <section className="mt-4">
-        <h2 className="mb-1.5 text-[0.74em] tracking-[0.06em] text-ink-mute">폰 알림</h2>
-        <Card>
-          <PushOptIn publicKey={vapidPublicKey} deviceCount={pushDevices} />
-        </Card>
+        <h2 className="text-cap tracking-[0.06em] text-ink-mute">폰 알림</h2>
+        <div className="mt-1.5">
+          <Card>
+            <PushOptIn publicKey={vapidPublicKey} deviceCount={pushDevices} />
+          </Card>
+        </div>
       </section>
 
       {/* ── 받지 않는 것 ── */}
