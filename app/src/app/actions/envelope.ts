@@ -48,7 +48,7 @@ export async function settleAction(formData: FormData) {
   if (!t) back("error=NO_ENVELOPE");
 
   const r = await settlePayment(childId, {
-    txnId: t!.id, merchant: t!.merchant, category: t!.category,
+    txnId: t!.id, merchant: t!.merchant, category: t!.category, mcc: t!.mcc,
     amount: t!.amount, occurredAt: new Date(),
   });
   // 거래를 다 쓴 것으로 표시한다 — 같은 거래가 다시 목록에 뜨지 않게

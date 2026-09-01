@@ -3,6 +3,7 @@ import { prisma } from "@/db";
 import { grantStar } from "@/modules/star-ledger";
 import { getBalance } from "@/modules/allowance";
 import { CATEGORIES, categoryOf } from "@/contracts/plan";
+import { categoryFromMcc } from "@/contracts/mcc";
 
 /** 우리가 아는 업종 — 🔴 실제 카드의 MCC 를 이 넷으로 접는 표는 아직 없다 (`DAT-004`) */
 const KNOWN: string[] = CATEGORIES.map((c) => c.code);
@@ -178,7 +179,13 @@ export type SettleResult =
  */
 export async function settlePayment(
   childId: string,
-  input: { txnId?: string; merchant: string; category: string; amount: number; occurredAt: Date },
+  input: {
+    txnId?: string; merchant: string; amount: number; occurredAt: Date;
+    /** 🔴 실제 카드가 보내는 값. 있으면 **이게 우선**이다 */
+    mcc?: string | null;
+    /** MCC 를 모를 때만 쓰는 값 */
+    category: string;
+  },
 ): Promise<SettleResult> {
   await ensureEnvelopes(childId);
 
@@ -189,8 +196,15 @@ export async function settlePayment(
     if (dup) return { ok: false, reason: "ALREADY" };
   }
 
+  /**
+   * 🔴 **MCC 가 있으면 그것으로 접는다.** 포괄 코드(잡화·기타 소매)는 일부러 null 이 되어
+   *    미분류 봉투로 간다 — 틀린 봉투에서 빼면 아이가 「왜 여기서 빠졌지」를 묻는데
+   *    답할 수 없다. **틀린 분류보다 「모르겠어요」가 낫다.**
+   */
+  const category = categoryFromMcc(input.mcc) ?? input.category;
+
   const rows = await prisma.envelope.findMany({ where: { childId }, orderBy: { rank: "asc" } });
-  const matched = rows.find((e) => e.categories.includes(input.category));
+  const matched = rows.find((e) => e.categories.includes(category));
   const target = matched ?? rows.find((e) => e.isDefault) ?? rows[0];
   if (!target) return { ok: false, reason: "NO_ENVELOPE" };
 
@@ -208,7 +222,7 @@ export async function settlePayment(
   await prisma.envelopeSpend.create({
     data: {
       childId, envelopeId: target.id, txnId: input.txnId,
-      merchant: input.merchant, category: input.category, amount,
+      merchant: input.merchant, category, mcc: input.mcc ?? null, amount,
       snapAllocated: target.allocated, snapRemaining: remaining,
       within, overBy, unclassified: matched === undefined,
       occurredAt: input.occurredAt,
@@ -236,7 +250,7 @@ export async function recentSpends(childId: string, take = 10) {
   const rows = await prisma.envelopeSpend.findMany({
     where: { childId }, orderBy: { occurredAt: "desc" }, take,
     select: {
-      id: true, merchant: true, category: true, amount: true, within: true,
+      id: true, merchant: true, category: true, mcc: true, amount: true, within: true,
       overBy: true, unclassified: true, occurredAt: true, refundedAt: true,
       envelopeId: true,
     },

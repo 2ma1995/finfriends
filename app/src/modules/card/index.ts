@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { categoryOf } from "@/contracts/plan";
+import { categoryFromMcc, mccLabel } from "@/contracts/mcc";
 
 /**
  * 카드 거래 내역 — 어긋남 대장 D19.
@@ -19,6 +20,10 @@ export type CardTxnView = {
   readonly amount: number;
   readonly merchant: string;
   readonly category: string;
+  /** 🔴 가맹점 업종 코드. **실제 카드가 보내는 값**이다 */
+  readonly mcc: string | null;
+  /** 사람이 읽을 업종 이름 — 부모가 분류를 고칠 때 무엇인지 보여야 한다 */
+  readonly mccLabel: string | null;
   readonly icon: string;
   readonly categoryLabel: string;
   readonly whenLabel: string;
@@ -33,11 +38,14 @@ function whenLabel(at: Date, now = new Date()) {
 
 function toView(r: {
   id: string; amount: number; merchant: string; category: string;
-  occurredAt: Date; source: string;
+  mcc?: string | null; occurredAt: Date; source: string;
 }): CardTxnView {
-  const cat = categoryOf(r.category);
+  // 🔴 MCC 가 있으면 **그게 진짜 입력**이다. 접은 결과가 저장값과 다르면 MCC 를 따른다
+  const folded = categoryFromMcc(r.mcc) ?? r.category;
+  const cat = categoryOf(folded);
   return {
-    id: r.id, amount: r.amount, merchant: r.merchant, category: r.category,
+    id: r.id, amount: r.amount, merchant: r.merchant, category: folded,
+    mcc: r.mcc ?? null, mccLabel: r.mcc ? mccLabel(r.mcc) : null,
     icon: cat.icon, categoryLabel: cat.label,
     whenLabel: whenLabel(r.occurredAt), isMock: r.source === "MOCK",
   };
@@ -49,7 +57,7 @@ export async function getUnmatched(childId: string, take = 6): Promise<CardTxnVi
     where: { childId, recordId: null },
     orderBy: { occurredAt: "desc" },
     take,
-    select: { id: true, amount: true, merchant: true, category: true, occurredAt: true, source: true },
+    select: { id: true, amount: true, merchant: true, category: true, mcc: true, occurredAt: true, source: true },
   });
   return rows.map(toView);
 }
@@ -57,7 +65,7 @@ export async function getUnmatched(childId: string, take = 6): Promise<CardTxnVi
 export async function getTxn(childId: string, txnId: string) {
   return prisma.cardTransaction.findFirst({
     where: { id: txnId, childId, recordId: null },
-    select: { id: true, amount: true, merchant: true, category: true },
+    select: { id: true, amount: true, merchant: true, category: true, mcc: true },
   });
 }
 
@@ -78,7 +86,7 @@ export async function attach(childId: string, txnId: string, recordId: string) {
 export async function findByRecord(childId: string, recordId: string) {
   const r = await prisma.cardTransaction.findFirst({
     where: { childId, recordId },
-    select: { id: true, amount: true, merchant: true, category: true, occurredAt: true, source: true },
+    select: { id: true, amount: true, merchant: true, category: true, mcc: true, occurredAt: true, source: true },
   });
   return r ? toView(r) : null;
 }

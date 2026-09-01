@@ -131,6 +131,9 @@ export const envelope = {
   mockTitle: "카드에서 온 내역",
   mockBadge: "카드 연결 전이라 예시 데이터입니다",
   settle: "봉투에서 빼기",
+  /** 🔴 어느 봉투로 갈지 **누르기 전에** 보인다. 눌러 보고 아는 건 늦다 */
+  goesTo: (name: string) => `→ ${name}`,
+  unknownMcc: "→ 어느 봉투인지 몰라요",
   spentTitle: "쓴 내역",
   within: "봉투 안",
   overBadge: "넘음",

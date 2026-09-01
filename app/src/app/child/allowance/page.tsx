@@ -252,7 +252,16 @@ export default async function ChildPassbookPage({
                   <input type="hidden" name="txnId" value={t.id} />
                   <button className="flex min-h-touch w-full items-center gap-2 rounded-card border border-line bg-surface px-2 text-left">
                     <span className="text-[1.1em]">{t.icon}</span>
-                    <span className="flex-1 text-[0.78em]">{t.merchant}</span>
+                    <span className="flex-1">
+                      <b className="block text-[0.78em]">{t.merchant}</b>
+                      {/* 🔴 어느 봉투로 갈지 누르기 전에 보인다 */}
+                      <span className="text-[0.66em] text-ink-mute">
+                        {t.mccLabel ? `${t.mccLabel} ` : ""}
+                        {board.envelopes.find((e) => e.categories.includes(t.category))
+                          ? envelope.goesTo(board.envelopes.find((e) => e.categories.includes(t.category))!.name)
+                          : envelope.unknownMcc}
+                      </span>
+                    </span>
                     <b className="tabular-nums text-[0.8em]">{won(t.amount)}</b>
                     <span className="shrink-0 text-[0.7em] text-primary-d">{envelope.settle}</span>
                   </button>
