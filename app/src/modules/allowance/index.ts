@@ -38,6 +38,9 @@ function whenLabel(at: Date, now = new Date()) {
   return days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
 }
 
+/** 🔴 목표로 옮긴 것은 **쓴 게 아니다.** 같은 「나감」으로 보이면 아이가 없어진 줄 안다 */
+export const MOVED_CODES = ["WISH_SET_ASIDE", "WISH_RELEASE"];
+
 const LABEL: Record<string, string> = {
   TOPUP: "용돈을 받았어요",
   WISH_SET_ASIDE: "목표에 넣었어요",
@@ -175,8 +178,38 @@ export async function reversedKeys(childId: string) {
 
 export type CardStage = "NONE" | "REQUESTED" | "VERIFIED" | "SHIPPING" | "ACTIVE";
 
+/**
+ * 🔴 **잔액이 두 개다.** 목표에 떼어 둔 돈은 **쓴 게 아니라 묶인 것**이다.
+ *    원장 합만 보면 「8,000원이 사라진」 것처럼 보인다 — 부모 화면과 아이 화면이
+ *    다른 숫자를 말하게 된 원인이 이것이었다.
+ *
+ *    실제 통장도 「출금가능금액」과 「잔액」이 다르다. 같은 구분이다.
+ *
+ * 🔴 **부모 화면도 이 함수를 써야 한다.** 각자 세면 또 갈린다.
+ */
+export type WalletTotals = {
+  /** 지금 바로 쓸 수 있는 돈 — 원장의 합 */
+  readonly free: number;
+  /** 목표에 떼어 둔 돈 — 여전히 아이 돈이다 */
+  readonly setAside: number;
+  /** 아이가 가진 돈 전체 */
+  readonly total: number;
+};
+
+export async function getWalletTotals(childId: string): Promise<WalletTotals> {
+  const [free, saved] = await Promise.all([
+    getBalance(childId),
+    prisma.wishlist.aggregate({ where: { childId }, _sum: { savedAmount: true } }),
+  ]);
+  const setAside = saved._sum.savedAmount ?? 0;
+  return { free, setAside, total: free + setAside };
+}
+
 export type PassbookView = {
+  /** 지금 바로 쓸 수 있는 돈 */
   readonly balance: number;
+  /** 🔴 가진 돈 전체 = 쓸 수 있는 돈 + 목표에 떼어 둔 돈 */
+  readonly total: number;
   /** 목표에 넣어 둔 돈 — 이자가 붙는 대상 */
   readonly savedWon: number;
   /** 🔴 보호자가 정한 이자율. 없으면 아직 안 정한 것이다 */
@@ -205,7 +238,7 @@ export async function getPassbook(
   const pct = guardian?.savingsInterestPct ?? null;
 
   return {
-    balance, savedWon, interestPct: pct,
+    balance, savedWon, total: balance + savedWon, interestPct: pct,
     interestWon: pct === null ? 0 : Math.floor((savedWon * pct) / 100),
     card: (guardian?.mockCardStatus as CardStage) ?? "NONE",
     history,

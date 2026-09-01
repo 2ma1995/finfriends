@@ -17,5 +17,5 @@ export const emptyRoom = {
 };
 
 export const itemsLabel = (n: number) => `내 아이템 ${n}개`;
-export const shopLink = "별로 바꾸기 →";
+export const shopLink = "상점";
 export const todoTitle = "오늘 할 일";

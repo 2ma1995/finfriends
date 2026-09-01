@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import {
   makeRenderer, makeScene, loadCharacter, loadProp, attachToSocket, attachToFace, attachToBack,
@@ -90,11 +90,12 @@ export function Room3D({
   const host = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
 
-  // 콜백이 바뀔 때마다 장면을 다시 만들지 않는다
+  // 콜백이 바뀔 때마다 장면을 다시 만들지 않는다.
+  // 🔴 렌더 중에 ref 를 쓰지 않는다 — effect 에서 갱신한다 (React 19 규칙)
   const cbs = useRef({ onMove, onSelect });
-  cbs.current = { onMove, onSelect };
   const layoutRef = useRef(layout);
-  layoutRef.current = layout;
+  useEffect(() => { cbs.current = { onMove, onSelect }; });
+  useEffect(() => { layoutRef.current = layout; });
 
   const api = useRef<{
     holders: Map<string, THREE.Object3D>;
@@ -129,10 +130,15 @@ export function Room3D({
   useEffect(() => {
     const el = host.current;
     if (!el) return;
+    const self = api.current;
     let alive = true;
 
     const renderer = makeRenderer(size);
-    if (!renderer) { setState("failed"); return; }
+    if (!renderer) {
+      // 🔴 effect 본문에서 바로 setState 하지 않는다 — 연쇄 렌더가 난다
+      queueMicrotask(() => setState("failed"));
+      return;
+    }
     const h = Math.round(size * 0.78);
     renderer.setSize(size, h);
     el.appendChild(renderer.domElement);
@@ -359,7 +365,7 @@ export function Room3D({
     let lastX = 0;
     let dragId: string | null = null;
     let grabY = 0;                    // 잡을 때의 밑면 높이 — 받침 후보를 거르는 기준
-    let grabOff = new THREE.Vector3();
+    const grabOff = new THREE.Vector3();
 
     const toNdc = (e: PointerEvent) => {
       const r = dom.getBoundingClientRect();
@@ -456,7 +462,8 @@ export function Room3D({
         }
       });
       dispose(); renderer.dispose(); dom.remove(); overlay.remove(); tags.clear();
-      api.current.holders = new Map(); api.current.ring = null; api.current.room = null;
+      // 🔴 cleanup 이 도는 시점엔 ref 가 바뀌어 있을 수 있다. effect 안에서 잡아 둔 것을 쓴다
+      self.holders = new Map(); self.ring = null; self.room = null;
     };
   }, [items, character, wear, size, turn, edit]);
 

@@ -1,9 +1,9 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
-import { getPassbook } from "@/modules/allowance";
+import { getPassbook, MOVED_CODES } from "@/modules/allowance";
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel, interest,
-  noDevice, notice, outLabel, savedTitle, title,
+  movedLabel, noDevice, notice, outLabel, savedTitle, setAsideNotice, title, totalTitle,
 } from "./allowance.fixture";
 
 // D18 · D20 — 아이 통장. 🔴 두 자료가 가장 강조하는 실천이 용돈기입장 쓰기다
@@ -25,17 +25,26 @@ export default async function ChildPassbookPage() {
 
   return (
     <Screen role="아이 화면" title={title} back={{ href: "/child/plan", label: "계획 카드" }}>
-      {/* 두 숫자를 나란히 — 「쓸 수 있는 돈」과 「묶어 둔 돈」은 다른 돈이다 */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-card border border-line bg-surface px-3 py-3 text-center">
-          <div className="text-[0.72em] text-ink-mute">{balanceTitle}</div>
-          <b className="mt-0.5 block text-title tabular-nums">{won(p.balance)}</b>
+      {/* 🔴 **가진 돈 전체가 먼저다.** 「쓸 수 있는 돈」만 크게 보이면
+          목표에 떼어 둔 돈이 없어진 것처럼 보인다 — 부모 화면과 숫자가 갈리던 원인이다 */}
+      <div className="rounded-card border border-line bg-surface px-3 py-3 text-center">
+        <div className="text-[0.74em] text-ink-mute">{totalTitle}</div>
+        <b className="mt-0.5 block text-title tabular-nums">{won(p.total)}</b>
+      </div>
+
+      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+        <div className="rounded-card border border-line bg-surface px-3 py-2 text-center">
+          <div className="text-[0.7em] text-ink-mute">{balanceTitle}</div>
+          <b className="mt-0.5 block text-[1.05em] tabular-nums">{won(p.balance)}</b>
         </div>
-        <div className="rounded-card border border-line bg-sand px-3 py-3 text-center">
-          <div className="text-[0.72em] text-ink-mute">{savedTitle}</div>
-          <b className="mt-0.5 block text-title tabular-nums">{won(p.savedWon)}</b>
+        <div className="rounded-card border border-line bg-sand px-3 py-2 text-center">
+          <div className="text-[0.7em] text-ink-mute">{savedTitle}</div>
+          <b className="mt-0.5 block text-[1.05em] tabular-nums">{won(p.savedWon)}</b>
         </div>
       </div>
+      {p.savedWon > 0 ? (
+        <p className="mt-1 text-center text-[0.74em] text-ink-mute">{setAsideNotice}</p>
+      ) : null}
 
       {/* 🔴 카드가 언제 오는지 아이가 알아야 한다 (UX-006 배송 대기) */}
       <div className="mt-2 flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5">
@@ -74,7 +83,7 @@ export default async function ChildPassbookPage() {
               <span className="flex-1">
                 <b className="block text-[0.84em]">{h.memo}</b>
                 <span className="text-[0.7em] text-ink-mute">
-                  {h.whenLabel} · {h.delta > 0 ? inLabel : outLabel}
+                  {h.whenLabel} · {MOVED_CODES.includes(h.code) ? movedLabel : h.delta > 0 ? inLabel : outLabel}
                 </span>
               </span>
               <b className={`shrink-0 tabular-nums text-[0.86em] ${

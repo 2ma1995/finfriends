@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CATALOG, DEFAULT_CHARACTER, type Item } from "@/contracts/items";
 import { saveLayoutAction } from "@/app/actions/items";
 import type { Layout } from "./Room3D";
@@ -42,17 +42,20 @@ export function RoomStage({ items, layout: saved, characterId, wear, turn = 0, s
   );
   const base = useMemo(() => baseLayout(items), [items]);
 
-  // 저장된 배치를 기본 배치 위에 덮는다. 새로 산 물건은 기본 자리에서 시작한다
-  const [layout, setLayout] = useState<Layout>(() => ({ ...base, ...saved }));
+  /**
+   * 🔴 **서버 값을 state 로 복사하지 않는다.** 예전엔 effect 로 맞췄는데,
+   *    그러면 새로 산 물건이 들어올 때 화면이 두 번 그려지고 손이 끊긴다.
+   *    서버가 준 배치 위에 **이번에 움직인 것만** 덮는다 — 파생 값이다.
+   */
+  const [moved, setMoved] = useState<Layout>({});
+  const layout = useMemo<Layout>(() => ({ ...base, ...saved, ...moved }), [base, saved, moved]);
   const [edit, setEdit] = useState(startEdit);
   const [sel, setSel] = useState<string | null>(null);
-
-  useEffect(() => { setLayout({ ...base, ...saved }); }, [base, saved]);
 
   // 🔴 화면을 먼저 움직이고 저장은 뒤따른다. 저장을 기다리면 끄는 손이 끊긴다.
   //    실패해도 되돌리지 않는다 — 다음 조작이 다시 저장한다
   const persist = useCallback((next: Layout) => {
-    setLayout(next);
+    setMoved(next);
     void saveLayoutAction(next).catch(() => { /* 다음 조작에서 다시 보낸다 */ });
   }, []);
 

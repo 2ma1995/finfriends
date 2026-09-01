@@ -5,7 +5,7 @@ import { RoomStage } from "@/components/child/RoomStage";
 import { CATEGORIES, byCategory } from "@/contracts/items";
 import { emptyRoom, itemsLabel, shopLink, todo, todoTitle } from "./room.fixture";
 import { getRoom, placedItems } from "@/modules/items";
-import { getBalance } from "@/modules/allowance";
+import { getWalletTotals } from "@/modules/allowance";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
 import { getTourState } from "@/modules/onboarding";
@@ -49,7 +49,7 @@ export default async function ChildHomePage({
   const [board, room, allowance] = await Promise.all([
     getMissionBoard(access.childId),
     getRoom(access.childId),
-    getBalance(access.childId),
+    getWalletTotals(access.childId),
   ]);
   const placed = placedItems(room);
   const badge = (href: string) =>
@@ -66,7 +66,7 @@ export default async function ChildHomePage({
         </p>
       ) : null}
 
-      <MoneyHUD stars={room.stars} allowance={allowance} />
+      <MoneyHUD stars={room.stars} allowance={allowance.total} />
 
       <div className="mt-3 rounded-card border border-line bg-surface py-3">
         <RoomStage items={placed} layout={room.layout} characterId={room.characterId}
@@ -78,12 +78,14 @@ export default async function ChildHomePage({
         ) : null}
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <h2 className="text-[0.82em] font-bold">{itemsLabel(placed.length)}</h2>
-        <Link href="/child/shop" className="text-[0.78em] font-bold text-primary-d">
-          {shopLink}
-        </Link>
-      </div>
+      {/* 🔴 상점은 탭에 없다. 방을 보고 나서 들어가는 자리라 **여기가 유일한 입구**다 —
+          작은 글씨 링크로 두면 아이가 못 찾는다 */}
+      <Link href="/child/shop"
+            className="mt-3 flex min-h-touch w-full items-center justify-center gap-1.5 rounded-card border-2 border-primary bg-primary-bg text-[0.9em] font-bold text-primary-d">
+        🛍 {shopLink}
+      </Link>
+
+      <h2 className="mt-3 text-[0.82em] font-bold">{itemsLabel(placed.length)}</h2>
 
       <ul className="mt-1.5 grid grid-cols-6 gap-1.5">
         {CATEGORIES.map((c) => {

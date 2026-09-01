@@ -39,7 +39,7 @@ const ROUTES = {
       { href: "/child/retro/r-201",    name: "계획 ↔ 실제",  task: "PLN-003" },
       { href: "/child/wishlist",       name: "갖고 싶은 것",  task: "PRC-004" },
       { href: "/child/stars",          name: "내 별",        task: "STR-001" },
-      { href: "/child/shop",           name: "별로 바꾸기",   task: "STR-005" },
+      { href: "/child/shop",           name: "상점",   task: "STR-005" },
     ],
   },
 } as const;

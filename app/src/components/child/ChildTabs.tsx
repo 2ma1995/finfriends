@@ -11,6 +11,10 @@ import { usePathname } from "next/navigation";
  *
  * 🔴 **아동 세션은 `parent/**` 로 가는 길을 갖지 않는다** — 계정 분리 · 부모→아이 단방향.
  *    여기 다섯 개 모두 `/child/**` 다.
+ *
+ * 🔴 **상점은 여기 없다.** 상점은 「내 방」에서 들어간다 — 방을 보고 나서 사는 것이지,
+ *    어디서든 살 수 있는 자리에 두면 사는 것 자체가 목적이 된다.
+ *    대신 **통장**을 넣었다. 별과 돈은 늘 볼 수 있어야 한다.
  */
 
 const TABS = [
@@ -18,7 +22,7 @@ const TABS = [
   { href: "/child/missions", emoji: "🎯", label: "미션" },
   { href: "/child/learn",    emoji: "📚", label: "배우기" },
   { href: "/child/stars",    emoji: "⭐", label: "내 별" },
-  { href: "/child/shop",     emoji: "🛍", label: "상점" },
+  { href: "/child/allowance", emoji: "💰", label: "내 통장" },
 ] as const;
 
 /**

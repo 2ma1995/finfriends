@@ -4,8 +4,11 @@
 // 날짜 · 내용 · 들어온 돈 · 나간 돈 · 남은 돈 다섯 칸을 그대로 옮겼다.
 
 export const title = "내 통장";
+export const totalTitle = "내 돈";
 export const balanceTitle = "쓸 수 있는 돈";
 export const savedTitle = "목표에 넣어 둔 돈";
+/** 🔴 떼어 둔 돈이 없어진 게 아니라는 걸 말한다 */
+export const setAsideNotice = "목표에 넣어 둔 돈도 내 돈이에요. 아직 안 썼어요.";
 
 /** 🔴 카드 발급 단계 — 아이가 「언제 오는지」를 알아야 한다 (SRS UX-006 배송 대기) */
 export const card = {
@@ -36,6 +39,8 @@ export const empty = {
 };
 export const inLabel = "들어옴";
 export const outLabel = "나감";
+/** 🔴 목표로 옮긴 건 **쓴 게 아니다.** 같은 「나감」으로 보이면 없어진 줄 안다 */
+export const movedLabel = "목표로 옮김";
 export const notice = "쓴 돈과 모은 돈이 여기 다 적혀요. 남은 돈이 맞는지 가끔 세어 봐요.";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };

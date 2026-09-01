@@ -1,4 +1,4 @@
-import { Screen, Card, Empty } from "@/components/shared/Screen";
+import { Screen, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
 import type { MissionView } from "@/contracts/mission";
