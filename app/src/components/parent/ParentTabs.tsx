@@ -42,7 +42,16 @@ export function ParentTabs() {
   return (
     <nav
       aria-label="부모 화면"
-      className="sticky bottom-0 mt-auto border-t border-line bg-surface"
+      /**
+       * 🔴 **아이 GNB(`ChildTabs`)와 같은 크기다** (사용자 요청).
+       *    한 기기에서 부모와 아이가 번갈아 쓰는데 탭 높이가 다르면
+       *    **손가락이 기억한 자리가 어긋난다.**
+       *
+       *    `sticky` 를 유지한다 — 아이 쪽은 `fixed` 라 본문에 `pb-[92px]` 를 비워 줘야 하고,
+       *    이쪽은 `flex` 열 + `mt-auto` 로 자리를 차지하므로 본문을 건드릴 필요가 없다.
+       *    **높이만 맞추면 되고 배치 방식을 바꿀 이유는 없다.**
+       */
+      className="sticky bottom-0 mt-auto border-t border-line bg-surface/95 backdrop-blur"
     >
       <ul className="grid grid-cols-5">
         {TABS.map(({ href, label, Icon }) => {
@@ -52,22 +61,30 @@ export function ParentTabs() {
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-touch flex-col items-center justify-center gap-0.5 py-2 text-[0.68em] ${
+                /* 🔴 `min-h-[68px]` · `py-3` · `gap-1` — 아이 GNB 와 같은 값이다 */
+                className={`grid min-h-[68px] place-items-center gap-1 py-3 text-[0.7em] ${
                   active ? "font-bold text-primary-d" : "text-ink-mute"
                 }`}
               >
+                {/*
+                  🔴 아이 쪽은 이모지(`text-[1.6em]`)지만 여기는 **선 아이콘**이다.
+                     `clean` 모드에 이모지를 쓰면 부모 화면이 아이 화면처럼 읽힌다.
+                     **높이만 맞추고 그림 종류는 각 모드 것을 쓴다.**
+                */}
                 <Icon
-                  size={20}
+                  size={24}
                   strokeWidth={active ? 2.2 : 1.7}
                   aria-hidden
                   className={active ? "text-primary" : "text-ink-mute"}
                 />
-                {label}
+                <span className="leading-none">{label}</span>
               </Link>
             </li>
           );
         })}
       </ul>
+      {/* 🔴 홈 인디케이터에 탭이 가리지 않게. 아이 GNB 와 같다 */}
+      <div className="h-[env(safe-area-inset-bottom)]" />
     </nav>
   );
 }
