@@ -166,7 +166,7 @@ export async function readOnboardingProgress(guardianId: string): Promise<Onboar
   const [guardian, childCount, deviceCount, planCount] = await Promise.all([
     prisma.guardianAccount.findUnique({
       where: { id: guardianId },
-      select: { consentCompleted: true, mockCardIssuedAt: true },
+      select: { consentCompleted: true, mockCardStatus: true },
     }),
     prisma.childAccount.count({ where: { guardianId } }),
     prisma.deviceSession.count({
@@ -183,6 +183,16 @@ export async function readOnboardingProgress(guardianId: string): Promise<Onboar
     childDone: childCount > 0,
     deviceDone: deviceCount > 0,
     planDone: planCount > 0,
-    cardDone: guardian?.mockCardIssuedAt !== null && guardian?.mockCardIssuedAt !== undefined,
+    /**
+     * 🔴 **신청을 접수한 순간 끝난 것으로 본다** — `mockCardStatus !== null`.
+     *
+     *    한동안 `mockCardIssuedAt`(마지막 단계 `ACTIVE` 에 닿은 시각)을 봤다.
+     *    그러면 부모가 **가짜 발급 4단계를 전부 눌러야** 온보딩이 넘어간다.
+     *    실물 카드 발급은 **이번 범위 밖**인데(`D20` · 새 SRS `Out`),
+     *    온보딩이 그 목업의 마지막 단계를 기다리고 있던 셈이다.
+     *
+     *    부모가 할 일은 **신청까지**다. 그 뒤는 제휴사가 한다.
+     */
+    cardDone: guardian?.mockCardStatus != null,
   };
 }

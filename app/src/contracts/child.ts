@@ -85,8 +85,9 @@ export type OnboardingProgress = {
    */
   readonly planDone: boolean;
   /**
-   * 🔴 시연용 가짜 카드 상태다 (어긋남 대장 D20).
-   *    새 SRS 에서 **실물 카드 발급은 범위 밖(Out)**이다 — 화면이 그 사실을 말한다.
+   * 🔴 **신청을 접수했는가**다. 발급이 끝났는가가 아니다.
+   *    실물 카드 발급은 범위 밖(`D20` · 새 SRS `Out`)이고 **부모가 할 일은 신청까지**다.
+   *    끝을 기다리면 온보딩이 가짜 발급 4단계에 묶인다.
    */
   readonly cardDone: boolean;
 };
