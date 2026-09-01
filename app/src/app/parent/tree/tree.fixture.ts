@@ -59,6 +59,15 @@ export const quarantineNotice = (n: number) =>
 export const alertsLabel = (n: number) => `새 알림 ${n}건`;
 
 /**
+ * 구역 제목.
+ *
+ * 🔴 이 화면에는 **구역 제목이 아예 없었다.** 아홉 덩어리가 여백만으로 나뉘어 있어서
+ *    「이 칸들이 뭐였지」를 매번 다시 읽어야 했다. 큰 글자가 페이지 제목 하나뿐이었다.
+ */
+export const slotsTitle = "네 영역";
+export const nextTitle = "다음 할 일";
+
+/**
  * 🔴 **정체를 나무랄 일로 말하지 않는다** (`GRW-002`).
  *
  *    「14일째 그대로」는 사실이지만, 그것만 있으면 부모는 **아이를 재촉**한다.
