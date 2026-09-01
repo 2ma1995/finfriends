@@ -4,7 +4,8 @@ import { getMissionBoard } from "@/modules/mission";
 import { photoRuleOf, type MissionView } from "@/contracts/mission";
 import { attachMissionPhoto, markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
-  backfilledNotice, consentRequired, doneLabel, empty, intro, noDevice, noPhotoWhy,
+  backfilledNotice, consentRequired, doneLabel, empty, expiredBody, expiredTitle,
+  intro, noDevice, noPhotoWhy,
   photoAttached, photoLabel, photoLabelOptional, photoLater, photoNotice, photoReplace,
   photoResult, photoWhy, photoWhyOptional, rejectedPrefix, sections, source,
   undoLabel, waitingNotice,
@@ -49,6 +50,8 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
     : m.bucket === "REJECTED" ? "border-miss-line bg-miss-bg"
     : m.bucket === "DONE" ? "border-primary-l/50 bg-primary-bg"
     : m.bucket === "TODO" ? "border-primary bg-surface shadow-[0_1px_0_var(--ff-primary-l)]"
+    /* 🔴 **거절색을 쓰지 않는다.** 아이가 잘못한 게 아니라 부모가 못 본 것이다 */
+    : m.bucket === "EXPIRED" ? "border-dashed border-line-2 bg-canvas"
     : "border-line bg-surface";
 
   return (
@@ -84,6 +87,13 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
       {/* 🔴 「기다리는 중」을 「안 했다」와 구별해 말한다 (AC-6.2) */}
       {m.bucket === "WAITING" ? (
         <p className="mt-1.5 text-[0.78em] text-ink-soft">{waitingNotice}</p>
+      ) : null}
+      {/* 🔴 「거절」이 아니라 **「못 봤다」**로 말한다 (AC-032-3) */}
+      {m.bucket === "EXPIRED" ? (
+        <p className="mt-1.5 text-[0.78em] leading-relaxed text-ink-soft">
+          <b className="block">⏳ {expiredTitle}</b>
+          {expiredBody}
+        </p>
       ) : null}
       {m.bucket === "REJECTED" ? (
         <p className="mt-1.5 text-[0.78em] text-miss">
