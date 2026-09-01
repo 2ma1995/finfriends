@@ -320,11 +320,20 @@ export async function rollCycleIfNeeded(childId: string): Promise<number> {
   const oldest = states.reduce(
     (min, s) => (s.cycleStartedAt < min ? s.cycleStartedAt : min), states[0].cycleStartedAt,
   );
+
+  /**
+   * 🔴 주기가 안 바뀌었어도 **지난달 스냅샷은 다시 센다.**
+   *    이번 달에 승인된 지난달 실천(소급)이 그 달 스냅샷에 들어가야 한다.
+   *    안 그러면 「늦게 승인했더니 숲에서 사라졌다」가 된다.
+   */
   // 🔴 날짜 컬럼이므로 연·월로 견준다. 시각으로 비교하면 시간대만큼 어긋난다
-  if (ymOf(oldest) >= YM(thisMonth)) return 0;
+  const rolled = ymOf(oldest) < YM(thisMonth);
+  const from = rolled ? oldest : new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 1, 1);
 
   // 지난 주기의 첫날 — UTC 로 읽어야 저장된 날짜와 같은 달이 나온다
-  const started = new Date(oldest.getUTCFullYear(), oldest.getUTCMonth(), 1);
+  const started = rolled
+    ? new Date(oldest.getUTCFullYear(), oldest.getUTCMonth(), 1)
+    : new Date(from.getFullYear(), from.getMonth(), 1);
 
   const progress = await getTopicProgress(childId);
   const progressBy = new Map(progress.map((p) => [p.topic, p]));
@@ -334,10 +343,20 @@ export async function rollCycleIfNeeded(childId: string): Promise<number> {
     const ym = YM(m);
     const next = new Date(m.getFullYear(), m.getMonth() + 1, 1);
 
+    /**
+     * 🔴 **이미 있어도 다시 센다.** 주기가 끝난 뒤 승인된 실천(`BACKFILLED`)은
+     *    **그 주기에 귀속**되므로, 한 번 만들고 끝내면 **소급 승인이 숲에 영영 안 들어간다.**
+     *
+     *    「주기 종료 후 승인된 실천 → 주기 N 에 귀속하고 N+1 나무에 가산하지 않으며
+     *    **월간 숲 스냅샷에만 반영**」이 요구다 (`FR-030` 예외). 그 반영이 여기다.
+     *
+     *    지난 실천은 **늘어나기만 한다**(승인은 되돌려도 실천 기록이 남는다) —
+     *    그래서 다시 세도 숫자가 줄지 않는다.
+     */
     const exists = await prisma.forestSnapshot.findUnique({
-      where: { childId_yearMonth: { childId, yearMonth: ym } }, select: { id: true },
+      where: { childId_yearMonth: { childId, yearMonth: ym } },
+      select: { id: true, starsEarned: true },
     });
-    if (exists) continue;
 
     // 그 주기에 인정된 실천만 센다 — 주기 귀속은 `cycleId` 가 갖고 있다
     const practices = await prisma.practiceCredit.groupBy({
@@ -362,17 +381,23 @@ export async function rollCycleIfNeeded(childId: string): Promise<number> {
       return { topic, label: TOPIC_LABEL[topic], stage };
     });
 
-    await prisma.forestSnapshot.create({
-      data: {
+    // 🔴 `upsert` 다. 소급 승인이 들어오면 그 달 스냅샷을 **다시 계산해 덮어쓴다**
+    await prisma.forestSnapshot.upsert({
+      where: { childId_yearMonth: { childId, yearMonth: ym } },
+      create: {
         childId, yearMonth: ym,
         finalStages,
         // 델타는 읽을 때 앞 스냅샷과 견줘 만든다 — 여기 넣으면 두 곳을 맞춰야 한다
         deltaItems: [],
         starsEarned: stars._sum.delta ?? 0,
       },
+      update: { finalStages, starsEarned: stars._sum.delta ?? 0 },
     });
-    made++;
+    if (!exists) made++;
   }
+
+  // 🔴 주기가 안 바뀌었으면 나무를 비우지 않는다. 스냅샷만 다시 센 것이다
+  if (!rolled) return made;
 
   // 🔴 실천만 비운다. 단계는 읽는 시점에 계산하므로 저장값도 0으로 되돌린다
   await prisma.treeState.updateMany({

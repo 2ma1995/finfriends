@@ -58,6 +58,17 @@ function toView(r: {
 }
 
 export async function getMissionBoard(childId: string): Promise<MissionBoardView> {
+  /**
+   * 🔴 **아이 화면에서도 만료를 처리한다.**
+   *
+   *    승인 화면에서만 돌게 두면 **부모가 안 열면 영원히 안 만료된다** —
+   *    그런데 만료를 기다리는 사람은 아이다. 「기다리는 중」이 끝없이 떠 있는 것을
+   *    보는 쪽에서 끝나야 한다.
+   *
+   *    `pg_cron` 이 붙으면 배치가 부르고 이 줄은 사라져도 된다 (`ADR-T02`).
+   */
+  await expireStaleMissions({ childId });
+
   const rows = await prisma.mission.findMany({
     where: { childId },
     orderBy: [{ state: "asc" }, { createdAt: "desc" }],

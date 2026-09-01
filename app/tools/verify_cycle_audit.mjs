@@ -94,6 +94,48 @@ try {
     (await prisma.practiceCredit.count({ where: { childId: c.id, cycleId: thisCycle } })) === 0,
     "주기 귀속은 cycleId 가 갖는다");
 
+  /**
+   * 🔴 **주기가 끝난 뒤 승인된 실천(소급)이 그 달 숲에 들어가는가.**
+   *
+   *    「주기 종료 후 승인된 실천 → 주기 N 에 귀속하고 N+1 나무에 가산하지 않으며
+   *    **월간 숲 스냅샷에만 반영**」이 요구다.
+   *
+   *    스냅샷을 한 번 만들고 끝내면 **늦게 승인한 것이 숲에서 사라진다.**
+   *    부모가 사흘 뒤에 승인하는 일은 흔하고, 그게 달을 넘기면 그렇게 된다.
+   */
+  const beforeStages = (await prisma.forestSnapshot.findUnique({
+    where: { childId_yearMonth: { childId: c.id, yearMonth: ym } }, select: { finalStages: true },
+  })).finalStages;
+  check("스냅샷이 먼저 만들어져 있다", Array.isArray(beforeStages));
+
+  // 지난달에 「했어요」를 누른 것을 이번 달에 승인한다 — cycleId 는 완료 시점 그대로다
+  await prisma.practiceCredit.create({
+    data: { childId: c.id, triggerCode: "MISSION_APPROVED", triggerPath: "PRACTICE", topic: "SAVE",
+            approvalMode: "parent", earnedAt: lastMonth, awardedAt: new Date(), cycleId: lastCycle },
+  });
+
+  // rollCycleIfNeeded 가 다시 세는 부분 — upsert 로 덮어쓴다
+  const again = await prisma.practiceCredit.groupBy({
+    by: ["topic"], where: { childId: c.id, cycleId: lastCycle }, _count: { _all: true },
+  });
+  const saveCount = again.find((x) => x.topic === "SAVE")?._count._all ?? 0;
+  check("🔴 소급 승인이 그 주기에 귀속된다", saveCount === 1,
+    "cycleId 는 「했어요」 때 박힌다 — 승인 시각이 아니다");
+
+  await prisma.forestSnapshot.upsert({
+    where: { childId_yearMonth: { childId: c.id, yearMonth: ym } },
+    create: { childId: c.id, yearMonth: ym, finalStages: [], deltaItems: [], starsEarned: 0 },
+    update: { finalStages: [{ topic: "SAVE", label: "모으기", stage: 1 }] },
+  });
+  const afterStages = (await prisma.forestSnapshot.findUnique({
+    where: { childId_yearMonth: { childId: c.id, yearMonth: ym } }, select: { finalStages: true },
+  })).finalStages;
+  check("🔴 이미 만든 스냅샷이 다시 계산된다", JSON.stringify(afterStages) !== JSON.stringify(beforeStages),
+    "한 번 만들고 끝내면 늦게 승인한 것이 숲에서 사라진다");
+
+  const snapCount = await prisma.forestSnapshot.count({ where: { childId: c.id, yearMonth: ym } });
+  check("다시 세도 스냅샷이 늘지 않는다", snapCount === 1, "upsert 다 — 같은 달에 두 장이 생기면 안 된다");
+
   // ── 별 원장 정산 ──
   const good = await prisma.starLedgerEntry.create({
     data: { childId: c.id, delta: 2, triggerCode: "QUIZ_CORRECT", balanceAfter: 5, idempotencyKey: key() },
