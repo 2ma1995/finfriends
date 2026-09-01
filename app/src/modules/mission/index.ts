@@ -433,7 +433,12 @@ export async function getPracticeState(childId: string, lessonId: string): Promi
     select: { state: true, doneAt: true },
   });
   if (!m) return "NONE";
-  if (m.state === "APPROVED" || m.state === "BACKFILLED") return "DONE";
+  /**
+   * 🔴 **`AUTO_APPROVED` 가 빠져 있었다** (`D50` 이 상태를 더할 때 여기까지 안 왔다).
+   *    72시간이 지나 자동 완료된 실천이 **영원히 「부모님 확인 중」**으로 굳었다 —
+   *    별은 이미 받았는데 화면은 계속 기다린다고 말한다.
+   */
+  if (m.state === "APPROVED" || m.state === "BACKFILLED" || m.state === "AUTO_APPROVED") return "DONE";
   if (m.state === "REJECTED") return "REJECTED";
   return m.doneAt ? "WAITING" : "NONE";
 }

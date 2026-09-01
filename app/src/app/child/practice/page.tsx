@@ -6,10 +6,11 @@ import { getMissionBoard } from "@/modules/mission";
 import { hasPlanToday } from "@/modules/plan";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
-  claim, claimed, comeTomorrow, consentRequired, done, hint, intro, lessonWaiting,
+  claim, claimed, comeTomorrow, consentRequired, creditsLabel, creditsNone,
+  done, hint, intro, lessonWaiting,
   missionDiff, missionNone, needsLesson, noDevice, nudge,
   practicedToday as practicedTodayLabel, quizDone, quizRule, quizToday,
-  readFirst, rejected, savingsCta, savingsNone, sub, title, waiting,
+  readFirst, rejected, savingsCta, savingsNone, savingsStage, sub, title, waiting,
 } from "./practice.fixture";
 
 // 오늘의 실천 — 네 영역을 한 화면에. 🔴 「오늘 하나」가 실천을 만든다
@@ -69,6 +70,12 @@ export default async function ChildPracticePage({
                 <span className="text-[1.1em]">{c.icon}</span>
                 <b className="text-[0.82em]">{c.label}</b>
               </div>
+              {/* 🔴 **네 칸이 같은 말을 한다.** 나무가 세는 값과 같은 값이다 —
+                     미션이든 회고든 위시리스트든 저금이든, 쌓였으면 여기 보인다 */}
+              <div className={`text-[0.62em] leading-none ${
+                c.credits > 0 ? "font-bold text-primary-d" : "text-ink-mute"}`}>
+                {c.credits > 0 ? creditsLabel.replace("{n}", String(c.credits)) : creditsNone}
+              </div>
 
               {/* 🔴 안 배웠으면 실천할 것이 없다. 배우러 보낸다 */}
               {c.needsLesson ? (
@@ -82,7 +89,14 @@ export default async function ChildPracticePage({
               ) : c.viaSavings ? (
                 /* 🔴 불리기는 미션이 아니라 저금으로 실천한다 (D25) */
                 <>
-                  <p className="mt-1.5 flex-1 text-[0.78em] leading-relaxed">
+                  {/* 🔴 다른 셋처럼 **어디까지 왔는지** 먼저 말한다 */}
+                  {c.savingsStage === "GOING" || c.savingsStage === "ASKED" ? (
+                    <p className={`mt-1.5 text-[0.76em] font-bold ${
+                      c.savingsStage === "GOING" ? "text-primary-d" : "text-star-d"}`}>
+                      {savingsStage[c.savingsStage]}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 flex-1 text-[0.78em] leading-relaxed">
                     {c.savingsNote ?? savingsNone}
                   </p>
                   <Link href="/child/allowance"
