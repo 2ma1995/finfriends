@@ -4,14 +4,12 @@ import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { TOPUP_AMOUNTS } from "@/contracts/bank";
 import { findChild } from "@/modules/consent";
 import { getBank } from "@/modules/bank";
-import { MOVED_CODES, getHistory } from "@/modules/allowance";
-import { reverseEntryAction, topUpMockAction } from "@/app/actions/parent-bank";
+import { topUpMockAction } from "@/app/actions/parent-bank";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { listForGuardian } from "@/modules/savings";
 import {
-  cardNeeded, fixErrors, fixLabel, fixNotice, fixReasonPlaceholder, fixedNotice,
-  historyTitle, missionNotice, moneyNotice, movedBadge, reversedBadge, savedNotice,
-  shortNotice, starSeparation, topUpErrors, topUpTitle, walletLabels,
+  adjustLabel, cardNeeded, historyLabel, missionNotice, savedNotice, topUpErrors,
+  topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
@@ -32,7 +30,7 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 export default async function ParentBankPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string; fixed?: string; short?: string; fix?: string }>;
+  searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
@@ -60,9 +58,8 @@ export default async function ParentBankPage({
 
   const sp = await searchParams;
   // 🔴 잔액과 기록은 **같은 원장**에서 온다. 두 곳에서 읽으면 다시 갈린다
-  const [view, history, savings] = await Promise.all([
+  const [view, savings] = await Promise.all([
     getBank(guardian.guardianId, child.id, child.displayName),
-    getHistory(child.id, 10),
     listForGuardian(guardian.guardianId),
   ]);
   // 🔴 만기가 된 것도 「할 일」이다 — 부모가 눌러야 아이에게 원금과 이자가 간다
@@ -78,26 +75,6 @@ export default async function ParentBankPage({
           <p className="text-[0.88em]">{topUpErrors[sp.error] ?? topUpErrors.BAD_AMOUNT}</p>
         </Card></div>
       ) : null}
-      {sp.fixed ? (
-        <div className="mb-2"><Card tone={sp.short ? "miss" : "grow"}>
-          <p className="text-[0.88em]">{fixedNotice(Number(sp.fixed))}</p>
-          {/* 🔴 못 되돌린 금액을 조용히 넘기지 않는다 — 보호자는 다 취소된 줄 안다 */}
-          {sp.short ? <p className="mt-1 text-[0.86em] text-ink-soft">{shortNotice(Number(sp.short))}</p> : null}
-        </Card></div>
-      ) : null}
-      {sp.fix ? (
-        <div className="mb-2"><Card tone="miss">
-          <p className="text-[0.88em]">{fixErrors[sp.fix] ?? fixErrors.NOT_FOUND}</p>
-        </Card></div>
-      ) : null}
-
-      {/* 🔴 맨 위에. 앱이 돈을 보관한다는 오해를 만들면 안 된다 (D18) */}
-      <Card>
-        <b className="text-[0.82em]">{moneyNotice.title}</b>
-        <p className="mt-1 text-[0.86em] leading-relaxed text-ink-soft">{moneyNotice.body}</p>
-        <p className="mt-2 text-[0.8em] leading-relaxed text-ink-mute">{starSeparation}</p>
-      </Card>
-
       {/*
         ── 아이가 가진 돈 ──
         🔴 **부분의 합이 항상 위 숫자와 같아야 한다.** 한동안 목표에 묶인 돈을
@@ -158,44 +135,27 @@ export default async function ParentBankPage({
         {!view.cardActive ? (
           <p className="mt-1.5 text-[0.76em] leading-relaxed text-ink-mute">{cardNeeded}</p>
         ) : null}
-      </section>
 
-      {/* ── 기록과 되돌리기 — 원장이 있어야 성립한다 ── */}
-      {history.length > 0 ? (
-        <section className="mt-4">
-          <h2 className="text-[0.74em] tracking-[0.06em] text-ink-mute">{historyTitle}</h2>
-          <p className="mb-1.5 mt-1 text-[0.74em] text-ink-mute">{fixNotice}</p>
-          <ul className="grid gap-1">
-            {history.map((h) => (
-              <li key={h.id} className="rounded-card border border-line bg-surface px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex-1 text-[0.84em]">{h.memo}</span>
-                  <span className="shrink-0 text-[0.72em] text-ink-mute">{h.whenLabel}</span>
-                  <b className={`shrink-0 tabular-nums text-[0.84em] ${h.delta > 0 ? "text-primary-d" : "text-ink-soft"}`}>
-                    {h.delta > 0 ? "+" : ""}{won(h.delta)}
-                  </b>
-                </div>
-                {/* 🔴 목표로 옮긴 것은 **쓴 게 아니다.** 같은 「나감」으로 보이면 그렇게 읽힌다 */}
-                {MOVED_CODES.includes(h.code) ? (
-                  <p className="mt-1 text-[0.72em] text-ink-mute">{movedBadge}</p>
-                ) : null}
-                {/* 🔴 보호자가 적은 줄만 되돌린다. 아이가 적은 것은 아이 쪽에서 되돌린다 */}
-                {h.byGuardian && !h.reversed ? (
-                  <form action={reverseEntryAction} className="mt-1.5 flex gap-1.5">
-                    <input type="hidden" name="entryId" value={h.id} />
-                    <input name="reason" maxLength={30} placeholder={fixReasonPlaceholder}
-                           className="min-h-touch flex-1 rounded-card border border-line-2 bg-surface px-2 text-[0.74em]" />
-                    <button className="min-h-touch shrink-0 rounded-card border border-line-2 bg-surface px-3 text-[0.76em] text-ink-soft">
-                      {fixLabel}
-                    </button>
-                  </form>
-                ) : null}
-                {h.reversed ? <p className="mt-1 text-[0.72em] text-ink-mute">{reversedBadge}</p> : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+        {/*
+          🔴 **보는 것과 고치는 것을 나눈다.** 한 화면에서 목록을 훑다가
+             실수로 되돌리면 아이 장부가 바뀐다. 되돌리기는 되돌릴 수 없는 일이 아니지만
+             (상쇄하는 줄이 하나 더 적힐 뿐) 아이 화면의 숫자가 즉시 바뀐다.
+        */}
+        <div className="mt-2 grid grid-cols-2 gap-1.5">
+          <Link
+            href="/parent/bank/adjust"
+            className="flex min-h-touch items-center justify-center rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft"
+          >
+            {adjustLabel}
+          </Link>
+          <Link
+            href="/parent/bank/history"
+            className="flex min-h-touch items-center justify-center rounded-card border border-line-2 bg-surface text-[0.82em] text-ink-soft"
+          >
+            {historyLabel}
+          </Link>
+        </div>
+      </section>
 
       {/* ── 미션 관리 — SRS 는 이것도 통장 안에 뒀다 ── */}
       {/* 🔴 「불리기」 실천을 여는 자리 — 아이가 신청하면 여기로 온다 (D25) */}

@@ -36,14 +36,15 @@ export async function topUpMockAction(formData: FormData) {
 }
 
 /**
- * 잘못 적은 줄 되돌리기 — D18.
+ * 잘못 적은 줄 되돌리기 — D18. 결과는 **수정 화면**으로 돌아간다 —
+ * 고친 자리에서 결과를 봐야 무엇이 달라졌는지 바로 확인한다.
  * 🔴 **줄을 고치거나 지우지 않는다.** 상쇄하는 줄을 새로 적는다 —
  *    고치면 「합이 잔액」이 깨지고 왜 이렇게 됐는지 아무도 못 본다.
  */
 export async function reverseEntryAction(formData: FormData) {
   const g = await requireGuardian();
   const child = await findChild(g.guardianId);
-  if (!child) redirect("/parent/bank?error=NO_CHILD");
+  if (!child) redirect("/parent/bank/adjust?fix=NOT_FOUND");
 
   const r = await reverseEntry(
     child.id,
@@ -53,7 +54,7 @@ export async function reverseEntryAction(formData: FormData) {
 
   revalidateMoney();
 
-  if (!r.ok) redirect(`/parent/bank?fix=${r.reason}`);
+  if (!r.ok) redirect(`/parent/bank/adjust?fix=${r.reason}`);
   // 🔴 얼마가 왜 안 돌아왔는지 그대로 말한다
-  redirect(`/parent/bank?fixed=${r.reversed}${r.short > 0 ? `&short=${r.short}` : ""}`);
+  redirect(`/parent/bank/adjust?fixed=${r.reversed}${r.short > 0 ? `&short=${r.short}` : ""}`);
 }
