@@ -194,6 +194,21 @@ export default async function ParentMyPage() {
         <p className="mt-1.5 text-center text-[0.74em] leading-relaxed text-ink-mute">
           등록한 아이 기기는 로그아웃해도 그대로 열립니다.
         </p>
+
+        {/*
+          🔴 **탈퇴는 여기서 실행되지 않는다** (`FR-041` · `AC-041-1`).
+             확인 화면을 한 번 거친다 — 되돌릴 수 없는 일은 실수로 눌릴 수 있는 자리에 두지 않는다.
+             그래서 버튼이 아니라 링크다.
+        */}
+        <Link
+          href="/parent/mypage/withdraw"
+          className="mt-6 flex min-h-touch w-full items-center justify-center rounded-card border border-line text-[0.8em] text-ink-mute"
+        >
+          탈퇴하기
+        </Link>
+        <p className="mt-1.5 text-center text-[0.74em] leading-relaxed text-ink-mute">
+          모은 별과 자란 나무는 되돌릴 수 없어요.
+        </p>
       </section>
     </Screen>
   );
