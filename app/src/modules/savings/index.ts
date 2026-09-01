@@ -20,6 +20,9 @@ import { getBalance, record as recordAllowance } from "@/modules/allowance";
 
 export const MIN_AMOUNT = 1_000;
 export const MAX_MONTHS = 12;
+/** 아이가 골라 볼 수 있는 이자율 — 🔴 **바라는 값**이지 정해지는 값이 아니다 */
+export const WANTED_CHOICES = [3, 5, 10, 15] as const;
+export const MAX_PCT = 20;
 
 export type SavingsView = {
   readonly id: string;
@@ -27,6 +30,10 @@ export type SavingsView = {
   readonly amount: number;
   readonly months: number;
   readonly interestPct: number;
+  /** 🔴 아이가 **바란** 이자율. 실제 적용은 `interestPct` 다 */
+  readonly wantedPct: number | null;
+  /** 보호자가 아이가 바란 것과 다르게 정했는가 — 화면이 그 사실을 말한다 */
+  readonly differs: boolean;
   readonly state: "REQUESTED" | "ACTIVE" | "DONE" | "BROKEN" | "REJECTED";
   /** 만기에 받을 이자 — 🔴 지금 받은 게 아니다 */
   readonly interestWon: number;
@@ -41,11 +48,13 @@ const interestOf = (amount: number, pct: number) => Math.floor((amount * pct) / 
 
 function toView(r: {
   id: string; goal: string; amount: number; months: number; interestPct: number;
-  state: string; maturesAt: Date | null; rejectReason: string | null;
+  wantedPct: number | null; state: string; maturesAt: Date | null; rejectReason: string | null;
 }): SavingsView {
   const left = r.maturesAt ? Math.ceil((r.maturesAt.getTime() - Date.now()) / 864e5) : null;
   return {
     id: r.id, goal: r.goal, amount: r.amount, months: r.months, interestPct: r.interestPct,
+    wantedPct: r.wantedPct,
+    differs: r.wantedPct !== null && r.wantedPct !== r.interestPct,
     state: r.state as SavingsView["state"],
     interestWon: interestOf(r.amount, r.interestPct),
     maturesAt: r.maturesAt,
@@ -57,7 +66,7 @@ function toView(r: {
 
 const SELECT = {
   id: true, goal: true, amount: true, months: true, interestPct: true,
-  state: true, maturesAt: true, rejectReason: true,
+  wantedPct: true, state: true, maturesAt: true, rejectReason: true,
 } as const;
 
 /** 지금 굴러가는 것 하나 — 🔴 한 번에 하나만 (DB 부분 유니크가 막는다) */
@@ -88,6 +97,8 @@ export type SavingsResult =
  */
 export async function request(
   childId: string, guardianId: string, goal: string, amount: number, months: number,
+  /** 🔴 아이가 **바라는** 이자율. 정해지는 값이 아니다 — 보호자가 답한다 */
+  wantedPct?: number,
 ): Promise<SavingsResult> {
   const g = goal.trim();
   if (!g || g.length > 30) return { ok: false, reason: "BAD_GOAL" };
@@ -103,9 +114,14 @@ export async function request(
     where: { id: guardianId }, select: { savingsInterestPct: true },
   });
 
+  const wanted = Number.isFinite(wantedPct) && wantedPct! >= 0 && wantedPct! <= MAX_PCT
+    ? Math.floor(wantedPct!) : null;
+
   await prisma.savingsPlan.create({
     data: { childId, guardianId, goal: g, amount: Math.floor(amount), months,
-            interestPct: guardian?.savingsInterestPct ?? 0 },
+            // 🔴 기본값은 **보호자가 정한 우리 집 이자**다. 아이가 바란 값이 아니다
+            interestPct: guardian?.savingsInterestPct ?? 0,
+            wantedPct: wanted },
   });
   return { ok: true };
 }
@@ -114,7 +130,11 @@ export async function request(
  * 보호자가 받아들인다 → 돈이 묶이고 ⭐1.
  * 🔴 잔액이 모자라면 시작하지 않는다. 신청 뒤에 아이가 다 써버렸을 수 있다.
  */
-export async function accept(guardianId: string, planId: string): Promise<SavingsResult> {
+export async function accept(
+  guardianId: string, planId: string,
+  /** 🔴 이 약속에만 적용할 이자율. 아이가 더 바랐을 때 보호자가 답하는 자리다 */
+  pct?: number,
+): Promise<SavingsResult> {
   const p = await prisma.savingsPlan.findFirst({
     where: { id: planId, guardianId, state: "REQUESTED" },
     select: { id: true, childId: true, goal: true, amount: true, months: true },
@@ -130,9 +150,11 @@ export async function accept(guardianId: string, planId: string): Promise<Saving
   const matures = new Date(now);
   matures.setMonth(matures.getMonth() + p.months);
 
+  const finalPct = Number.isFinite(pct) && pct! >= 0 && pct! <= MAX_PCT ? Math.floor(pct!) : undefined;
   await prisma.savingsPlan.update({
     where: { id: p.id },
-    data: { state: "ACTIVE", startedAt: now, maturesAt: matures },
+    data: { state: "ACTIVE", startedAt: now, maturesAt: matures,
+            ...(finalPct === undefined ? {} : { interestPct: finalPct }) },
   });
   await grantStar({
     childId: p.childId, triggerCode: "SAVINGS_JOINED", delta: 1,

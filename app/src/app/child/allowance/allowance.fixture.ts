@@ -42,6 +42,17 @@ export const savings = {
   what: "정한 기간 동안 안 쓰고 두면 부모님이 이자를 주세요.",
   notBank: "은행 적금이 아니라 부모님과 하는 약속이에요.",
   noRate: "부모님이 이자를 정하면 신청할 수 있어요.",
+  /**
+   * 🔴 **고르게 해놓고 무시하면 안 된다.** 그래서 「선택」이 아니라 「제안」이다 —
+   *    누르기 전에 정하는 사람이 누구인지 먼저 말한다.
+   */
+  wantLabel: "이자는 얼마면 좋겠어요?",
+  wantNotice: (pct: number) => `우리 집 이자는 지금 ${pct}%예요. 더 받고 싶으면 말해 볼 수 있어요.`,
+  wantWho: "얼마로 할지는 부모님이 정해요.",
+  wantedShown: (pct: number) => `${pct}%를 바랐어요`,
+  gaveInstead: (pct: number) => `부모님이 ${pct}%로 해주셨어요`,
+  sameAsWanted: "바란 대로 해주셨어요!",
+
   goalLabel: "무엇을 위해",
   goalPlaceholder: "예: 자전거",
   amountLabel: "얼마를",

@@ -1,7 +1,7 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook, MOVED_CODES } from "@/modules/allowance";
-import { getClosed, getOpen, MAX_MONTHS, MIN_AMOUNT } from "@/modules/savings";
+import { getClosed, getOpen, MAX_MONTHS, MIN_AMOUNT, WANTED_CHOICES } from "@/modules/savings";
 import { breakSavingsAction, requestSavingsAction } from "@/app/actions/savings";
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel, interest,
@@ -134,6 +134,26 @@ export default async function ChildPassbookPage({
                          className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-[0.9em] tabular-nums" />
                 </label>
               </div>
+              {/* 🔴 「선택」이 아니라 「제안」이다. 정하는 사람을 **누르기 전에** 말한다 */}
+              <div className="grid gap-1">
+                <span className="text-[0.72em] text-ink-mute">{savings.wantLabel}</span>
+                <p className="text-[0.72em] text-ink-mute">{savings.wantNotice(p.interestPct)}</p>
+                <ul className="mt-0.5 grid grid-cols-4 gap-1">
+                  {WANTED_CHOICES.map((w) => (
+                    <li key={w}>
+                      <label className="block cursor-pointer">
+                        <input type="radio" name="wantedPct" value={w}
+                               defaultChecked={w === p.interestPct} className="peer sr-only" />
+                        <span className="grid min-h-touch place-items-center rounded-card border border-line bg-surface text-[0.8em] peer-checked:border-primary peer-checked:bg-primary-bg peer-checked:font-bold">
+                          {w}%
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[0.72em] font-bold text-ink-soft">{savings.wantWho}</p>
+              </div>
+
               <button disabled={p.balance < MIN_AMOUNT}
                       className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white disabled:opacity-40">
                 {savings.ask}
@@ -149,6 +169,14 @@ export default async function ChildPassbookPage({
             <b className="shrink-0 tabular-nums text-[0.9em]">{won(open.amount)}</b>
           </div>
           <p className="mt-0.5 text-[0.74em] text-ink-mute">{open.months}달 · 이자 {open.interestPct}%</p>
+          {/* 🔴 바란 것과 다르면 그 사실을 말한다. 조용히 넘기면 「왜 물어봤지」가 된다 */}
+          {open.wantedPct !== null ? (
+            <p className={`mt-0.5 text-[0.74em] ${open.differs ? "text-star-d" : "text-primary-d"}`}>
+              {open.state === "REQUESTED"
+                ? savings.wantedShown(open.wantedPct)
+                : open.differs ? savings.gaveInstead(open.interestPct) : savings.sameAsWanted}
+            </p>
+          ) : null}
 
           {open.state === "REQUESTED" ? (
             <p className="mt-1.5 text-[0.84em] text-ink-soft">

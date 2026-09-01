@@ -30,6 +30,7 @@ export async function requestSavingsAction(formData: FormData) {
     String(formData.get("goal") ?? ""),
     Number(formData.get("amount") ?? 0),
     Number(formData.get("months") ?? 0),
+    Number(formData.get("wantedPct") ?? NaN),
   );
   back(r.ok ? "asked=1" : `error=${r.reason}`);
 }

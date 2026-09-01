@@ -647,8 +647,12 @@ model SavingsPlan {
   goal         String
   amount       Int
   months       Int
-  /// 🔴 **신청 시점 이자율을 박아 둔다.** 약속한 뒤에 조건이 바뀌면 그건 약속이 아니다
+  /// 🔴 **신청 시점 이자율을 박아 둔다.** 약속한 뒤에 조건이 바뀌면 그건 약속이 아니다.
+  ///    정하는 것은 **보호자**다 — 이자는 보호자가 자기 돈으로 준다
   interestPct  Int          @default(0) @map("interest_pct")
+  /// 🔴 아이가 **바란** 이자율. 실제 적용값이 아니다 —
+  ///    고르게 해놓고 무시하면 안 되므로 「선택」이 아니라 **「제안」**으로 둔다
+  wantedPct    Int?         @map("wanted_pct")
   state        SavingsState @default(REQUESTED)
   requestedAt  DateTime     @default(now()) @map("requested_at") @db.Timestamptz(6)
   startedAt    DateTime?    @map("started_at") @db.Timestamptz(6)
