@@ -3,7 +3,13 @@ import { Screen, Empty } from "@/components/shared/Screen";
 import { MoneyHUD } from "@/components/child/MoneyHUD";
 import { RoomStage } from "@/components/child/RoomStage";
 import { MyItems } from "@/components/child/MyItems";
-import { emptyCategory, emptyRoom, itemsTitle, myItemsHint, shopLink, todo, todoTitle } from "./room.fixture";
+import { TodayList, type TodayItem } from "@/components/child/TodayList";
+import { hasPlanToday } from "@/modules/plan";
+import { getTodayBoard } from "@/modules/practice";
+import {
+  emptyCategory, emptyRoom, itemsTitle, missionMore, myItemsHint, restCount,
+  shopLink, today, todayAllDone, todoTitle,
+} from "./room.fixture";
 import { getRoom, placedItems } from "@/modules/items";
 import { getWalletTotals } from "@/modules/allowance";
 import { markAttendance } from "@/modules/attendance";
@@ -20,6 +26,7 @@ import { labels as planLabels, placeholders as planPlaceholders, submitLabel as 
 import * as ask from "./ask.fixture";
 
 // UX-003 · STR-003 · STR-005 — 아이가 여는 첫 화면
+const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 export const metadata = { title: "내 방 · 핀프렌즈" };
 
 export default async function ChildHomePage({
@@ -64,18 +71,36 @@ export default async function ChildHomePage({
    * 🔴 **하교 시각이 지났는데 오늘 계획이 없을 때만** 묻는다 (D41).
    *    조건은 넷 다 서버가 본다 — 화면은 뜨라면 뜬다.
    */
-  const [board, room, allowance, askState] = await Promise.all([
+  const [board, room, allowance, askState, plannedToday, cells] = await Promise.all([
     getMissionBoard(access.childId),
     getRoom(access.childId),
     getWalletTotals(access.childId),
     shouldAsk(access.childId),
+    hasPlanToday(access.childId),
+    getTodayBoard(access.childId),
   ]);
   const placed = placedItems(room);
-  const badge = (href: string) =>
-    href !== "/child/missions" ? null
-    : board.todo.length > 0 ? { text: `${board.todo.length}개 남음`, tone: "text-primary-d" }
-    : board.waiting.length > 0 ? { text: "확인 기다리는 중", tone: "text-star-d" }
-    : null;
+
+  /**
+   * 🔴 **오늘 남은 것만 줄로 만든다.** 링크를 늘 네 개 두던 것을 바꿨다 —
+   *    할 게 있든 없든 같아 보이면 아이가 넷을 다 눌러 봐야 안다.
+   *
+   * 🔴 **판단을 여기서 새로 하지 않는다.** 계획은 `hasPlanToday`, 실천·읽기·문제는
+   *    실천 화면이 쓰는 `getTodayBoard` 를 그대로 본다 — 두 화면이 갈라지면
+   *    홈은 「남았다」는데 실천 화면은 「다 했다」가 된다.
+   */
+  const open = cells.filter((c) => !c.viaSavings);
+  const items: TodayItem[] = [];
+  if (!plannedToday) items.push(today.plan);
+
+  const lessonLeft = open.filter((c) => c.lessonToday).length;
+  if (lessonLeft > 0) items.push({ ...today.lesson, note: restCount(lessonLeft) });
+
+  const practiceLeft = open.filter((c) => !c.needsLesson && !c.practicedToday).length;
+  if (practiceLeft > 0) items.push({ ...today.practice, note: restCount(practiceLeft) });
+
+  const quizLeft = cells.filter((c) => !c.quizDone).length;
+  if (quizLeft > 0) items.push({ ...today.quiz, note: restCount(quizLeft) });
 
   return (
     <Screen role="아이 화면" title="내 방">
@@ -130,19 +155,8 @@ export default async function ChildHomePage({
       <MyItems owned={room.owned} placedCount={placed.length}
                title={itemsTitle} emptyCat={emptyCategory} hint={myItemsHint} />
 
-      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{todoTitle}</h2>
-      <ul className="grid gap-1.5">
-        {todo.map((t) => (
-          <li key={t.href}>
-            <Link href={t.href} className="flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3 text-[0.9em]">
-              <span className="text-[1.2em]">{t.emoji}</span>{t.label}
-              {(() => { const b = badge(t.href); return b ? (
-                <span className={`ml-auto text-[0.72em] font-bold ${b.tone}`}>{b.text}</span>
-              ) : null; })()}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <TodayList title={todoTitle} missions={board.todo} items={items}
+                 allDone={todayAllDone} missionMore={missionMore} won={won} />
 
       <form action={restartTourAction} className="mt-4">
         <button className="min-h-touch w-full text-[0.78em] text-ink-mute underline underline-offset-2">

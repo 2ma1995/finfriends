@@ -5,18 +5,27 @@
  * 오늘 할 일 — 🔴 **하단 탭에 있는 것은 넣지 않는다.** 같은 길을 두 번 두면
  * 아이는 둘이 다른 곳인 줄 안다. 미션·배우기·내 별·상점은 탭에 있다.
  */
-export const todo = [
-  /**
-   * 🔴 **홈에 미션 신호가 아예 없었다.** 아래 `badge()` 가 `/child/missions` 를
-   *    찾는데 이 목록에 없어서 **늘 null 이었다** — 죽은 코드였다는 뜻이고,
-   *    아이는 홈에서 「할 미션이 있다」를 알 길이 없었다.
-   */
-  { href: "/child/missions", emoji: "🎯", label: "부모님이 준 미션" },
-  // 🔴 봉투를 접고 되돌아온 자리 (D41). 아이가 소비를 적는 길은 다시 계획 카드다
-  { href: "/child/plan", emoji: "📝", label: "쓸 계획 적기" },
-  { href: "/child/practice", emoji: "✋", label: "실천하기" },
-  { href: "/child/wishlist", emoji: "🎁", label: "갖고 싶은 것" },
-];
+/**
+ * 오늘 할 일 문구 — 🔴 **목록은 여기 없다.** 무엇이 남았는지는 DB 가 정한다.
+ *
+ * 예전엔 네 줄이 **늘 똑같이** 박혀 있었다. 할 게 있든 없든 같은 화면이라
+ * **아이가 넷을 다 눌러 봐야** 오늘 뭐가 남았는지 알 수 있었다 —
+ * 그건 할 일 목록이 아니라 메뉴다.
+ */
+export const today = {
+  plan:     { href: "/child/plan/new",  emoji: "📝", label: "오늘 쓸 계획 적기" },
+  practice: { href: "/child/practice",  emoji: "✋", label: "배운 것 해보기" },
+  lesson:   { href: "/child/learn",     emoji: "📖", label: "오늘 읽을 이야기" },
+  quiz:     { href: "/child/practice",  emoji: "❓", label: "오늘의 문제" },
+  wish:     { href: "/child/wishlist",  emoji: "🎁", label: "갖고 싶은 것 모으기" },
+};
+
+/** 🔴 다 했으면 그렇다고 말한다 — 빈 목록은 고장으로 읽힌다 */
+export const todayAllDone = "오늘 할 일을 다 했어요! 내일 또 만나요";
+/** 🔴 `{n}` 은 화면에 안 그린 미션 수 */
+export const missionMore = "미션 {n}개 더 보기 →";
+/** 🔴 `{n}` 은 남은 영역 수 — 「세 군데 남았어요」 */
+export const restCount = (n: number) => `${n}군데`;
 
 /** 아직 아무것도 없는 방 — 오늘 가입한 아이가 보는 화면 */
 export const emptyRoom = {
