@@ -18,7 +18,7 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 /** 소비 한 줄. 🔴 **이번 달과 지난달이 같은 모양이어야 한다** — 따로 쓰면 한쪽만 고쳐진다 */
 function SpendRow({ r }: { r: SpendRecordView }) {
   return (
-    <li className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
+    <li className="flex items-center gap-2 rounded-card bg-surface px-3 py-2">
       <span aria-hidden className="shrink-0 text-[1.1em]">{r.icon}</span>
       <span className="min-w-0 flex-1">
         <b className="block truncate text-sub font-medium">{r.categoryLabel}</b>
@@ -67,7 +67,7 @@ export default async function ParentSpendingPage() {
         <Empty emoji={e.emoji} title={e.title} body={e.body} hint={e.hint} />
         {view.prevRecords.length > 0 ? (
           <>
-            <h2 className="mb-1.5 mt-4 text-cap tracking-[0.06em] text-ink-mute">{prevRecordsTitle}</h2>
+            <h2 className="mb-2 mt-6 text-title font-bold leading-none">{prevRecordsTitle}</h2>
             <ul className="grid gap-1">
               {view.prevRecords.map((r) => (
                 <SpendRow key={r.id} r={r} />
@@ -106,10 +106,10 @@ export default async function ParentSpendingPage() {
         </div>
       )}
 
-      <h2 className="mb-1.5 mt-3 text-cap tracking-[0.04em] text-ink-mute">업종별</h2>
+      <h2 className="mb-2 mt-6 text-title font-bold leading-none">업종별</h2>
       <ul className="grid gap-1.5">
         {view.byCategory.map((l) => (
-          <li key={l.label} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-sub">
+          <li key={l.label} className="flex items-center justify-between rounded-card bg-surface px-3 py-2 text-sub">
             <span>
               {l.icon} {l.label}
             </span>
@@ -135,7 +135,7 @@ export default async function ParentSpendingPage() {
         🔴 「계획 없이」를 색으로 가르지 않는다. ⭐ 판정은 금액 단독이고(ADR-008)
            경고색을 쓰면 다그치는 화면이 된다 (P-03).
       */}
-      <h2 className="mb-1.5 mt-4 text-cap tracking-[0.06em] text-ink-mute">{recordsTitle}</h2>
+      <h2 className="mb-2 mt-6 text-title font-bold leading-none">{recordsTitle}</h2>
       <ul className="grid gap-1">
         {view.records.map((r) => (
           <SpendRow key={r.id} r={r} />

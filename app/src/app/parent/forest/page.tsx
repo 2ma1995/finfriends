@@ -62,10 +62,10 @@ export default async function ParentForestPage() {
         </div>
       ) : (
         <section className="mt-3">
-          <h2 className="mb-1.5 text-cap tracking-[0.04em] text-ink-mute">이번 달 네 영역</h2>
+          <h2 className="mb-2 mt-6 text-title font-bold leading-none">이번 달 네 영역</h2>
           <ul className="grid grid-cols-2 gap-1.5">
             {view.slotStages.map((s) => (
-              <li key={s.label} className="flex items-baseline justify-between rounded-card border border-line bg-surface px-3 py-2 text-sub">
+              <li key={s.label} className="flex items-baseline justify-between rounded-card bg-surface px-3 py-2 text-sub">
                 <span>{s.label}</span>
                 <b className="text-ink-soft">{s.stage}</b>
               </li>
@@ -78,11 +78,11 @@ export default async function ParentForestPage() {
         ③④ 지난달과 비교 — 🔴 전월 스냅샷이 없으면 **0으로 그리지 않는다** (AC-E2).
             0으로 그리면 보호자는 「변화 없음」이 아니라 「고장」으로 읽는다.
       */}
-      <h2 className="mb-1.5 mt-3 text-cap tracking-[0.04em] text-ink-mute">지난달과 비교</h2>
+      <h2 className="mb-2 mt-6 text-title font-bold leading-none">지난달과 비교</h2>
       {view.hasPrevMonth && view.deltas.length > 0 ? (
         <ul className="grid gap-1.5">
           {view.deltas.map((d) => (
-            <li key={d.label} className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-sub">
+            <li key={d.label} className="flex items-center justify-between rounded-card bg-surface px-3 py-2 text-sub">
               <span>{d.label}</span>
               <span className={`font-bold tabular-nums ${d.improved ? "text-primary-d" : ""}`}>
                 {d.from} → {d.to}

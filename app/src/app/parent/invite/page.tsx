@@ -58,7 +58,7 @@ export default async function ParentInvitePage({
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">쓰는 법</h2>
         <ol className="mt-1.5 grid gap-1">
           {howTo.map((line, i) => (
-            <li key={line} className="flex items-baseline gap-2 rounded-card border border-line bg-surface px-3 py-2">
+            <li key={line} className="flex items-baseline gap-2 rounded-card bg-surface px-3 py-2">
               <span className="text-sub tabular-nums text-ink-mute">{i + 1}</span>
               <span className="flex-1 text-sub leading-relaxed text-ink-soft">{line}</span>
             </li>
@@ -77,7 +77,7 @@ export default async function ParentInvitePage({
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">등록 규칙</h2>
         <dl className="mt-1.5 grid gap-1">
           {rules.map((r) => (
-            <div key={r.k} className="flex items-baseline justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
+            <div key={r.k} className="flex items-baseline justify-between gap-3 rounded-card bg-surface px-3 py-2">
               <dt className="shrink-0 text-sub text-ink-mute">{r.k}</dt>
               <dd className="text-right text-sub text-ink-soft">{r.v}</dd>
             </div>

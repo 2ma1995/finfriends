@@ -74,7 +74,7 @@ export default async function ParentSavingsPage({
 
       {requested.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-sub font-bold">{requestedTitle}</h2>
+          <h2 className="mb-2 mt-6 text-title font-bold leading-none">{requestedTitle}</h2>
           <ul className="grid gap-2">
             {requested.map((s) => (
               <li key={s.id} className="rounded-card border border-star bg-star-bg p-3">
@@ -112,7 +112,7 @@ export default async function ParentSavingsPage({
                     return a === null ? (
                       <p className="text-cap text-ink-mute">{annualUnknown}</p>
                     ) : (
-                      <div className="rounded-card border border-line bg-surface px-2.5 py-1.5">
+                      <div className="rounded-card bg-surface px-2.5 py-1.5">
                         <div className="flex items-baseline justify-between gap-2 text-sub">
                           <span className="text-ink-mute">{annualLabel}</span>
                           <b className="tabular-nums">약 {a}%</b>
@@ -145,7 +145,7 @@ export default async function ParentSavingsPage({
 
       {active.length > 0 ? (
         <>
-          <h2 className="mb-1.5 mt-4 text-sub font-bold">{activeTitle}</h2>
+          <h2 className="mb-2 mt-6 text-title font-bold leading-none">{activeTitle}</h2>
           <ul className="grid gap-2">
             {active.map((s) => (
               <li key={s.id} className="rounded-card border border-primary-l bg-primary-bg p-3">

@@ -64,7 +64,7 @@ export default async function BankAdjustPage({
       ) : (
         <ul className="mt-3 grid gap-1.5">
           {fixable.map((h) => (
-            <li key={h.id} className="rounded-card border border-line bg-surface px-3 py-2.5">
+            <li key={h.id} className="rounded-card bg-surface px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <span className="flex-1 text-sub">{h.memo}</span>
                 <span className="shrink-0 text-cap text-ink-mute">{h.whenLabel}</span>

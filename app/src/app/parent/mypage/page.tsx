@@ -22,7 +22,7 @@ export const metadata = { title: "내 정보 · 핀프렌즈" };
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
+    <div className="flex items-baseline justify-between gap-3 rounded-card bg-surface px-3 py-2">
       <span className="shrink-0 text-sub text-ink-mute">{label}</span>
       <span className="text-right text-sub text-ink-soft">{value}</span>
     </div>
@@ -100,7 +100,7 @@ export default async function ParentMyPage({
         ) : (
           <ul className="mt-1.5 grid gap-1">
             {view.devices.map((d) => (
-              <li key={d.deviceRef} className="rounded-card border border-line bg-surface p-3">
+              <li key={d.deviceRef} className="rounded-card bg-surface p-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <b className="text-sub">{d.childName}의 기기</b>
                   <span className="text-cap text-ink-mute">{d.lastSeenLabel}</span>

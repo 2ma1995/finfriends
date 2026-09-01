@@ -38,11 +38,20 @@ export function Empty({ emoji, title, body, hint }: {
 }
 
 /** 카드 — 두 모드가 radius 만 다르다 */
+/**
+ * 카드 — 🔴 **선은 「무슨 일이 있다」를 말할 때만 그린다.**
+ *
+ * 예전엔 `surface` 도 `border-line` 을 둘렀다. 화면의 **모든 상자**가 선을 갖게 되니
+ * 정작 `miss`(문제)·`grow`(좋은 소식)의 선이 **눈에 안 들어왔다** —
+ * 다 두르면 아무것도 안 두른 것과 같다.
+ *
+ * 🔴 기본은 **배경만**이다. 묶는 것은 배경과 여백이고, 선은 뜻을 갖는다.
+ */
 export function Card({ children, tone = "surface" }: { children: ReactNode; tone?: "surface" | "miss" | "grow" }) {
   const cls = {
-    surface: "border-line bg-surface",
-    miss: "border-miss-line bg-miss-bg",
-    grow: "border-primary-l/50 bg-primary-bg",
+    surface: "bg-surface",
+    miss: "border border-miss-line bg-miss-bg",
+    grow: "border border-primary-l/50 bg-primary-bg",
   }[tone];
-  return <section className={`rounded-card border p-3 ${cls}`}>{children}</section>;
+  return <section className={`rounded-card p-3.5 ${cls}`}>{children}</section>;
 }

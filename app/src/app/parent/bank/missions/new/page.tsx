@@ -168,7 +168,7 @@ export default async function NewMissionPage({
           </h2>
           <ul className="mt-1.5 grid gap-1">
             {open.map((m) => (
-              <li key={m.id} className="flex items-baseline justify-between gap-2 rounded-card border border-line bg-surface px-3 py-2">
+              <li key={m.id} className="flex items-baseline justify-between gap-2 rounded-card bg-surface px-3 py-2">
                 <span className="flex-1 text-sub leading-relaxed text-ink-soft">
                   {m.icon} {m.title}
                 </span>

@@ -42,7 +42,7 @@ export default async function BankHistoryPage() {
       ) : (
         <ul className="grid gap-1">
           {history.map((h) => (
-            <li key={h.id} className="rounded-card border border-line bg-surface px-3 py-2">
+            <li key={h.id} className="rounded-card bg-surface px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className="flex-1 text-sub">{h.memo}</span>
                 <span className="shrink-0 text-cap text-ink-mute">{h.whenLabel}</span>
