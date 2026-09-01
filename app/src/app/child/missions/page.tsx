@@ -4,7 +4,7 @@ import { getMissionBoard } from "@/modules/mission";
 import type { MissionView } from "@/contracts/mission";
 import { markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
-  backfilledNotice, consentRequired, doneLabel, empty, noDevice,
+  backfilledNotice, consentRequired, doneLabel, empty, noDevice, photoLabel, photoNotice,
   rejectedPrefix, sections, undoLabel, waitingNotice,
 } from "./missions.fixture";
 
@@ -48,8 +48,17 @@ function Row({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
       ) : null}
 
       {action === "done" ? (
-        <form action={markMissionDone} className="mt-2">
+        <form action={markMissionDone} className="mt-2 grid gap-1.5">
           <input type="hidden" name="missionId" value={m.id} />
+          {/* 🔴 사진은 선택이다. 필수로 하면 찍을 수 없는 실천은 아예 못 올린다 */}
+          <label className="grid gap-1">
+            <span className="text-[0.72em] text-ink-mute">{photoLabel}</span>
+            {/* 🔴 `capture` 를 넣지 않는다 — 강제 촬영은 요구가 아니다.
+                이미 찍어 둔 사진도 고를 수 있어야 한다 */}
+            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                   className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-[0.72em]" />
+            <span className="text-[0.7em] text-ink-mute">{photoNotice}</span>
+          </label>
           <button className="min-h-touch w-full rounded-card bg-primary text-[0.86em] font-bold text-white">
             {doneLabel}
           </button>

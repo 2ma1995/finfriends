@@ -6,11 +6,13 @@ import { CATEGORIES, byCategory } from "@/contracts/items";
 import { emptyRoom, itemsLabel, shopLink, todo, todoTitle } from "./room.fixture";
 import { getRoom, placedItems } from "@/modules/items";
 import { getWalletTotals } from "@/modules/allowance";
+import { markAttendance } from "@/modules/attendance";
 import { currentChild } from "@/lib/session/current-child";
 import { getMissionBoard } from "@/modules/mission";
 import { getTourState } from "@/modules/onboarding";
 import { restartTourAction } from "@/app/actions/onboarding";
 import { consentRequired, finishBonus, noDevice, restartLabel } from "../welcome/welcome.fixture";
+import { attendanceNotice } from "./room.fixture";
 import { redirect } from "next/navigation";
 
 // UX-003 · STR-003 · STR-005 — 아이가 여는 첫 화면
@@ -46,6 +48,13 @@ export default async function ChildHomePage({
   const tour = await getTourState(access.childId);
   if (!tour.finished && !tour.skipped) redirect("/child/welcome");
 
+  /**
+   * 🔴 **출석 별은 아이가 처음 여는 화면에서 준다** (FR-010).
+   *    KST 기준 1일 1회이고, 같은 날 몇 번 열어도 멱등키가 막는다.
+   *    별을 못 줘도 화면은 열린다 — 출석은 덤이지 관문이 아니다.
+   */
+  const attended = await markAttendance(access.childId);
+
   const [board, room, allowance] = await Promise.all([
     getMissionBoard(access.childId),
     getRoom(access.childId),
@@ -60,6 +69,13 @@ export default async function ChildHomePage({
 
   return (
     <Screen role="아이 화면" title="내 방" back={{ href: "/screens", label: "화면 목록" }}>
+      {/* 🔴 받았을 때만 말한다. 매번 띄우면 아이가 무시하게 된다 */}
+      {attended.granted ? (
+        <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
+          {attendanceNotice}
+        </p>
+      ) : null}
+
       {justFinished ? (
         <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-[0.86em] font-bold text-star-d">
           {finishBonus}

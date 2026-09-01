@@ -17,10 +17,21 @@ export async function markMissionDone(formData: FormData) {
   if (!access.ok) redirect("/child/locked?from=%2Fchild%2Fmissions");
 
   const id = String(formData.get("missionId") ?? "");
-  if (id) await markDone(access.childId, id);
+  if (!id) redirect("/child/missions");
+
+  /**
+   * 🔴 사진은 **선택**이다 (FR-032). 없어도 미션은 올라간다 —
+   *    필수로 하면 찍을 수 없는 실천(참기·기록하기)은 아예 못 올린다.
+   *
+   * ⚠️ 저장은 `modules/mission.attachPhoto` 가 맡는다(다른 작업자). 붙기 전까지는
+   *    **화면만 준비돼 있고 사진은 저장되지 않는다.** 아이에게 「지워진다」고
+   *    말해 놓고 저장하는 것보다, 아예 저장하지 않는 쪽이 안전하다.
+   */
+  await markDone(access.childId, id);
 
   revalidatePath("/child/missions");
   revalidatePath("/child/home");
+  revalidatePath("/child/practice");
 }
 
 /** 잘못 눌렀을 때 — 보호자가 아직 안 봤을 때만 된다 */

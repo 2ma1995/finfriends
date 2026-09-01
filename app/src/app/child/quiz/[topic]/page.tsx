@@ -5,7 +5,7 @@ import { answeredToday, getQuiz, QUIZ_TOPICS, quizTitle, todayIndex } from "@/mo
 import { submitAnswer } from "@/app/actions/quiz";
 import {
   backToPractice, consentRequired, correctLabel, doneToday, explainTitle,
-  noDevice, starNotice, todayLabel, tomorrow, wrongLabel, wrongNotice, wrongPractice,
+  limitNotice, noDevice, starNotice, todayLabel, tomorrow, wrongLabel, wrongNotice, wrongPractice,
 } from "./quiz.fixture";
 
 // LRN-001 — 퀴즈. 🔴 맞히면 **별이 DB 에 남는다**
@@ -16,7 +16,7 @@ export default async function ChildQuizPage({
   params, searchParams,
 }: {
   params: Promise<{ topic: string }>;
-  searchParams: Promise<{ r?: string; star?: string }>;
+  searchParams: Promise<{ r?: string; star?: string; limit?: string }>;
 }) {
   const access = await currentChild();
   const { topic } = await params;
@@ -81,6 +81,8 @@ export default async function ChildQuizPage({
               </>
             ) : null}
             {sp.star ? <p className="mt-1 text-[0.86em] font-bold text-star-d">{starNotice}</p> : null}
+            {/* 🔴 맞혔는데 한도라 못 받은 것 — 「틀렸다」와 갈라 말한다 */}
+            {sp.limit ? <p className="mt-1 text-[0.84em] text-ink-soft">{limitNotice}</p> : null}
           </div>
 
           <div className="mt-2">

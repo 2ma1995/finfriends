@@ -20,3 +20,5 @@ export const emptyRoom = {
 export const itemsLabel = (n: number) => `내 아이템 ${n}개`;
 export const shopLink = "상점";
 export const todoTitle = "오늘 할 일";
+/** 🔴 출석 별 — 받았을 때만 말한다. 매번 띄우면 아이가 무시한다 (FR-010) */
+export const attendanceNotice = "오늘도 왔네요! ⭐ 1개를 받았어요";

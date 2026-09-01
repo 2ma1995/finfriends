@@ -175,6 +175,23 @@ export function todayIndex(slug: string, now = new Date()) {
   return ((day + salt) % total) + 1;
 }
 
+/**
+ * 오늘 별을 받은 퀴즈 수 — `FR-011` 「분야별 1일 1개 · **총 4개**」.
+ *
+ * 🔴 한도를 넘어도 **풀이는 된다.** ⭐만 안 준다 (FR-011 예외).
+ *    막아 버리면 더 배우려는 아이를 벌하는 셈이 된다.
+ * 🔴 별 원장이 답을 갖고 있다 — 따로 세는 표를 만들면 둘이 갈린다.
+ */
+export const DAILY_STAR_LIMIT = 4;
+
+export async function quizStarsToday(childId: string, now = new Date()) {
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const start = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - 9 * 60 * 60 * 1000);
+  return prisma.starLedgerEntry.count({
+    where: { childId, triggerCode: "QUIZ_CORRECT", createdAt: { gte: start } },
+  });
+}
+
 /** 오늘 문제를 이미 맞혔나 — 별 원장이 답을 갖고 있다 (같은 멱등키) */
 export async function answeredToday(childId: string, slug: string, now = new Date()) {
   const n = todayIndex(slug, now);
@@ -201,6 +218,8 @@ export type GradeResult = {
   explain: string;
   /** 맞혔고 **처음**이면 별이 하나 는다. 두 번째부터는 늘지 않는다 */
   starred: boolean;
+  /** 🔴 오늘 한도(4개)를 다 써서 못 받았다 — 틀린 게 아니다. 화면이 갈라 말해야 한다 */
+  limitReached: boolean;
   balance: number;
 };
 
@@ -214,7 +233,17 @@ export async function gradeQuiz(childId: string, slug: string, n: number, choice
 
   if (!correct) {
     // 오답 — 아무것도 깎지 않는다. 해설만 준다
-    return { correct: false, explain: q.explain, starred: false, balance: await currentBalance(childId) };
+    return { correct: false, explain: q.explain, starred: false, limitReached: false,
+             balance: await currentBalance(childId) };
+  }
+
+  /**
+   * 🔴 **하루 총 4개까지만 별을 준다** (FR-011). 넘으면 풀이는 되고 ⭐만 안 준다 —
+   *    막으면 더 배우려는 아이를 벌하는 셈이다.
+   */
+  if ((await quizStarsToday(childId)) >= DAILY_STAR_LIMIT) {
+    return { correct: true, explain: q.explain, starred: false, limitReached: true,
+             balance: await currentBalance(childId) };
   }
 
   const res = await grantStar({
@@ -237,6 +266,7 @@ export async function gradeQuiz(childId: string, slug: string, n: number, choice
     correct: true,
     explain: q.explain,
     starred: res.ok && !res.duplicated,
+    limitReached: false,
     balance: res.ok ? res.balance : await currentBalance(childId),
   };
 }

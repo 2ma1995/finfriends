@@ -3,6 +3,13 @@
 // 두 자료(금감원 익힘책 · 슬기로운 생활금융)가 **가장 강조하는 실천이 용돈기입장 쓰기**다.
 // 날짜 · 내용 · 들어온 돈 · 나간 돈 · 남은 돈 다섯 칸을 그대로 옮겼다.
 
+/**
+ * 🔴 이자를 **정액 비례**로 말하는 기준 단위 (`AC-031-5`).
+ *    「10,000원 모으면 ○○원」이 저학년이 잡을 수 있는 유일한 감각이다.
+ */
+export const UNIT = 10_000;
+export const perUnit = (pct: number) => Math.floor((UNIT * pct) / 100);
+
 export const title = "내 통장";
 export const totalTitle = "내 돈";
 export const balanceTitle = "쓸 수 있는 돈";
@@ -54,13 +61,19 @@ export const savings = {
    *    누르기 전에 정하는 사람이 누구인지 먼저 말한다.
    */
   wantLabel: "이자는 얼마면 좋겠어요?",
-  wantNotice: (pct: number) => `우리 집 이자는 지금 ${pct}%예요. 더 받고 싶으면 말해 볼 수 있어요.`,
+  /**
+   * 🔴 **아이 화면에 `%` 를 쓰지 않는다** (`AC-031-5`). 저학년은 퍼센트를 못 읽는다 —
+   *    「5%」는 아무 감각도 안 준다. **정액 비례**로 말한다: 「10,000원 모으면 500원」.
+   */
+  wantNotice: (pct: number) =>
+    `지금은 ${UNIT.toLocaleString("ko-KR")}원에 ${perUnit(pct).toLocaleString("ko-KR")}원을 받아요. 더 받고 싶으면 말해 볼 수 있어요.`,
   wantNoRate: "아직 우리 집 이자가 없어요. 얼마면 좋겠는지 말해 보세요.",
   /** 🔴 갖고 싶은 것에 넣어 둔 돈에는 이자가 안 붙는다. 위의 이자 칸을 없앴으므로 여기서 말한다 */
   onlyOnSavings: "이자는 저금한 돈에만 붙어요.",
   wantWho: "얼마로 할지는 부모님이 정해요.",
-  wantedShown: (pct: number) => `${pct}%를 바랐어요`,
-  gaveInstead: (pct: number) => `부모님이 ${pct}%로 해주셨어요`,
+  wantedShown: (pct: number) => `${UNIT.toLocaleString("ko-KR")}원에 ${perUnit(pct).toLocaleString("ko-KR")}원을 바랐어요`,
+  gaveInstead: (pct: number) =>
+    `부모님이 ${UNIT.toLocaleString("ko-KR")}원에 ${perUnit(pct).toLocaleString("ko-KR")}원으로 해주셨어요`,
   sameAsWanted: "바란 대로 해주셨어요!",
 
   goalLabel: "무엇을 위해",
@@ -81,7 +94,13 @@ export const savings = {
   askedNotice: "신청했어요. 부모님이 보시면 시작돼요.",
   doneBadge: "끝까지 지켰어요 ⭐",
   brokenBadge: "중간에 깼어요",
-  rejectedBadge: "이번엔 안 됐어요",
+  /**
+   * 🔴 **「거절」이라는 단어를 쓰지 않는다** (`AC-031-4`). 아이에게 거절은 끝으로 읽힌다 —
+   *    부모가 안 된다고 한 것은 **다시 이야기할 일**이지 닫힌 문이 아니다.
+   */
+  rejectedBadge: "다시 이야기해요",
+  talkAgain: "다시 이야기해요",
+  talkAgainBody: "부모님과 이야기하고 다시 신청할 수 있어요.",
   lockedTitle: "적금에 넣은 돈",
 };
 

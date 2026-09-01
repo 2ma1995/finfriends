@@ -8,7 +8,7 @@ import { breakSavingsAction, payInstallmentAction, requestSavingsAction } from "
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel,
   errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
-  setAsideNotice, title, totalTitle,
+  perUnit, setAsideNotice, title, totalTitle,
 } from "./allowance.fixture";
 
 // D18 · D20 — 아이 통장. 🔴 두 자료가 가장 강조하는 실천이 용돈기입장 쓰기다
@@ -87,6 +87,17 @@ export default async function ChildPassbookPage({
         <div className="mb-1.5"><Card tone="grow">
           <p className="text-[0.86em]">{sp.asked ? savings.askedNotice : savings.brokeNotice}</p>
         </Card></div>
+      ) : null}
+
+      {/* 🔴 반려는 끝이 아니다. 「거절」을 쓰지 않고 다시 이야기할 자리를 연다 (AC-031-4) */}
+      {open === null && closed[0]?.state === "REJECTED" ? (
+        <div className="mb-1.5 rounded-card border border-miss-line bg-miss-bg p-3">
+          <b className="text-[0.88em] text-miss">{savings.talkAgain}</b>
+          {closed[0].rejectReason ? (
+            <p className="mt-1 text-[0.84em] leading-relaxed">{closed[0].rejectReason}</p>
+          ) : null}
+          <p className="mt-1 text-[0.8em] text-ink-soft">{savings.talkAgainBody}</p>
+        </div>
       ) : null}
 
       {open === null ? (
@@ -175,7 +186,7 @@ export default async function ChildPassbookPage({
                         <input type="radio" name="wantedPct" value={w}
                                defaultChecked={w === (p.interestPct ?? 5)} className="peer sr-only" />
                         <span className="grid min-h-touch place-items-center rounded-card border border-line bg-surface text-[0.8em] peer-checked:border-primary peer-checked:bg-primary-bg peer-checked:font-bold">
-                          {w}%
+                          {perUnit(w).toLocaleString("ko-KR")}원
                         </span>
                       </label>
                     </li>
@@ -199,8 +210,8 @@ export default async function ChildPassbookPage({
           </div>
           <p className="mt-0.5 text-[0.74em] text-ink-mute">
             {open.kind === "INSTALLMENT"
-              ? `${savings.kinds.INSTALLMENT.label} · 한 주 ${won(open.perPeriod ?? 0)} · 이자 ${open.interestPct}%`
-              : `${savings.kinds.DEPOSIT.label} · ${open.months}달 · 이자 ${open.interestPct}%`}
+              ? `${savings.kinds.INSTALLMENT.label} · 한 주 ${won(open.perPeriod ?? 0)}`
+              : `${savings.kinds.DEPOSIT.label} · ${open.months}달`}
           </p>
           {/* 🔴 바란 것과 다르면 그 사실을 말한다. 조용히 넘기면 「왜 물어봤지」가 된다 */}
           {open.wantedPct !== null ? (

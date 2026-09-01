@@ -51,6 +51,7 @@ function toView(r: {
     rejectReason: r.rejectReason,
     backfilled: r.state === "BACKFILLED",
     fromLesson: r.sourceId != null,
+    hasPhoto: false,
   };
 }
 
@@ -94,7 +95,9 @@ export async function markDone(childId: string, missionId: string) {
   const r = await prisma.mission.updateMany({
     // 이미 했거나 판정이 끝난 것은 다시 누를 수 없다
     where: { id: missionId, childId, state: "PENDING", doneAt: null },
-    data: { doneAt: new Date(), cycleId: cycleIdOf() },
+    data: {
+      doneAt: new Date(), cycleId: cycleIdOf(),
+    },
   });
   return r.count === 1;
 }
@@ -195,7 +198,9 @@ export async function approveMission(guardianId: string, missionId: string) {
 
   await prisma.mission.update({
     where: { id: m.id },
-    data: { state: late ? "BACKFILLED" : "APPROVED", decidedAt: new Date() },
+    data: {
+      state: late ? "BACKFILLED" : "APPROVED", decidedAt: new Date(),
+    },
   });
   return true;
 }
@@ -207,7 +212,9 @@ export async function approveMission(guardianId: string, missionId: string) {
 export async function rejectMission(guardianId: string, missionId: string, reason: string) {
   const r = await prisma.mission.updateMany({
     where: { id: missionId, guardianId, state: "PENDING", doneAt: { not: null } },
-    data: { state: "REJECTED", decidedAt: new Date(), rejectReason: reason.trim() || null },
+    data: {
+      state: "REJECTED", decidedAt: new Date(), rejectReason: reason.trim() || null,
+    },
   });
   return r.count === 1;
 }

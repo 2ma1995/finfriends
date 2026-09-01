@@ -6,7 +6,8 @@ import { addWishAction, depositAction, raiseRankAction, removeWishAction } from 
 import {
   addLabel, addTitle, addedNotice, consentRequired, depositLabel, depositPlaceholder,
   empty, errors, milestoneHint, nameLabel, namePlaceholder, noDevice, rankNotice, reachedLabel, remainingLabel,
-  rankUpLabel, rankedNotice, removeLabel, savedNotice, targetLabel, targetPlaceholder,
+  allStarsLabel, nextStarLabel, rankUpLabel, rankedNotice, removeLabel, savedNotice,
+  targetLabel, targetPlaceholder,
   walletEmpty, walletLabel,
 } from "./wishlist.fixture";
 
@@ -62,9 +63,9 @@ export default async function ChildWishlistPage({
             <li key={w.id} className="rounded-card border border-line bg-surface p-3">
               <div className="flex items-baseline justify-between gap-2">
                 <b className="text-[0.92em]">{w.name}</b>
-                <b className="shrink-0 tabular-nums text-[0.92em] text-primary-d">{w.percent}%</b>
+                <b className="shrink-0 tabular-nums text-[0.86em] text-ink-mute">{won(w.targetAmount)}</b>
               </div>
-              <div className="text-[0.74em] text-ink-mute">{w.rank}순위 · {won(w.targetAmount)}</div>
+              <div className="text-[0.74em] text-ink-mute">{w.rank}순위</div>
 
               {/* 🔴 넣은 게 **0%로 보이면 안 된다.** 1,000/300,000 은 0% 로 내려간다 —
                   아이는 「넣었는데 아무 일도 안 일어났다」로 느낀다. 조금이라도 넣었으면 보인다 */}
@@ -84,11 +85,11 @@ export default async function ChildWishlistPage({
               <div className="mt-0.5 flex justify-between text-[0.72em] text-ink-mute">
                 <span />
                 {/* 지난 단계는 이미 별을 받은 것 · 다음 단계는 앞으로 받을 것 */}
+                {/* 🔴 아이 화면에 `%` 를 쓰지 않는다 (AC-031-5). 다음 별까지 **금액**으로 말한다 */}
                 <span>
-                  {w.reached.length > 0 ? `${w.reached.join("·")}% 지남` : null}
-                  {w.reached.length > 0 && w.nextMilestone ? " · " : null}
-                  {w.nextMilestone ? `${w.nextMilestone}%까지 조금 더` : null}
-                  {!w.nextMilestone ? " 다 모았어요" : null}
+                  {w.nextMilestone
+                    ? nextStarLabel(Math.max(0, Math.ceil((w.targetAmount * w.nextMilestone) / 100) - w.savedAmount))
+                    : allStarsLabel}
                 </span>
               </div>
 

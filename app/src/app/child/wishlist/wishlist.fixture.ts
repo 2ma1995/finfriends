@@ -43,7 +43,10 @@ export const rankNotice = (left: number) =>
 export const remainingLabel = (won: number) => `${won.toLocaleString("ko-KR")}원 더 모으면 돼요`;
 export const reachedLabel = "다 모았어요!";
 
-export const milestoneHint = "30% · 70% · 100%에 닿으면 별을 하나씩 받아요.";
+/** 🔴 아이 화면에 `%` 를 쓰지 않는다 (AC-031-5). 다음 별까지 **금액**으로 말한다 */
+export const nextStarLabel = (won: number) => `${won.toLocaleString("ko-KR")}원 더 모으면 ⭐`;
+export const allStarsLabel = "별을 다 받았어요";
+export const milestoneHint = "모으는 동안 별을 세 번 받아요.";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
 export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };

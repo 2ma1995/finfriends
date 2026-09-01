@@ -35,6 +35,8 @@ export type MissionView = {
    *    같아 보이면 보호자는 자기가 시킨 줄 알고, 아이가 스스로 한 것을 못 알아본다.
    */
   readonly fromLesson: boolean;
+  /** 🔴 사진이 붙어 있나. **판정하면 즉시 사라진다** (FR-032 · AC-032-1) */
+  readonly hasPhoto: boolean;
 };
 
 export type MissionBoardView = {

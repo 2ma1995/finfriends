@@ -7,6 +7,12 @@ export const sections = {
 };
 
 export const doneLabel = "했어요";
+/**
+ * 🔴 사진은 **선택**이다 (FR-032). 찍을 수 없는 실천(참기·기록하기)도 있다.
+ * 🔴 **부모가 보고 나면 바로 지워진다**는 것을 아이에게 말한다 — 아동 이미지다.
+ */
+export const photoLabel = "사진 보여주기 (안 해도 돼요)";
+export const photoNotice = "부모님만 보시고 바로 지워져요.";
 export const undoLabel = "아니에요";
 
 /** 🔴 「승인 대기」를 「미실천」과 구별해 말한다 (AC-6.2) */

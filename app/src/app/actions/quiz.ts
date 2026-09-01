@@ -23,6 +23,7 @@ export async function submitAnswer(formData: FormData) {
     n: String(n),
     r: r.correct ? "o" : "x",
     ...(r.starred ? { star: "1" } : {}),
+    ...(r.limitReached ? { limit: "1" } : {}),
   });
   redirect(`/child/quiz/${slug}?${q}`);
 }

@@ -11,6 +11,8 @@ export const wrongLabel = "다시 볼까요";
 export const wrongNotice = "괜찮아요. 별은 그대로예요.";
 export const wrongPractice = "배운 걸 해보면 별을 받을 수 있어요.";
 export const starNotice = "⭐ 1개를 받았어요";
+/** 🔴 「틀렸다」가 아니다. 맞혔는데 오늘 별을 다 받은 것이다 (FR-011) */
+export const limitNotice = "맞았어요! 오늘 별은 다 받아서 이번엔 안 붙어요. 내일 또 받을 수 있어요.";
 /** 🔴 하루에 한 문제다. 「다음 문제」를 두면 하루에 몰아 푼다 */
 export const todayLabel = "오늘의 문제";
 export const tomorrow = "내일 또 새 문제가 나와요.";

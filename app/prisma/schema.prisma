@@ -282,6 +282,10 @@ model Mission {
   rejectReason String?      @map("reject_reason")
   /// 완료 시점 주기. 승인이 늦어도 이 주기에 귀속된다
   cycleId     Int?          @map("cycle_id")
+  /// 🔴 언제 사진을 지웠는지. 사진 자체는 `mission_photos` 가 갖고 판정 즉시 사라진다.
+  ///    행이 사라지면 증명이 「없다」뿐이라, **「언제 지웠다」**를 남긴다 (FR-032 · AC-032-2)
+  photoErasedAt DateTime?   @map("photo_erased_at") @db.Timestamptz(6)
+
   /// 학습 편 id. 🔴 null 이면 보호자가 만든 미션, 값이 있으면 **아이가 배우고 스스로 한 것**.
   ///    한 편당 한 장이다 — 부분 유니크 인덱스가 DB 에서 막는다
   sourceId    String?       @map("source_id")
