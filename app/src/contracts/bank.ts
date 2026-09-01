@@ -28,6 +28,19 @@
  */
 export const TOPUP_AMOUNTS = [5000, 10000, 30000] as const;
 
+/**
+ * 한 번에 넣을 수 있는 최대 금액.
+ *
+ * 🔴 **여기 있어야 한다.** 한동안 `modules/allowance`(서버 전용)에만 있어서
+ *    화면은 `max={500000}` 을 **따로 적고** 있었다 — 한쪽만 바꾸면 조용히 갈린다.
+ *    오늘 같은 종류의 어긋남을 두 번 고쳤다(`D61` — 되돌리기 조건).
+ *    계약에 두면 클라이언트 컴포넌트도 읽을 수 있고 숫자가 하나다.
+ *
+ * 🔴 상한이 있는 이유는 **0 하나 더 눌린 실수**다. 되돌릴 수는 있지만
+ *    (`/parent/bank/adjust`) 아이가 이미 봤을 수 있다.
+ */
+export const MAX_TOPUP = 500_000;
+
 
 export type BankView = {
   readonly childName: string | null;

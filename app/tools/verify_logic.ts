@@ -17,7 +17,7 @@ import {
   PRACTICE_BY_TOPIC, STAGE_EMOJI, STAGE_LABEL, STAGE_LADDER, STALL_DAYS,
   blockedBy, nextRule, practiceNeeded, stageFor, subjectParticle, topRule,
 } from "@/contracts/growth";
-import { TOPUP_AMOUNTS } from "@/contracts/bank";
+import { MAX_TOPUP, TOPUP_AMOUNTS } from "@/contracts/bank";
 import { MAX_PCT, WANTED_CHOICES } from "@/modules/savings";
 import { PIN_LENGTH, PIN_MAX_TRIES } from "@/lib/session/child-mode-pin";
 import { EXPIRE_HOURS, REMIND_HOURS } from "@/modules/mission";
@@ -150,6 +150,17 @@ check("아이 화면·로그인은 막지 않는다", !isGuardianPath("/child/ho
 const src = (rel: string) => readFileSync(new URL(`../src/${rel}`, import.meta.url), "utf8");
 
 /**
+ * 주석을 뺀 코드.
+ *
+ * 🔴 **주석이 검사를 속인다.** 「한때 `disabled={total + a > MAX_TOPUP}` 을 걸었다」고
+ *    주석에 적었더니 「그 코드가 없는지」 보는 검사가 **주석을 코드로 읽고 실패**했다.
+ *    있어서는 안 되는 것을 찾는 검사는 반드시 이쪽을 쓴다 —
+ *    안 그러면 「왜 이렇게 안 했는지」를 적을 수 없게 된다.
+ */
+const code = (rel: string) =>
+  src(rel).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+
+/**
  * 🔴 **로그인 시도 제한** (D54). 없어서 비밀번호를 무한히 시도할 수 있었다 —
  *    네 자리 PIN 은 다섯 번이면 잠그는데 부모 비밀번호는 안 막았다.
  */
@@ -253,9 +264,40 @@ check("  이미 되돌린 것은 멱등키가 막는다", /adjust:\$\{e\.id\}/.t
 const topup = src("components/parent/TopUpForm.tsx");
 check("🔴 금액 버튼이 제출하지 않는다", /type="button"/.test(topup),
   "`type` 을 빼면 폼이 제출돼 예전 동작으로 돌아간다");
-check("  누른 것이 보인다", /aria-pressed/.test(topup),
-  "칸만 조용히 바뀌면 부모가 또 누른다");
-check("  빈 칸으로는 못 누른다", /disabled=\{amount\.trim\(\)\.length === 0\}/.test(topup));
+check("  빈 칸으로는 못 누른다", /amount\.trim\(\)\.length === 0/.test(topup));
+
+/**
+ * 🔴 **누르면 더한다** (사용자 요청). 30,000 + 10,000 + 5,000 으로 45,000 을 만든다.
+ */
+check("🔴 금액 버튼이 누적한다", /const next = total \+ a;/.test(topup),
+  "바꾸기만 하면 45,000 같은 금액을 버튼으로 만들 수 없다");
+check("  비울 방법이 있다", /setAmount\(""\)/.test(topup),
+  "더하기만 되면 틀렸을 때 칸을 손으로 지워야 한다 — 그건 방법이 아니라 요령이다");
+
+/**
+ * 🔴 **상한을 넘기면 알린다.** 그리고 **넘기는 누름은 반영하지 않는다** —
+ *    500,000 으로 맞춰 주면 부모가 안 누른 금액이 칸에 남는다.
+ *
+ * 🔴 **버튼을 미리 막지 않는다.** `disabled` 를 걸면 `bump` 가 안 불려서
+ *    **알림이 영원히 안 뜬다** — 한 번 그렇게 짜서 잡았다.
+ */
+check("🔴 상한을 넘기면 알린다", /if \(next > MAX_TOPUP\) \{[\s\S]{0,400}?alert\(/.test(topup),
+  "조용히 잘라내면 부모가 누른 것과 다른 숫자가 들어간다");
+check("  넘기는 누름은 반영하지 않는다", /alert\([\s\S]{0,500}?\);\s*\n\s*return;/.test(topup),
+  "잘라서 넣으면 부모가 안 누른 금액이 칸에 남는다");
+check("  버튼을 미리 막지 않는다", !/disabled=\{total \+ a/.test(code("components/parent/TopUpForm.tsx")),
+  "막으면 bump 가 안 불려서 알림이 영원히 안 뜬다");
+
+/**
+ * 🔴 **상한이 한 숫자다.** 계약에 있어서 화면과 서버가 같은 값을 본다 —
+ *    한동안 화면이 `max={500000}` 을 따로 적고 있었다.
+ */
+check("🔴 상한이 계약에 있다", MAX_TOPUP === 500_000, "화면·서버가 같은 숫자를 본다");
+check("  화면이 숫자를 다시 적지 않는다", !/500000|500_000/.test(code("components/parent/TopUpForm.tsx")),
+  "한쪽만 바꾸면 조용히 갈린다");
+check("  서버도 계약을 쓴다",
+  /export \{ MAX_TOPUP \} from "@\/contracts\/bank"/.test(allowance),
+  "서버가 자기 숫자를 갖고 있으면 갈린다");
 check("  통장 화면에 즉시 제출 폼이 남지 않았다",
   !/action=\{topUpMockAction\}[\s\S]{0,200}?type="hidden" name="amount"/.test(src("app/parent/bank/page.tsx")),
   "숨은 amount 를 가진 폼이 남아 있으면 그 버튼은 여전히 바로 넣는다");

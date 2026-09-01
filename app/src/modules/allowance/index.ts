@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
 import { exactWhen, relativeWhen } from "@/lib/when";
+import { MAX_TOPUP } from "@/contracts/bank";
 
 /**
  * 용돈 장부 — 어긋남 대장 D18.
@@ -16,7 +17,8 @@ import { exactWhen, relativeWhen } from "@/lib/when";
  * 🔴 **잔액을 따로 저장하지 않는다.** 별 원장과 같은 규율 — 합이 잔액이다.
  */
 
-export const MAX_TOPUP = 500_000;
+/** 🔴 계약에서 가져온다 — 화면도 같은 숫자를 본다. 다시 여기 적으면 갈린다 */
+export { MAX_TOPUP } from "@/contracts/bank";
 
 export type AllowanceEntryView = {
   readonly id: string;

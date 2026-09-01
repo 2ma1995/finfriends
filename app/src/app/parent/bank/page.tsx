@@ -9,7 +9,8 @@ import { currentGuardian } from "@/lib/session/guardian-session";
 import { listForGuardian } from "@/modules/savings";
 import {
   adjustLabel, cardNeeded, customHint, customLabel, customPlaceholder, customSubmit,
-  historyLabel, missionNotice, presetHint, savedNotice, topUpErrors, topUpTitle, walletLabels,
+  clearLabel, historyLabel, missionNotice, overMaxNotice, presetHint, savedNotice,
+  topUpErrors, topUpTitle, walletLabels,
 } from "./bank.fixture";
 
 /**
@@ -130,6 +131,7 @@ export default async function ParentBankPage({
             labels={{
               srLabel: customLabel, placeholder: customPlaceholder,
               submit: customSubmit, hint: customHint, presetHint,
+              clear: clearLabel, overMax: overMaxNotice,
             }}
           />
         </div>
