@@ -94,6 +94,6 @@ console.log("  미션      ", await prisma.mission.count({ where: { childId: c.i
 if (!demo) console.log("  별        0개 · 가진 아이템 없음 · 온보딩 처음부터");
 if (!g?.consentCompleted) console.log("  ⚠ 보호자 동의가 아직 없다 — 아이 화면이 「동의가 필요해요」로 막힌다");
 console.log("");
-console.log("  아이 화면 열기 (브라우저 콘솔에 붙여넣고 새로고침):");
-console.log(`  document.cookie="ff_device_token=${token}; path=/"; document.cookie="ff_device=CHILD; path=/"`);
+console.log("  아이 화면 열기 — 이 주소를 브라우저에 붙여넣으면 됩니다:");
+console.log(`  http://localhost:${process.env.PORT ?? 4600}/child/enter?t=${token}`);
 await prisma.$disconnect();

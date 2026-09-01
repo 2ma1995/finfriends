@@ -116,6 +116,6 @@ console.log("  아이     ", c.id, c.displayName);
 console.log("  별 잔액  ", bal);
 console.log("  해제 PIN  1234");
 console.log("");
-console.log("  기기 토큰 (브라우저 콘솔에 붙여넣기):");
-console.log(`  document.cookie="ff_device_token=${token}; path=/"; document.cookie="ff_device=CHILD; path=/"`);
+console.log("  아이 화면 열기 — 이 주소를 브라우저에 붙여넣으면 됩니다:");
+console.log(`  http://localhost:${process.env.PORT ?? 4600}/child/enter?t=${token}`);
 await prisma.$disconnect();
