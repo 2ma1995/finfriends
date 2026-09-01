@@ -38,7 +38,9 @@ export async function getBank(
      *    목표에 떼어 둔 돈은 이 파일에서 따로 집계했다 — 그래서 부모 화면과
      *    아이 화면의 「가진 돈」이 또 갈렸다. 세는 곳은 `getWalletTotals` 하나다.
      */
-    childId ? getWalletTotals(childId) : Promise.resolve({ free: 0, setAside: 0, total: 0 }),
+    childId
+      ? getWalletTotals(childId)
+      : Promise.resolve({ free: 0, setAside: 0, locked: 0, total: 0 }),
     childId ? countWaiting(childId) : Promise.resolve(0),
     childId
       ? prisma.mission.count({ where: { childId, state: "PENDING", doneAt: null } })
@@ -53,6 +55,7 @@ export async function getBank(
     totalWon: wallet.total,
     freeWon: wallet.free,
     setAsideWon: wallet.setAside,
+    lockedWon: wallet.locked,
     cardActive: guardian?.mockCardStatus === "ACTIVE",
     interestPct: pct,
     // 🔴 한 번 줄 때 기준. 주기가 정해지지 않았으므로 자동으로 주지 않는다

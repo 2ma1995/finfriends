@@ -89,4 +89,31 @@ export type SpendSummaryView = {
   /** 계획 카드 없이 발생한 소비 건수 — C5 사각지대의 크기다 */
   readonly noPlanCount: number;
   readonly recordCount: number;
+  /**
+   * 🔴 **건별 내역.** 집계만 있으면 「소비 내역」이라는 이름이 거짓이 된다 —
+   *    부모는 합계 4,500원을 보고도 무엇을 샀는지 알 수 없었다.
+   *    `REQ-FUNC-013` 은 집계까지만 요구하지만 추적표의 컴포넌트 이름이
+   *    `SpendingLedgerView` 이고 화면 이름도 「내역」이다 (어긋남 대장 D26).
+   */
+  readonly records: readonly SpendRecordView[];
+};
+
+/**
+ * 소비 한 건.
+ *
+ * 🔴 **가게 이름이 없다.** 스키마에 `merchant_category` 만 있고 상호는 두지 않았다 —
+ *    아이가 어디를 다니는지가 그대로 위치 기록이 된다. 업종까지가 이 화면의 한계다.
+ */
+export type SpendRecordView = {
+  readonly id: string;
+  /** 「9월 1일」 */
+  readonly dayLabel: string;
+  readonly icon: string;
+  readonly categoryLabel: string;
+  readonly amount: number;
+  /**
+   * 🔴 **잘못 표시가 아니다.** ⭐ 판정은 금액 단독이고(ADR-008) 업종 불일치는
+   *    회고 문장을 가를 뿐 별을 막지 않는다. 화면도 그렇게 읽히게 적는다.
+   */
+  readonly planNote: "계획에 있었어요" | "계획에 없던 업종" | "계획 없이";
 };

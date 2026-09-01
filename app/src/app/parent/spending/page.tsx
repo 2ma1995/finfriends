@@ -4,7 +4,9 @@ import { Screen, Empty } from "@/components/shared/Screen";
 import { findChild } from "@/modules/consent";
 import { getSpendSummary } from "@/modules/plan";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { emptyState, noPrevNotice, notice, noPlanNotice } from "./spending.fixture";
+import {
+  emptyState, noPrevNotice, notice, noPlanNotice, recordsNotice, recordsTitle, seedNotice,
+} from "./spending.fixture";
 
 // PLN-005 — 소비 내역. 전월 대비 증감액을 맨 위에 둔다
 export const metadata = { title: "소비 내역 · 핀프렌즈" };
@@ -93,6 +95,31 @@ export default async function ParentSpendingPage() {
           {noPlanNotice(view.noPlanCount)}
         </p>
       ) : null}
+
+      {/*
+        ── 건별 내역 ──
+        🔴 집계만 있으면 「소비 내역」이라는 이름이 거짓이 된다. 부모는 합계를 보고도
+           무엇을 샀는지 알 수 없었다 (어긋남 대장 D26).
+        🔴 「계획 없이」를 색으로 가르지 않는다. ⭐ 판정은 금액 단독이고(ADR-008)
+           경고색을 쓰면 다그치는 화면이 된다 (P-03).
+      */}
+      <h2 className="mb-1.5 mt-4 text-[0.74em] tracking-[0.06em] text-ink-mute">{recordsTitle}</h2>
+      <ul className="grid gap-1">
+        {view.records.map((r) => (
+          <li key={r.id} className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
+            <span aria-hidden className="shrink-0 text-[1.1em]">{r.icon}</span>
+            <span className="min-w-0 flex-1">
+              <b className="block truncate text-[0.86em] font-medium">{r.categoryLabel}</b>
+              <span className="block text-[0.74em] text-ink-mute">
+                {r.dayLabel} · {r.planNote}
+              </span>
+            </span>
+            <b className="shrink-0 tabular-nums text-[0.88em]">{won(r.amount)}</b>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1.5 text-[0.72em] leading-relaxed text-ink-mute">{recordsNotice}</p>
+      <p className="mt-1 text-[0.72em] leading-relaxed text-ink-mute">{seedNotice}</p>
 
       <p className="mt-3 text-[0.72em] leading-relaxed text-ink-mute">{notice}</p>
     </Screen>
