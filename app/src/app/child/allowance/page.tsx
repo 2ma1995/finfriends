@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook, MOVED_CODES } from "@/modules/allowance";
+import { getWishlist } from "@/modules/wishlist";
+import { remainingLabel, reachedLabel } from "@/app/child/wishlist/wishlist.fixture";
 import {
   getClosed, getOpen, MAX_MONTHS, MAX_PERIODS, MIN_AMOUNT, MIN_PER_PERIOD, MIN_PERIODS, WANTED_CHOICES,
 } from "@/modules/savings";
@@ -10,7 +12,7 @@ import { SavingsForm } from "@/components/child/SavingsForm";
 import {
   balanceTitle, card, consentRequired, empty, historyTitle, inLabel,
   errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
-  planLink, setAsideNotice, title, totalTitle,
+  planLink, setAsideNotice, title, totalTitle, wishEmpty, wishRank, wishTitle,
 } from "./allowance.fixture";
 
 // D18 · D20 — 아이 통장. 🔴 두 자료가 가장 강조하는 실천이 용돈기입장 쓰기다
@@ -32,10 +34,11 @@ export default async function ChildPassbookPage({
   }
 
   const sp = await searchParams;
-  const [p, open, closed] = await Promise.all([
+  const [p, open, closed, wish] = await Promise.all([
     getPassbook(access.childId, access.guardianId),
     getOpen(access.childId),
     getClosed(access.childId, 3),
+    getWishlist(access.childId),
   ]);
   const stage = card[p.card];
 
@@ -230,6 +233,48 @@ export default async function ChildPassbookPage({
           ))}
         </ul>
       ) : null}
+
+      {/*
+        🔴 **목표가 내역보다 먼저다.** 통장을 여는 이유는 「얼마 남았지」이지
+           「지난달에 뭘 샀지」가 아니다. 내역은 지나간 것이고 목표는 앞으로 올 것이다.
+        🔴 **여기서 돈을 넣지 않는다.** 넣는 자리는 「갖고 싶은 것」 화면 하나다 —
+           두 군데서 넣으면 한도와 별 판정이 두 경로로 갈린다.
+      */}
+      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{wishTitle}</h2>
+      {wish.wishes.length === 0 ? (
+        <p className="rounded-card border border-dashed border-line-2 px-3 py-2.5 text-center text-[0.76em] text-ink-mute">
+          {wishEmpty}
+        </p>
+      ) : (
+        <ul className="grid gap-1.5">
+          {wish.wishes.map((w) => (
+            <li key={w.id}>
+              <Link href="/child/wishlist"
+                    className="block rounded-card border border-line bg-surface px-3 py-2">
+                <span className="flex items-baseline justify-between gap-2">
+                  <b className="truncate text-[0.88em]">{w.name}</b>
+                  <span className="shrink-0 text-[0.72em] text-ink-mute">{wishRank(w.rank)}</span>
+                </span>
+
+                {/* 🔴 넣은 게 **0%로 보이면 안 된다.** 1,000/300,000 은 0% 로 내려가고
+                    아이는 「넣었는데 아무 일도 안 일어났다」로 느낀다 */}
+                <span className="mt-1.5 block h-2 overflow-hidden rounded-full bg-line">
+                  <span className="block h-full rounded-full bg-primary-l"
+                        style={{ width: w.savedAmount > 0 ? `${Math.max(3, w.percent)}%` : "0%" }} />
+                </span>
+
+                {/* 🔴 아이 화면에 `%` 를 쓰지 않는다 (AC-031-5). 남은 것을 **금액**으로 말한다 */}
+                <span className="mt-1 flex items-baseline justify-between gap-2">
+                  <b className="text-[0.84em] tabular-nums text-primary-d">{won(w.savedAmount)}</b>
+                  <span className="text-[0.74em] text-ink-mute">
+                    {w.remaining > 0 ? remainingLabel(w.remaining) : reachedLabel}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{historyTitle}</h2>
       {p.history.length === 0 ? <Empty emoji="📒" {...empty} /> : (
