@@ -45,3 +45,11 @@ export const shopLink = "상점";
 export const todoTitle = "오늘 할 일";
 /** 🔴 출석 별 — 받았을 때만 말한다. 매번 띄우면 아이가 무시한다 (FR-010) */
 export const attendanceNotice = "오늘도 왔네요! ⭐ 1개를 받았어요";
+
+/**
+ * 방 제목 — 🔴 **「내 방」이 아니라 「서연의 방」이다.**
+ *
+ * 같은 화면이라도 자기 이름이 붙으면 **자기 자리**가 된다.
+ * 이름을 못 읽으면 「내 방」으로 떨어진다 — 이름은 꾸밈이지 관문이 아니다.
+ */
+export const roomTitle = (name: string | null) => (name ? `${name}의 방` : "내 방");

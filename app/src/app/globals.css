@@ -1,3 +1,15 @@
+/*
+ * Pretendard — 🔴 **본문 글꼴을 우리가 고른다.**
+ *
+ * 예전엔 `Apple SD Gothic Neo` 가 첫 자리였다. **OS 기본 글꼴**이라 기기마다 다르게
+ * 보이고, 무엇보다 **고른 흔적이 없다** — 「AI 가 만든 것 같다」에 한몫하던 자리다.
+ *
+ * 🔴 **동적 서브셋을 쓴다.** 한글 완성형 전부를 받으면 1MB 가 넘는데, 이 방식은
+ *    화면에 실제로 쓰인 글자만 조각으로 받는다. 아이 폰이 LTE 일 수 있다.
+ * 🔴 **폴백을 남긴다.** 오프라인이면 못 받는다 — 그때는 기기 글꼴로 떨어질 뿐
+ *    화면이 깨지지 않는다 (`REQ-NF-003` 오프라인).
+ */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -145,8 +157,14 @@
 :root {
   --ff-frame: 390px;   /* 모바일 폭 1종 — 명세 §7.2 */
   --ff-touch: 44px;    /* 아동 터치 타깃 하한 */
-  --ff-sans: 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
-  --ff-serif: 'AppleMyungjo', 'Nanum Myeongjo', 'Batang', serif;
+  /* 🔴 **Pretendard 를 앞에 세운다.** 뒤는 못 받았을 때 떨어질 자리다 */
+  --ff-sans: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  /*
+   * 🔴 **명조도 Pretendard 로 보낸다** (사용자 결정).
+   *    `ff-serif` 클래스는 5곳에 남아 있는데, 클래스를 지우는 대신 **가리키는 값만**
+   *    바꾼다 — 나중에 다시 명조를 쓰고 싶으면 여기 한 줄이다.
+   */
+  --ff-serif: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
 /* Clean — 보호자. 증거 제시 · 판단 지원. 명세 §4의 값이 그대로 여기다 */

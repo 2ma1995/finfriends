@@ -6,9 +6,10 @@ import { MyItems } from "@/components/child/MyItems";
 import { TodayList, type TodayItem } from "@/components/child/TodayList";
 import { hasPlanToday } from "@/modules/plan";
 import { getTodayBoard } from "@/modules/practice";
+import { getChildName } from "@/modules/child";
 import {
   emptyCategory, emptyRoom, itemsTitle, missionMore, myItemsHint, restCount,
-  shopLink, today, todayAllDone, todoTitle,
+  roomTitle, shopLink, today, todayAllDone, todoTitle,
 } from "./room.fixture";
 import { getRoom, placedItems } from "@/modules/items";
 import { getWalletTotals } from "@/modules/allowance";
@@ -71,13 +72,14 @@ export default async function ChildHomePage({
    * 🔴 **하교 시각이 지났는데 오늘 계획이 없을 때만** 묻는다 (D41).
    *    조건은 넷 다 서버가 본다 — 화면은 뜨라면 뜬다.
    */
-  const [board, room, allowance, askState, plannedToday, cells] = await Promise.all([
+  const [board, room, allowance, askState, plannedToday, cells, childName] = await Promise.all([
     getMissionBoard(access.childId),
     getRoom(access.childId),
     getWalletTotals(access.childId),
     shouldAsk(access.childId),
     hasPlanToday(access.childId),
     getTodayBoard(access.childId),
+    getChildName(access.childId),
   ]);
   const placed = placedItems(room);
 
@@ -103,7 +105,7 @@ export default async function ChildHomePage({
   if (quizLeft > 0) items.push({ ...today.quiz, note: restCount(quizLeft) });
 
   return (
-    <Screen role="아이 화면" title="내 방">
+    <Screen role="아이 화면" title={roomTitle(childName)}>
       {/* 🔴 받았을 때만 말한다. 매번 띄우면 아이가 무시하게 된다 */}
       {attended.granted ? (
         <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-sub font-bold text-star-d">

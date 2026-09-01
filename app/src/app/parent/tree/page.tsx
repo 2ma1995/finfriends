@@ -51,7 +51,7 @@ function TreeCard({ t }: { t: TreeSlotView }) {
         🔴 잠긴 칸에는 안 적는다. 열리지도 않은 것에 「남았어요」는 말이 안 된다.
       */}
       {!t.locked && t.blockedBy ? (
-        <p className="mt-1.5 text-left text-[0.66em] leading-relaxed text-ink-soft">{t.blockedBy}</p>
+        <p className="mt-1.5 text-left text-micro leading-relaxed text-ink-soft">{t.blockedBy}</p>
       ) : null}
     </div>
   );
@@ -164,7 +164,7 @@ export default async function ParentTreePage() {
            무엇이 남았는지가 카드마다 적혀 있으니 거기를 가리킨다.
       */}
       {view.slots.some((s) => s.stalledDays !== null) ? (
-        <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.78em] leading-relaxed text-ink-soft">
+        <p className="mt-3 rounded-card border border-dashed border-line-2 px-3 py-2 text-sub leading-relaxed text-ink-soft">
           {stallNotice}
         </p>
       ) : null}
