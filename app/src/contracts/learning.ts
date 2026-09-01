@@ -7,8 +7,21 @@ export const TOPIC_LABEL: Record<Topic, string> = {
   EARN: "벌기", SPEND: "잘 쓰기", SAVE: "모으기", GROW: "불리기",
 };
 
+/**
+ * 영역 이모지 — 🔴 **넷이 서로 달라야 한다.**
+ *
+ * 예전엔 `🌳 🌿 🌱 🌱` 였다. 넷 다 식물이고 **모으기와 불리기가 같은 🌱** 이라
+ * 목록에서 어느 영역인지 구별이 안 됐다. 나무 단계 이모지(`STAGE_EMOJI`)와도
+ * 겹쳐서 「영역」인지 「단계」인지 헷갈렸다.
+ *
+ * 🔴 **하는 일을 그린다.** 벌고 · 쓰고 · 모으고 · 불린다 —
+ *    식물의 크기 순서가 아니라 **네 가지 다른 행동**이다.
+ *
+ * 🔴 보호자·아동 **같은 표기**를 쓴다 (SRS §2 용어표 4영역).
+ *    여기 하나만 고치면 배우기 · 실천 · 미션 · 부모 미션 만들기가 함께 바뀐다.
+ */
 export const TOPIC_ICON: Record<Topic, string> = {
-  EARN: "🌳", SPEND: "🌿", SAVE: "🌱", GROW: "🌱",
+  EARN: "💰", SPEND: "🛒", SAVE: "🐷", GROW: "🌱",
 };
 
 export type TopicProgressView = {
