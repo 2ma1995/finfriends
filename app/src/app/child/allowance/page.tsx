@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
-import { getPassbook, MOVED_CODES } from "@/modules/allowance";
+import { getPassbook } from "@/modules/allowance";
 import { getWishlist } from "@/modules/wishlist";
 import { remainingLabel, reachedLabel } from "@/app/child/wishlist/wishlist.fixture";
 import {
@@ -10,8 +10,8 @@ import {
 import { breakSavingsAction, payInstallmentAction, requestSavingsAction } from "@/app/actions/savings";
 import { SavingsForm } from "@/components/child/SavingsForm";
 import {
-  balanceTitle, card, consentRequired, empty, historyTitle, inLabel,
-  errors, movedLabel, noDevice, notice, outLabel, savedTitle, savings,
+  balanceTitle, card, consentRequired, historyTitle,
+  errors, noDevice, notice, savedTitle, savings,
   planLink, setAsideNotice, title, totalTitle, wishEmpty, wishRank, wishTitle,
 } from "./allowance.fixture";
 
@@ -219,19 +219,14 @@ export default async function ChildPassbookPage({
         </div>
       )}
 
+      {/* 🔴 **끝난 저금은 딴 화면이다.** 여기 붙으면 「지금 하는 저금」이 그 아래 묻힌다 */}
       {closed.length > 0 ? (
-        <ul className="mt-1.5 grid gap-1">
-          {closed.map((c) => (
-            <li key={c.id} className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
-              <span className="flex-1 text-[0.82em]">{c.goal}</span>
-              <span className="text-[0.72em] text-ink-mute">
-                {c.state === "DONE" ? savings.doneBadge
-                 : c.state === "BROKEN" ? savings.brokenBadge : savings.rejectedBadge}
-              </span>
-              <b className="shrink-0 tabular-nums text-[0.8em]">{won(c.amount)}</b>
-            </li>
-          ))}
-        </ul>
+        <Link href="/child/allowance/savings"
+              className="mt-1.5 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
+          <span className="text-[1.1em]">🐖</span>
+          <span className="flex-1 text-[0.84em]">{savings.pastLink}</span>
+          <span className="text-[0.74em] tabular-nums text-ink-mute">{closed.length}건 ›</span>
+        </Link>
       ) : null}
 
       {/*
@@ -276,27 +271,16 @@ export default async function ChildPassbookPage({
         </ul>
       )}
 
-      <h2 className="mb-1.5 mt-4 text-[0.82em] font-bold">{historyTitle}</h2>
-      {p.history.length === 0 ? <Empty emoji="📒" {...empty} /> : (
-        <ul className="grid gap-1">
-          {p.history.map((h) => (
-            <li key={h.id}
-                className={`flex items-center gap-2 rounded-card border px-3 py-2 ${
-                  h.code === "ADJUST" ? "border-star bg-star-bg" : "border-line bg-surface"}`}>
-              <span className="flex-1">
-                <b className="block text-[0.84em]">{h.memo}</b>
-                <span className="text-[0.7em] text-ink-mute">
-                  {h.whenLabel} · {MOVED_CODES.includes(h.code) ? movedLabel : h.delta > 0 ? inLabel : outLabel}
-                </span>
-              </span>
-              <b className={`shrink-0 tabular-nums text-[0.86em] ${
-                h.delta > 0 ? "text-primary-d" : "text-ink-soft"}`}>
-                {h.delta > 0 ? "+" : ""}{won(h.delta)}
-              </b>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* 🔴 **지난 기록은 딴 화면이다.** 30줄이 여기 붙으면 스크롤이 기록으로 끝나고
+             목표도 저금도 그 밑에 묻힌다 — 기록을 줄인 게 아니라 자리를 옮겼다 */}
+      <Link href="/child/allowance/history"
+            className="mt-4 flex min-h-touch items-center gap-2 rounded-card border border-line bg-surface px-3">
+        <span className="text-[1.1em]">📒</span>
+        <span className="flex-1 text-[0.84em] font-bold">{historyTitle}</span>
+        <span className="text-[0.74em] tabular-nums text-ink-mute">
+          {p.history.length > 0 ? `${p.history.length}건 ›` : "›"}
+        </span>
+      </Link>
 
       <div className="mt-3"><Card tone="grow"><p className="text-[0.86em] leading-relaxed">{notice}</p></Card></div>
     </Screen>
