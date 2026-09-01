@@ -12,7 +12,10 @@
     "db:generate": "prisma generate",
     "db:verify": "../tools/verify_schema.sh",
     "db:seed": "node prisma/seed.mjs",
-    "db:up": "../tools/dev_db.sh"
+    "db:up": "../tools/dev_db.sh",
+    "prebuild": "node tools/scan_child_bundle.mjs",
+    "postbuild": "node tools/scan_child_bundle.mjs",
+    "gate:origin": "node tools/scan_child_bundle.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
