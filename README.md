@@ -78,7 +78,8 @@ node tools/verify_auth.mjs       # 보호자 인증 13건
 node tools/verify_consent.mjs    # 동의 게이트 12건
 node tools/verify_child.mjs      # 아이 프로필 19건
 node tools/verify_mission_loop.mjs  # 미션 승인 → 실천 → 승급 12건
-node tools/verify_bank_ledger.mjs   # 아이 통장 · 용돈 원장 18건
+node tools/verify_bank_ledger.mjs   # 아이 통장 · 용돈 원장 21건
+node tools/verify_withdraw.mjs      # 탈퇴 · 파기 8건
 ```
 
 ---

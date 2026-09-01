@@ -136,3 +136,112 @@ export async function getGuardianEmail(authRef: string) {
   return user?.email ?? "";
 }
 
+// ─────────────────────────────────────────────────────────────
+// 탈퇴 · 파기 — FR-041 · 어긋남 대장 D36
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 탈퇴하면 무엇이 사라지는지 — **누르기 전에** 보여줄 값.
+ *
+ * 🔴 「데이터를 지웁니다」로는 부족하다 (`AC-041-1`). 보호자가 무엇을 잃는지
+ *    **숫자로** 봐야 한다 — 모은 별 몇 개, 자란 나무 몇 칸인지.
+ */
+export type WithdrawPreview = {
+  readonly childName: string | null;
+  readonly starsEarned: number;
+  readonly grownSlots: number;
+  readonly missionsApproved: number;
+  readonly allowanceWon: number;
+};
+
+export async function getWithdrawPreview(guardianId: string): Promise<WithdrawPreview> {
+  const child = await prisma.childAccount.findFirst({
+    where: { guardianId }, select: { id: true, displayName: true }, orderBy: { createdAt: "asc" },
+  });
+  if (!child) {
+    return { childName: null, starsEarned: 0, grownSlots: 0, missionsApproved: 0, allowanceWon: 0 };
+  }
+  const [stars, trees, missions, allowance] = await Promise.all([
+    prisma.starLedgerEntry.aggregate({ where: { childId: child.id, delta: { gt: 0 } }, _sum: { delta: true } }),
+    prisma.treeState.count({ where: { childId: child.id, stage: { gt: 0 } } }),
+    prisma.mission.count({ where: { childId: child.id, state: { in: ["APPROVED", "BACKFILLED"] } } }),
+    prisma.allowanceEntry.aggregate({ where: { childId: child.id }, _sum: { delta: true } }),
+  ]);
+  return {
+    childName: child.displayName,
+    starsEarned: stars._sum.delta ?? 0,
+    grownSlots: trees,
+    missionsApproved: missions,
+    allowanceWon: allowance._sum.delta ?? 0,
+  };
+}
+
+/**
+ * 🔴 **탈퇴 — 식별 가능한 모든 것을 지운다** (`FR-041` · `AC-041-2`).
+ *
+ * 🔴 **한 트랜잭션이다.** 중간에 죽으면 절반만 지워진 계정이 남고,
+ *    그때부터 그 아이는 화면에도 안 보이는데 데이터는 살아 있는 상태가 된다.
+ *
+ * 🔴 **표를 하나라도 빠뜨리면 식별 정보가 남는다.** 그래서 목록을 여기 한 곳에 두고,
+ *    검증이 「`child_id` 를 가진 모든 표에 0건」을 **DB 에서 직접 세어** 확인한다 —
+ *    코드가 아니라 스키마를 기준으로 세야 새 표가 생겨도 잡힌다.
+ *
+ * 🔴 **선불 잔액은 우리가 환불하지 않는다.** 실제 돈은 제휴사에 있고(`ADR-004`)
+ *    환불은 발행사가 한다. 화면이 그 사실을 안내한다.
+ *
+ * 🔴 **⭐는 환불 대상이 아니다.** 앱 안의 재화이고 현금과 분리돼 있다 (`P-21`).
+ */
+export async function withdrawAccount(guardianId: string): Promise<{ ok: boolean }> {
+  const guardian = await prisma.guardianAccount.findUnique({
+    where: { id: guardianId }, select: { authRef: true },
+  });
+  if (!guardian) return { ok: false };
+
+  const children = await prisma.childAccount.findMany({
+    where: { guardianId }, select: { id: true },
+  });
+  const childIds = children.map((c) => c.id);
+  const missions = await prisma.mission.findMany({
+    where: { guardianId }, select: { id: true },
+  });
+  const missionIds = missions.map((m) => m.id);
+
+  const byChild = { childId: { in: childIds } };
+
+  await prisma.$transaction([
+    // 미션 사진 — child_id 가 없어 미션 id 로 지운다. 남으면 아동 이미지가 남는다
+    prisma.missionPhoto.deleteMany({ where: { missionId: { in: missionIds } } }),
+
+    // activity — 아이 단위
+    prisma.appEvent.deleteMany({ where: byChild }),
+    prisma.cardTransaction.deleteMany({ where: byChild }),
+    prisma.childItem.deleteMany({ where: byChild }),
+    prisma.childOnboarding.deleteMany({ where: byChild }),
+    prisma.childRoom.deleteMany({ where: byChild }),
+    prisma.envelopeChange.deleteMany({ where: byChild }),
+    prisma.envelopeSpend.deleteMany({ where: byChild }),
+    prisma.envelope.deleteMany({ where: byChild }),
+    prisma.forestSnapshot.deleteMany({ where: byChild }),
+    prisma.learningProgress.deleteMany({ where: byChild }),
+    prisma.planCard.deleteMany({ where: byChild }),
+    prisma.practiceCredit.deleteMany({ where: byChild }),
+    prisma.savingsPlan.deleteMany({ where: byChild }),
+    prisma.spendingRecord.deleteMany({ where: byChild }),
+    prisma.starLedgerEntry.deleteMany({ where: byChild }),
+    prisma.treeState.deleteMany({ where: byChild }),
+    prisma.wishlist.deleteMany({ where: byChild }),
+    prisma.allowanceEntry.deleteMany({ where: byChild }),
+    prisma.mission.deleteMany({ where: { guardianId } }),
+
+    // identity
+    prisma.childInvite.deleteMany({ where: { guardianId } }),
+    prisma.deviceSession.deleteMany({ where: { guardianId } }),
+    prisma.childAccount.deleteMany({ where: { guardianId } }),
+    prisma.guardianAccount.delete({ where: { id: guardianId } }),
+
+    // 🔴 로컬 인증 사용자. Supabase 이관 때는 Auth 쪽 삭제로 바뀐다 (D10)
+    prisma.devAuthUser.deleteMany({ where: { id: guardian.authRef } }),
+  ]);
+
+  return { ok: true };
+}
