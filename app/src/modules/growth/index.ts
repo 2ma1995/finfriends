@@ -75,6 +75,19 @@ export async function getTreeView(childId: string, childName: string): Promise<T
       select: { slot: true, stage: true, practiceCount: true, stallDays: true },
     }),
     getTopicProgress(childId),
+    /**
+     * 🔴 **`approvalMode` 로 걸러내지 않는다** — 자동 완료(`"auto"`)도 실천으로 센다.
+     *    사용자 결정 (2026-09-01 · 어긋남 대장 `D51`).
+     *
+     *    `ADR-006`(실천 필수 승급)의 뜻은 「학습만으로는 안 자란다」였다.
+     *    자동 완료도 **아이가 실제로 「했어요」를 누른 것**이므로 실천이 없는 게 아니다 —
+     *    없는 것은 **부모의 확인**이다.
+     *
+     * 🔴 **대가를 적어 둔다.** 부모가 아무것도 안 해도 사흘이면 나무가 자란다.
+     *    「누가 인정했나」가 근거인 제품에서 아무도 확인하지 않은 실천이 나무를 밀어 올린다.
+     *    되돌리려면 `where` 에 `approvalMode: "parent"` 를 더하면 된다 — **한 줄이다.**
+     *    지표에서 가려내는 것도 같은 필드로 된다.
+     */
     prisma.practiceCredit.groupBy({
       by: ["topic"],
       where: { childId },
