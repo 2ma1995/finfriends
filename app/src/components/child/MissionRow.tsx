@@ -1,8 +1,7 @@
-import Image from "next/image";
 import { photoRuleOf, type MissionView } from "@/contracts/mission";
 import { attachMissionPhoto, markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
-  backfilledNotice, doneLabel, expiredBody, expiredTitle, noPhotoWhy,
+  autoDoneNotice, backfilledNotice, doneLabel, expiredBody, expiredTitle, noPhotoWhy,
   photoAttached, photoLabel, photoLabelOptional, photoLater, photoNotice, photoReplace,
   photoWhy, photoWhyOptional, rejectedPrefix, source, undoLabel, waitingNotice,
 } from "@/app/child/missions/missions.fixture";
@@ -96,6 +95,10 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
         <p className="mt-1.5 text-[0.78em] text-miss">
           {rejectedPrefix}{m.rejectReason ? ` — ${m.rejectReason}` : ""}
         </p>
+      ) : null}
+      {/* 🔴 **「부모님이 확인했어요」가 아니다.** 부모는 못 봤다 — 별은 같아도 근거가 다르다 */}
+      {m.autoDone ? (
+        <p className="mt-1.5 text-[0.78em] text-primary-d">⏳ {autoDoneNotice}</p>
       ) : null}
       {m.backfilled ? (
         <p className="mt-1.5 text-[0.78em] text-primary-d">{backfilledNotice}</p>
