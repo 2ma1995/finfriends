@@ -7,7 +7,7 @@ import {
 import {
   acceptLabel, acceptedNotice, activeTitle, completeLabel, completeNotice, daysLeft,
   doneNotice, empty, errors, houseLabel, interestPreview, maturedLabel, needLogin,
-  notice, pctLabel, reasonPlaceholder, rejectLabel, rejectedNotice, requestedTitle,
+  notice, pctCarryNote, pctLabel, reasonPlaceholder, rejectLabel, rejectedNotice, requestedTitle,
   title, wantedLabel, wantedMore,
 } from "./savings.fixture";
 
@@ -90,6 +90,8 @@ export default async function ParentSavingsPage({
                     <span className="text-[0.8em]">%</span>
                   </label>
                   <p className="text-[0.74em] text-ink-mute">{interestPreview(s.interestWon)}</p>
+                  {/* 🔴 이 숫자가 이 한 건에만 쓰이는 게 아니라는 것을 말한다 (D28-b) */}
+                  <p className="text-[0.74em] leading-relaxed text-ink-mute">{pctCarryNote}</p>
                   <button className="min-h-touch w-full rounded-card bg-primary text-[0.88em] font-bold text-white">
                     {acceptLabel}
                   </button>
