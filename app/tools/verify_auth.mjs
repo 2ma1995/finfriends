@@ -149,7 +149,18 @@ try {
   check("  아이 기기 토큰을 지운다", /jar\.delete\(DEVICE_COOKIE\)/.test(auth), "남기면 남의 아이가 보인다");
   check("  로그인·가입·로그아웃 세 곳에서 부른다",
     (auth.match(/await clearChildMode\(\)/g) ?? []).length === 3);
-  check("  /parent 는 아동 모드에서 막힌다", /GUARDIAN_PREFIXES = \["\/parent"\]/.test(mode));
+  /**
+   * 🔴 **배열을 문자열로 비교하지 않는다.** `GUARDIAN_PREFIXES = ["/parent"]` 로 검사했더니
+   *    아이 화면 세션이 `/screens` 를 목록에 넣는 순간 검증이 깨졌다 — **막는 힘이 더 세졌는데
+   *    검사가 실패했다.** 검사는 값의 모양이 아니라 **막히는가**를 봐야 한다.
+   */
+  const prefixes = [...mode.matchAll(/"(\/[a-z-]+)"/g)].map((m) => m[1]);
+  const blocks = (path) => prefixes.some((p) => path === p || path.startsWith(`${p}/`));
+  check("  🔴 /parent 는 아동 모드에서 막힌다", blocks("/parent") && blocks("/parent/bank/missions"),
+    `막는 경로 ${prefixes.length}개`);
+  check("  🔴 /unlock 은 막지 않는다", !blocks("/unlock"),
+    "막으면 아이 기기에서 PIN 을 넣을 자리가 없어진다 (D42)");
+  check("  아이 화면은 막지 않는다", !blocks("/child/home") && !blocks("/login"));
 
   /**
    * 기기 토큰은 **어느 보호자의 것인지** 들고 있어야 한다 —
