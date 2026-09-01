@@ -227,10 +227,15 @@ export type PassbookView = {
   readonly total: number;
   /** 목표에 넣어 둔 돈 — 이자가 붙는 대상 */
   readonly savedWon: number;
-  /** 🔴 보호자가 정한 이자율. 없으면 아직 안 정한 것이다 */
+  /**
+   * 🔴 **우리 집 이자율.** 이 값은 **적금·예금에만** 붙는다 (`modules/savings`).
+   *
+   *    예전엔 이 값을 **위시리스트에 넣어 둔 돈에 곱해** 「지금이면 400원」이라고 보여줬다.
+   *    근거가 없었다 — `REQ-FUNC-012`(위시리스트)는 30·70·100% ⭐1 뿐이고 이자가 없다.
+   *    「보호자는 위시리스트 목표에 이자를 준다」는 **§10.1 A3 [검증 대기] 가정**이지
+   *    만들라는 요구가 아니다. **지급 경로가 없어서 아이는 영원히 못 받는다.**
+   */
   readonly interestPct: number | null;
-  /** 🔴 **아직 받은 게 아니다.** 지금 기준으로 「한 번 줄 때」 얼마인지만 보여준다 */
-  readonly interestWon: number;
   readonly card: CardStage;
   readonly history: readonly AllowanceEntryView[];
 };
@@ -253,7 +258,6 @@ export async function getPassbook(
 
   return {
     balance: totals.free, savedWon, locked: totals.locked, total: totals.total, interestPct: pct,
-    interestWon: pct === null ? 0 : Math.floor((savedWon * pct) / 100),
     card: (guardian?.mockCardStatus as CardStage) ?? "NONE",
     history,
   };

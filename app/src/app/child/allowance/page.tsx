@@ -83,10 +83,8 @@ export default async function ChildPassbookPage({
             <p className="mt-1 text-[0.86em] text-ink-soft">{interest.none}</p>
           ) : (
             <>
-              <p className="mt-1 text-[0.88em]">{interest.rate(p.interestPct)}</p>
-              <p className="mt-0.5 text-[0.92em] font-bold text-primary-d">
-                {p.savedWon > 0 ? interest.amount(p.interestWon) : interest.zero}
-              </p>
+              <p className="mt-1 text-[0.92em] font-bold text-primary-d">{interest.rate(p.interestPct)}</p>
+              {/* 🔴 무엇에 붙는지 분명히 말한다. 안 적으면 아이는 모든 돈에 붙는 줄 안다 */}
               <p className="mt-1 text-[0.76em] text-ink-mute">{interest.notice}</p>
             </>
           )}
