@@ -1,10 +1,13 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { listPendingForGuardian, photoMissionIds } from "@/modules/mission";
+import {
+  countOverdue, expireStaleMissions, listPendingForGuardian, photoMissionIds,
+} from "@/modules/mission";
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
-  approveLabel, BULK_THRESHOLD, bulkLabel, empty, fromLessonBadge, needLogin,
-  photoAlt, photoNotice, reasonPlaceholder, rejectLabel, retroNotice,
+  approveLabel, BULK_THRESHOLD, bulkLabel, empty, expireNotice, fromLessonBadge,
+  needLogin, overdueNotice, photoAlt, photoNotice, reasonPlaceholder, rejectLabel,
+  retroNotice,
 } from "./mission.fixture";
 
 // PRC-001 · PRC-003 — 승인 대기와 일괄 승인
@@ -20,7 +23,17 @@ export default async function ParentMissionsPage() {
     );
   }
 
-  const pendings = await listPendingForGuardian(g.guardianId);
+  /**
+   * 🔴 **화면을 열 때 만료를 처리한다.** `pg_cron` 이 없어서다 (`ADR-T02`).
+   *    배치가 붙으면 같은 함수를 배치가 부르면 되고 이 화면은 안 바뀐다.
+   *    먼저 만료시키고 목록을 읽어야 이미 끝난 것이 승인 대기에 안 남는다.
+   */
+  await expireStaleMissions({ guardianId: g.guardianId });
+
+  const [pendings, overdue] = await Promise.all([
+    listPendingForGuardian(g.guardianId),
+    countOverdue(g.guardianId),
+  ]);
   // 🔴 사진이 붙은 미션만 자리를 만든다. 사진은 **선택**이므로 없는 것이 정상이다
   const withPhoto = await photoMissionIds(pendings.map((p) => p.id));
 
@@ -43,6 +56,16 @@ export default async function ParentMissionsPage() {
                 {bulkLabel} ({pendings.length}건)
               </button>
             </form>
+          ) : null}
+
+          {/*
+            🔴 알림 인프라가 없어 화면 표시로 대신한다 (D37).
+               다그치지 않는다 — 말해야 하는 것은 **아이가 기다리고 있다**는 사실이다.
+          */}
+          {overdue > 0 ? (
+            <p className="mt-2 rounded-card border border-dashed border-line-2 px-3 py-2 text-[0.78em] leading-relaxed text-ink-soft">
+              {overdueNotice(overdue)}
+            </p>
           ) : null}
 
           <ul className="mt-2 grid gap-1.5">
@@ -98,6 +121,9 @@ export default async function ParentMissionsPage() {
               </li>
             ))}
           </ul>
+
+          {/* 🔴 기다림에 끝이 있다는 것을 부모도 알아야 한다 (FR-032) */}
+          <p className="mt-3 text-[0.72em] leading-relaxed text-ink-mute">{expireNotice}</p>
         </>
       )}
     </Screen>

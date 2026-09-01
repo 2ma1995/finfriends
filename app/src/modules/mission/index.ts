@@ -24,6 +24,8 @@ import {
 
 function bucketOf(state: string, doneAt: Date | null): MissionBucket {
   if (state === "REJECTED") return "REJECTED";
+  // 🔴 만료는 거절과 다른 자리다. 아이는 한 일을 했고 부모가 못 봤을 뿐이다 (AC-032-3)
+  if (state === "EXPIRED") return "EXPIRED";
   if (state === "APPROVED" || state === "BACKFILLED") return "DONE";
   return doneAt ? "WAITING" : "TODO";
 }
@@ -444,4 +446,65 @@ export async function photoMissionIds(missionIds: readonly string[]) {
  */
 export async function destroyPhoto(missionId: string) {
   await prisma.missionPhoto.deleteMany({ where: { missionId } });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 72시간 자동 만료 — FR-032 · AC-032-3 · 어긋남 대장 D37
+// ─────────────────────────────────────────────────────────────
+
+/** 🔴 「했어요」를 누른 뒤 이만큼 지나면 만료된다 */
+export const EXPIRE_HOURS = 72;
+/** 이만큼 지나면 승인 화면에서 눈에 띄게 한다 — 알림 인프라가 없어 화면 표시로 대신한다 */
+export const REMIND_HOURS = 24;
+
+/**
+ * 판정되지 않은 채 72시간이 지난 미션을 만료시킨다.
+ *
+ * 🔴 **부모가 안 누르면 영원히 대기였다.** 아이 화면엔 「기다리는 중」이 계속 떠 있고,
+ *    아이는 언제까지 기다려야 하는지 모른다. 기다림에 끝이 있어야 한다.
+ *
+ * 🔴 **⭐를 주지 않는다.** 부모가 확인하지 않은 것을 실천으로 인정하면
+ *    승인이라는 절차 자체가 의미를 잃는다 (`PRC-001`).
+ *
+ * 🔴 **사진도 함께 파기한다.** 판정되지 않았다고 아동 이미지가 남으면 안 된다 (`D32`).
+ *
+ * 🔴 **`pg_cron` 이 붙으면 배치가 이 함수를 부르면 된다.** 지금은 화면을 열 때 부른다 —
+ *    cron 이 없어서이고, 함수를 그대로 두면 옮길 때 화면은 안 바뀐다 (`ADR-T02`).
+ *
+ * @param scope 아이 하나(`childId`) 또는 보호자 하나(`guardianId`)로 좁힌다
+ */
+export async function expireStaleMissions(
+  scope: { childId: string } | { guardianId: string },
+): Promise<number> {
+  const cutoff = new Date(Date.now() - EXPIRE_HOURS * 3600e3);
+  const where = {
+    ...scope,
+    state: "PENDING" as const,
+    doneAt: { not: null, lt: cutoff },
+  };
+
+  const stale = await prisma.mission.findMany({ where, select: { id: true } });
+  if (stale.length === 0) return 0;
+
+  const ids = stale.map((m) => m.id);
+  await prisma.$transaction([
+    // 🔴 판정 없이 사라져도 사진은 남기지 않는다
+    prisma.missionPhoto.deleteMany({ where: { missionId: { in: ids } } }),
+    prisma.mission.updateMany({
+      where: { id: { in: ids } },
+      // 🔴 `decidedAt` 을 채운다 — 사진 파기 시각이자 「언제 끝났나」다
+      data: { state: "EXPIRED", decidedAt: new Date() },
+    }),
+  ]);
+  return ids.length;
+}
+
+/** 24시간 넘게 기다리는 미션 수 — 승인 화면이 눈에 띄게 한다 */
+export async function countOverdue(guardianId: string) {
+  return prisma.mission.count({
+    where: {
+      guardianId, state: "PENDING",
+      doneAt: { not: null, lt: new Date(Date.now() - REMIND_HOURS * 3600e3) },
+    },
+  });
 }

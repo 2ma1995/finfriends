@@ -99,6 +99,42 @@ try {
   check("🔴 판정된 미션에 사진이 남지 않는다", leaked[0].n === 0, "AC-032-2 · 아동 이미지는 되돌릴 수 없다");
   check("파기 시각은 decidedAt 이다", true, "판정과 파기가 같은 순간이라 컬럼을 따로 두지 않는다");
 
+  /**
+   * 🔴 **72시간이 지나면 만료된다** — FR-032 · AC-032-3 · 어긋남 대장 D37.
+   *    부모가 안 누르면 미션이 영원히 대기였다. 기다림에 끝이 있어야 한다.
+   */
+  const old4d = new Date(Date.now() - 4 * 864e5);
+  const stale = await prisma.mission.create({
+    data: { childId: c.id, guardianId: g.id, title: "오래된 미션", topic: "EARN",
+            reward: 1, state: "PENDING", doneAt: old4d, cycleId: 202609 },
+  });
+  await prisma.missionPhoto.create({
+    data: { missionId: stale.id, bytes: Buffer.from([0xff]), mime: "image/png", byteSize: 1 },
+  });
+  const fresh = await prisma.mission.create({
+    data: { childId: c.id, guardianId: g.id, title: "어제 미션", topic: "EARN",
+            reward: 1, state: "PENDING", doneAt: new Date(Date.now() - 864e5), cycleId: 202609 },
+  });
+
+  // expireStaleMissions 가 하는 일
+  const cutoff = new Date(Date.now() - 72 * 3600e3);
+  const staleIds = (await prisma.mission.findMany({
+    where: { guardianId: g.id, state: "PENDING", doneAt: { not: null, lt: cutoff } }, select: { id: true },
+  })).map((m) => m.id);
+  await prisma.$transaction([
+    prisma.missionPhoto.deleteMany({ where: { missionId: { in: staleIds } } }),
+    prisma.mission.updateMany({ where: { id: { in: staleIds } }, data: { state: "EXPIRED", decidedAt: new Date() } }),
+  ]);
+
+  const after = async (id) => (await prisma.mission.findUnique({ where: { id }, select: { state: true } }))?.state;
+  check("🔴 사흘 넘게 기다린 미션은 만료된다", (await after(stale.id)) === "EXPIRED", "기다림에 끝이 있어야 한다");
+  check("어제 것은 그대로 기다린다", (await after(fresh.id)) === "PENDING", "72시간 전만 만료다");
+  check("🔴 만료는 거절이 아니다", (await after(stale.id)) !== "REJECTED", "아이는 한 일을 했고 부모가 못 봤을 뿐이다 (AC-032-3)");
+  check("🔴 만료돼도 사진은 남지 않는다", (await prisma.missionPhoto.count({ where: { missionId: stale.id } })) === 0);
+  check("만료에는 별이 붙지 않는다",
+    (await prisma.starLedgerEntry.count({ where: { childId: c.id, triggerCode: "MISSION_APPROVED" } })) === 1,
+    "확인하지 않은 것을 실천으로 인정하지 않는다");
+
   const cnt = await prisma.practiceCredit.count({ where: { childId: c.id, topic: "EARN" } });
   check("승인이 실천을 남긴다", cnt === 1);
   check("승인이 실천을 한 칸 올린다", stageFor("EARN", 5, 4, cnt + 1) === 1, "벌기는 실천 2회에 나무가 된다");
