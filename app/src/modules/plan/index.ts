@@ -139,6 +139,27 @@ export async function createPlanCard(childId: string, input: NewPlanCard) {
  * 🔴 「계획에 없던 업종」은 **강조 표시일 뿐 잘못이 아니다.** ⭐ 판정은 금액 단독이다
  *    (ADR-008). 화면 문구도 그렇게 적는다.
  */
+/** 소비 한 건 → 화면 줄. 🔴 이번 달과 지난달을 **같은 방법으로** 만든다 */
+function toRecord(r: {
+  id: string; actualAmount: number; merchantCategory: string;
+  planCardId: string | null; categoryMatch: string | null; occurredAt: Date;
+}) {
+  const c = categoryOf(r.merchantCategory);
+  return {
+    id: r.id,
+    dayLabel: `${r.occurredAt.getMonth() + 1}월 ${r.occurredAt.getDate()}일`,
+    icon: c.icon,
+    categoryLabel: c.label,
+    amount: r.actualAmount,
+    // 🔴 셋 다 사실 진술이다. 어느 것도 잘못을 뜻하지 않는다 (ADR-008)
+    planNote: r.planCardId === null
+      ? ("계획 없이" as const)
+      : r.categoryMatch === "MISMATCHED"
+        ? ("계획에 없던 업종" as const)
+        : ("계획에 있었어요" as const),
+  };
+}
+
 export async function getSpendSummary(childId: string): Promise<SpendSummaryView> {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -152,7 +173,9 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
     }),
     prisma.spendingRecord.findMany({
       where: { childId, occurredAt: { gte: prevStart, lt: monthStart } },
-      select: { actualAmount: true },
+      // 🔴 합계만 세면 달이 바뀐 날 화면이 「기록 없음」이 된다. 목록도 같이 만든다
+      select: { id: true, actualAmount: true, merchantCategory: true, planCardId: true, categoryMatch: true, occurredAt: true },
+      orderBy: { occurredAt: "desc" },
     }),
   ]);
 
@@ -189,22 +212,9 @@ export async function getSpendSummary(childId: string): Promise<SpendSummaryView
      * 🔴 **집계와 같은 배열에서 만든다.** 따로 조회하면 합계와 목록이 어긋난다 —
      *    통장에서 이미 그 실수를 했다 (어긋남 대장 D22).
      */
-    records: thisMonth.map((r) => {
-      const c = categoryOf(r.merchantCategory);
-      return {
-        id: r.id,
-        dayLabel: `${r.occurredAt.getMonth() + 1}월 ${r.occurredAt.getDate()}일`,
-        icon: c.icon,
-        categoryLabel: c.label,
-        amount: r.actualAmount,
-        // 🔴 셋 다 사실 진술이다. 어느 것도 잘못을 뜻하지 않는다 (ADR-008)
-        planNote: r.planCardId === null
-          ? ("계획 없이" as const)
-          : r.categoryMatch === "MISMATCHED"
-            ? ("계획에 없던 업종" as const)
-            : ("계획에 있었어요" as const),
-      };
-    }),
+    records: thisMonth.map(toRecord),
+    // 🔴 달이 바뀐 날 「기록이 없다」로 보이지 않게 한다
+    prevRecords: prevMonth.map(toRecord),
   };
 }
 
