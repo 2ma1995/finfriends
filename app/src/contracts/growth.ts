@@ -1,3 +1,4 @@
+import { josa } from "@/lib/korean";
 import type { Topic } from "@/contracts/learning";
 
 /**
@@ -58,12 +59,11 @@ export function nextRule(stage: Stage) {
   return STAGE_LADDER.find((r) => r.stage > stage) ?? null;
 }
 
-/** 받침이 있으면 「이」, 없으면 「가」 — 「새싹가 되기까지」로 나가면 안 된다 */
-export function subjectParticle(word: string) {
-  const code = word.charCodeAt(word.length - 1) - 0xac00;
-  if (code < 0 || code > 11171) return "가";
-  return code % 28 === 0 ? "가" : "이";
-}
+/**
+ * 받침이 있으면 「이」, 없으면 「가」 — 「새싹가 되기까지」로 나가면 안 된다.
+ * 🔴 판정은 `lib/korean.josa` 하나로 한다. 같은 규칙을 두 곳에 두면 한쪽만 고쳐진다.
+ */
+export const subjectParticle = (word: string) => josa(word, "이", "가");
 
 export type Condition = {
   readonly label: string;

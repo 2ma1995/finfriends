@@ -1,3 +1,5 @@
+import { i } from "@/lib/korean";
+
 /**
  * 아이 통장(보호자용) 문구 — SRS §3 · 어긋남 대장 D18 · D21.
  *
@@ -33,7 +35,8 @@ export const cardNeeded = "카드를 등록하면 아이가 이 돈을 실제로
  *    그 안에 원금을 두면, 이자율을 안 정한 부모에게는 원금이 아예 안 보인다.
  */
 export const walletLabels = {
-  total: (name: string) => `${name}이 가진 돈`,
+  // 🔴 아이 이름은 무엇이든 들어온다. 「민수이 가진 돈」이 되면 안 된다
+  total: (name: string) => `${i(name)} 가진 돈`,
   free: "지금 쓸 수 있는 돈",
   setAside: "목표에 넣어 둔 돈",
   /** 🔴 숫자만 보면 「어디 갔지」가 된다. 쓴 게 아니라는 것을 그 자리에서 말한다 */
