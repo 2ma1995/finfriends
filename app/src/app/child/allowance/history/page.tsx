@@ -1,6 +1,6 @@
 import { Screen, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
-import { getPassbook, MOVED_CODES } from "@/modules/allowance";
+import { getPassbook } from "@/modules/allowance";
 import {
   consentRequired, empty, historyTitle, inLabel, movedLabel, noDevice, notice, outLabel,
 } from "../allowance.fixture";
@@ -41,7 +41,7 @@ export default async function ChildHistoryPage() {
               <span className="flex-1">
                 <b className="block text-[0.84em]">{h.memo}</b>
                 <span className="text-[0.7em] text-ink-mute">
-                  {h.whenLabel} · {MOVED_CODES.includes(h.code) ? movedLabel : h.delta > 0 ? inLabel : outLabel}
+                  {h.whenLabel} · {movedLabel[h.code] ?? (h.delta > 0 ? inLabel : outLabel)}
                 </span>
               </span>
               <b className={`shrink-0 tabular-nums text-[0.86em] ${

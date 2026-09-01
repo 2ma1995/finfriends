@@ -127,7 +127,21 @@ export const empty = {
 export const inLabel = "들어옴";
 export const outLabel = "나감";
 /** 🔴 목표로 옮긴 건 **쓴 게 아니다.** 같은 「나감」으로 보이면 없어진 줄 안다 */
-export const movedLabel = "목표로 옮김";
+/**
+ * 🔴 **「옮김」이 넷을 한 말로 뭉뚱그리고 있었다.** `MOVED_CODES` 에 적금이 더해지면서
+ *    「자전거 적금에 넣었어요」가 **「목표로 옮김」**으로 표시됐다 —
+ *    아이에게 **목표(갖고 싶은 것)와 적금은 다른 것**이고, 하나는 언제든 되돌릴 수 있고
+ *    하나는 깨야 나온다. 부모 화면 담당이 같은 문제를 자기 화면에서 먼저 찾았다.
+ *
+ * 🔴 **되돌아온 것도 갈라 말한다.** 「목표에서 되돌림」과 「적금이 끝남」은
+ *    아이가 한 일이 다르다 — 하나는 마음을 바꾼 것이고 하나는 끝까지 지킨 것이다.
+ */
+export const movedLabel: Record<string, string> = {
+  WISH_SET_ASIDE:  "목표로 옮김",
+  WISH_RELEASE:    "목표에서 되돌림",
+  SAVINGS_LOCK:    "적금·예금으로 옮김",
+  SAVINGS_RELEASE: "적금·예금에서 돌아옴",
+};
 export const notice = "쓴 돈과 모은 돈이 여기 다 적혀요. 남은 돈이 맞는지 가끔 세어 봐요.";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
