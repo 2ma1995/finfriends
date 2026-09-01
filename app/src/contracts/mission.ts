@@ -129,8 +129,12 @@ export type CreateMissionError =
 export const CREATE_MISSION_MESSAGES: Record<CreateMissionError, string> = {
   TITLE_REQUIRED: "무엇을 하면 되는지 적어 주세요.",
   TITLE_TOO_LONG: `조건은 ${TITLE_MAX}자까지 쓸 수 있어요. 아이가 읽을 문장입니다.`,
-  TOPIC_INVALID: "영역을 하나 골라 주세요.",
-  TOPIC_LOCKED: "「불리기」는 아직 실천 경로가 열리지 않았어요.",
+  TOPIC_INVALID: "미션은 「벌기」로만 만들 수 있어요.",
+  /**
+   * 🔴 미션은 「벌기」뿐이다 (D50). 나머지는 실천 경로가 따로 있다 —
+   *    잘 쓰기는 계획 카드 · 모으기는 위시리스트 · 불리기는 우리 집 적금.
+   */
+  TOPIC_LOCKED: "미션은 「벌기」로만 셉니다. 잘 쓰기는 계획 카드, 모으기는 위시리스트, 불리기는 적금으로 자랍니다.",
   PAYOUT_OUT_OF_RANGE: "금액은 0원부터 100,000원까지 정할 수 있어요.",
   REWARD_OUT_OF_RANGE: `별은 ${REWARD_MIN}개에서 ${REWARD_MAX}개까지 정할 수 있어요.`,
   TOO_MANY_OPEN: `아직 안 한 미션이 ${OPEN_LIMIT}개예요. 하나를 마치면 새로 만들 수 있어요.`,

@@ -296,8 +296,18 @@ export async function createMission(
   if (!(["EARN", "SPEND", "SAVE", "GROW"] as const).includes(input.topic)) {
     return { ok: false, reason: "TOPIC_INVALID" };
   }
-  // 「불리기」는 실천 경로가 닫혀 있다. 미션을 열면 아이가 할 수 없는 일을 받는다
-  if (input.topic === "GROW") return { ok: false, reason: "TOPIC_LOCKED" };
+  /**
+   * 🔴 **미션은 「벌기」뿐이다** (사용자 결정 2026-09-01 · 어긋남 대장 D50).
+   *
+   *    미션은 **심부름하고 용돈을 받는 일**이다 — 아이가 겪는 유일한 「버는」 경험이다.
+   *    나머지 영역은 실천 경로가 **이미 따로 있다** — 잘 쓰기는 계획 카드,
+   *    모으기는 위시리스트 단계 보상, 불리기는 우리 집 적금.
+   *    미션으로 겹쳐 열면 **같은 일을 두 곳에서 세고** 부모가 어느 쪽에 걸어야 할지 모른다.
+   *
+   * 🔴 **화면이 벌기만 보여도 여기서 다시 막는다.** 값을 `hidden` 으로 넘기므로
+   *    폼을 우회하면 아무 영역이나 올 수 있다 (§6.6 규약 ②).
+   */
+  if (input.topic !== "EARN") return { ok: false, reason: "TOPIC_LOCKED" };
 
   if (!Number.isInteger(input.reward) || input.reward < REWARD_MIN || input.reward > REWARD_MAX) {
     return { ok: false, reason: "REWARD_OUT_OF_RANGE" };

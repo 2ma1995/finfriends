@@ -15,7 +15,21 @@ import { examples, hints, photoRule } from "./new-mission.fixture";
 export const metadata = { title: "미션 만들기 · 핀프렌즈" };
 
 /** 🔴 「불리기」는 실천 경로가 닫혀 있어 미션을 열지 않는다 (F15 · P-20) */
-const OPENABLE: readonly Topic[] = ["EARN", "SPEND", "SAVE"];
+/**
+ * 🔴 **미션은 「벌기」 하나다** (사용자 결정 2026-09-01 · 어긋남 대장 D50).
+ *
+ *    미션은 **심부름하고 용돈을 받는 일**이다 — 아이가 겪는 유일한 「버는」 경험이고,
+ *    그래서 실천이 붙을 자리도 벌기뿐이다.
+ *
+ *    나머지 영역은 **각자의 실천 경로가 이미 있다.** 미션으로 겹쳐 열면
+ *    같은 일을 두 곳에서 세게 되고, 부모가 어느 쪽으로 걸어야 할지 모른다.
+ *
+ *    | 영역 | 실천을 여는 것 |
+ *    | 잘 쓰기 | 계획 카드 ↔ 실제 대조 (`FR-020` 이전 방식) |
+ *    | 모으기 | 위시리스트 30 · 70 · 100% (`REQ-FUNC-012`) |
+ *    | 불리기 | 우리 집 적금 (`D25`) |
+ */
+const OPENABLE: readonly Topic[] = ["EARN"];
 
 export default async function NewMissionPage({
   searchParams,
@@ -74,30 +88,27 @@ export default async function NewMissionPage({
           <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.title}</small>
         </div>
 
+        {/*
+          🔴 **고를 것이 하나면 묻지 않는다.** 라디오 하나만 있는 선택지는
+             「다른 것도 있나」를 묻게 만들고, 실제로는 없다.
+             값은 hidden 으로 넘기고 화면은 **무엇으로 셀지 알려주기만** 한다.
+        */}
         <fieldset className="grid gap-1">
-          <legend className="mb-1 text-[0.8em] text-ink-soft">어느 영역의 실천으로 셀까요</legend>
+          <legend className="mb-1 text-[0.8em] text-ink-soft">무엇으로 셀까요</legend>
           <div className="grid gap-1">
             {OPENABLE.map((t) => (
-              <label
+              <div
                 key={t}
-                htmlFor={`topic-${t}`}
-                className="flex min-h-touch cursor-pointer items-start gap-2 rounded-card border border-line bg-surface px-3 py-2"
+                className="flex items-start gap-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2"
               >
-                <input
-                  id={`topic-${t}`}
-                  name="topic"
-                  type="radio"
-                  value={t}
-                  required
-                  defaultChecked={topic === t}
-                  className="mt-1 size-4 shrink-0 accent-[var(--ff-primary)]"
-                />
+                {/* 🔴 서버가 다시 검사한다 — hidden 은 폼을 우회하면 아무 값이나 올 수 있다 */}
+                <input type="hidden" name="topic" value={t} />
                 <span className="flex-1 text-[0.84em] leading-relaxed">
-                  {TOPIC_ICON[t]} {TOPIC_LABEL[t]}
+                  <b>{TOPIC_ICON[t]} {TOPIC_LABEL[t]}</b>
                   <br />
-                  <small className="text-[0.86em] text-ink-mute">{examples[t]}</small>
+                  <small className="text-[0.86em] text-ink-soft">{examples[t]}</small>
                 </span>
-              </label>
+              </div>
             ))}
           </div>
           <small className="text-[0.74em] leading-relaxed text-ink-mute">{hints.topic}</small>
