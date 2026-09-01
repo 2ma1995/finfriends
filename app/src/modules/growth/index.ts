@@ -4,7 +4,7 @@ import { getTopicProgress } from "@/modules/learning";
 import { countWaiting } from "@/modules/mission";
 import { TOPIC_LABEL, type Topic } from "@/contracts/learning";
 import {
-  STAGE_EMOJI, STAGE_LABEL, STAGE_LADDER, nextRule, stageFor, subjectParticle,
+  STAGE_EMOJI, STAGE_LABEL, nextRule, stageFor, subjectParticle, topRule,
   type ForestView, type Stage, type TreeSlotView, type TreeView,
 } from "@/contracts/growth";
 
@@ -83,8 +83,10 @@ export async function getTreeView(childId: string, childName: string): Promise<T
      *    `tree_states.stage` 에 쓰고 `tree_state_changed` 이벤트를 적재한다 —
      *    그 이벤트가 있어야 정체 판정(GRW-002)과 월말 스냅샷(GRW-004)이 성립한다.
      */
-    const stage = stageFor(learn, quiz, practiceCount);
-    const next = nextRule(stage);
+    // 🔴 실천 조건은 **영역마다 다르다** (FR-030). 같은 숫자를 요구하면 불리기가 영영 안 자란다
+    const stage = stageFor(topic, learn, quiz, practiceCount);
+    const next = nextRule(topic, stage);
+    const top = topRule(topic);
 
     return {
       topic,
@@ -97,13 +99,9 @@ export async function getTreeView(childId: string, childName: string): Promise<T
         : null,
       // 게이지는 **다음 단계 조건**을 향한다. 최고 단계면 마지막 조건을 그대로 둔다
       conditions: [
-        { label: "학습", current: learn, required: next?.learn ?? STAGE_LADDER[STAGE_LADDER.length - 1].learn },
-        { label: "퀴즈", current: quiz, required: next?.quiz ?? STAGE_LADDER[STAGE_LADDER.length - 1].quiz },
-        {
-          label: PRACTICE_LABEL[topic],
-          current: practiceCount,
-          required: next?.practice ?? STAGE_LADDER[STAGE_LADDER.length - 1].practice,
-        },
+        { label: "학습", current: learn, required: next?.learn ?? top.learn },
+        { label: "퀴즈", current: quiz, required: next?.quiz ?? top.quiz },
+        { label: PRACTICE_LABEL[topic], current: practiceCount, required: next?.practice ?? top.practice },
       ],
       // 🔴 GRW-002 가 없다. 판정하지 않은 것을 정체로 표시하지 않는다
       stalledDays: null,

@@ -4,59 +4,88 @@ import type { Topic } from "@/contracts/learning";
 /**
  * 성장 나무 계약 — GRW-003 의 읽기 표면.
  *
- * 🔴 **단계 수와 승급 임계값은 확정 사양이 아니다** — D6 미결이고, 변경 대장 #14 가
- *    「새싹 · 나무 · 꽃 나무 · 열매 나무」 4단계를 제안한 채 결정 대기다.
- *    그래서 화면에 **「예시값」**을 적는다 (원장 T9 · 스킬 401).
- *    `tree_states.stage` 를 정수로 둔 것도 같은 이유다 — 이름이 바뀌어도 마이그레이션이 붙지 않는다.
+ * 🔴 **단계 수와 임계값이 확정됐다** — `FR-030` 조건표. 오래 `D6` 미결이라 3단계에
+ *    예시값을 두고 화면에 「예시값」이라 적어 뒀는데, 새 SRS 가 4단계로 확정했다
+ *    (어긋남 대장 `D30`). `tree_states.stage` 를 정수로 둔 덕에 마이그레이션이 붙지 않는다.
  *
- * 🔴 승급 판정 엔진(GRW-001)은 아직 없다. 그래서 `stage` 는 DB 에 있는 값을 그대로 읽고
- *    누구도 올려 주지 않는다. 화면이 그 사실을 숨기지 않는다.
+ * 🔴 승급 판정 엔진(GRW-001)은 아직 없다. 그래서 단계를 **읽는 시점에 계산**한다 —
+ *    `modules/growth.getTreeView` 참조. 저장된 `stage` 를 올려 주는 사람이 없어서다.
  */
 
-export type Stage = 0 | 1 | 2;
-
-export const STAGE_LABEL: Record<Stage, string> = { 0: "씨앗", 1: "새싹", 2: "나무" };
+export type Stage = 0 | 1 | 2 | 3;
 
 /**
- * 🔴 이모지는 **단계**를 따른다. 영역을 따르면 씨앗인데 🌳 가 나온다 — 그랬다.
- *    라벨과 그림이 어긋나면 보호자는 그림을 믿고 「자랐구나」로 읽는다.
+ * 🔴 **4단계다** — `FR-030`. 한동안 3단계(씨앗·새싹·나무)에 임계값도 예시값이었다.
+ *    D6 미결이라 정하지 못했던 것인데 새 SRS 가 표로 확정했다 (어긋남 대장 D30).
  *
- * 변경 대장 #14 의 4단계(새싹·나무·꽃 나무·열매 나무)가 확정되면
- * 여기에 🌸 · 🍎 를 이어 붙인다. 라벨과 같은 자리에서 함께 고친다.
+ * 🔴 **0단계가 「씨앗」이 아니라 「새싹」이다.** 아무것도 안 한 아이도 새싹에서 시작한다 —
+ *    시작점이 「아직 아무것도 아님」이면 첫 화면부터 뒤처진 것으로 읽힌다.
  */
-export const STAGE_EMOJI: Record<Stage, string> = { 0: "🌰", 1: "🌱", 2: "🌳" };
+export const STAGE_LABEL: Record<Stage, string> = {
+  0: "새싹", 1: "나무", 2: "꽃나무", 3: "열매나무",
+};
+
+/** 🔴 이모지는 **단계**를 따른다. 영역을 따르면 새싹인데 🍎 가 나온다 */
+export const STAGE_EMOJI: Record<Stage, string> = {
+  0: "🌱", 1: "🌳", 2: "🌸", 3: "🍎",
+};
 
 /**
- * 승급 사다리 — SRS 다이어그램 B.
+ * 승급 사다리 — `FR-030` 확정 조건표.
  *
- *   씨앗 → 새싹 : 학습 완주 + 퀴즈 정답 + 실천 1회
- *   새싹 → 나무 : 학습 3회 + 퀴즈 5개 + 실천 1회
+ * | 단계 | 학습 | 퀴즈 | 실천 (벌기·쓰기 / 모으기 / 불리기) |
+ * | 🌱 새싹 | 0 | 0 | 0 / 0 / 0 |
+ * | 🌳 나무 | 5 | 4 | 2 / 1 / 1 |
+ * | 🌸 꽃나무 | 10 | 8 | 5 / 2 / 1 |
+ * | 🍎 열매나무 | 15 | 12 | 8 / 3 / 1 |
  *
- * 🔴 **실천이 0이면 어떤 단계로도 오르지 않는다.** 학습·퀴즈를 100번 해도 그렇다
- *    (REQ-FUNC-001 · 실천 없이는 자라지 않는다). 그것이 이 제품의 근거다.
+ * 🔴 **실천 조건이 영역마다 다르다.** 벌기·잘 쓰기는 자주 할 수 있는 일이고
+ *    모으기·불리기는 그렇지 않다 — 같은 숫자를 요구하면 불리기 나무는 영영 안 자란다.
+ *    그래서 `stageFor` 가 영역을 함께 받는다.
  *
- * 🔴 값과 단계 수는 **예시값**이다 — D6 미결이고 변경 대장 #14 가
- *    「새싹 · 나무 · 꽃 나무 · 열매 나무」 4단계를 제안한 채 결정 대기다.
- *    확정되면 이 배열 한 곳만 고친다.
+ * 🔴 **세 조건을 모두 채워야 오른다.** 학습·퀴즈를 아무리 채워도 실천이 모자라면
+ *    그 자리에 머문다 (`AC-030-1`). 그것이 이 제품의 근거다.
  */
+export const PRACTICE_BY_TOPIC: Record<Topic, readonly [number, number, number]> = {
+  // [나무, 꽃나무, 열매나무]
+  EARN:  [2, 5, 8],
+  SPEND: [2, 5, 8],
+  SAVE:  [1, 2, 3],
+  GROW:  [1, 1, 1],
+};
+
 export const STAGE_LADDER = [
-  { stage: 1 as Stage, learn: 1, quiz: 1, practice: 1 },
-  { stage: 2 as Stage, learn: 3, quiz: 5, practice: 1 },
+  { stage: 1 as Stage, learn: 5,  quiz: 4  },
+  { stage: 2 as Stage, learn: 10, quiz: 8  },
+  { stage: 3 as Stage, learn: 15, quiz: 12 },
 ] as const;
 
+/** 그 영역에서 이 단계로 오르는 데 필요한 실천 횟수 */
+export function practiceNeeded(topic: Topic, stage: Stage): number {
+  return stage === 0 ? 0 : PRACTICE_BY_TOPIC[topic][stage - 1];
+}
+
 /** 지금 조건으로 오를 수 있는 최고 단계. 아래에서 위로 올라가며 마지막으로 통과한 칸 */
-export function stageFor(learn: number, quiz: number, practice: number): Stage {
+export function stageFor(topic: Topic, learn: number, quiz: number, practice: number): Stage {
   let reached: Stage = 0;
   for (const r of STAGE_LADDER) {
-    if (learn >= r.learn && quiz >= r.quiz && practice >= r.practice) reached = r.stage;
+    const need = practiceNeeded(topic, r.stage);
+    if (learn >= r.learn && quiz >= r.quiz && practice >= need) reached = r.stage;
     else break;
   }
   return reached;
 }
 
-/** 다음 단계의 조건. 최고 단계면 null */
-export function nextRule(stage: Stage) {
-  return STAGE_LADDER.find((r) => r.stage > stage) ?? null;
+/** 다음 단계의 조건. 최고 단계면 null — 영역마다 실천 조건이 다르다 */
+export function nextRule(topic: Topic, stage: Stage) {
+  const r = STAGE_LADDER.find((x) => x.stage > stage);
+  return r ? { ...r, practice: practiceNeeded(topic, r.stage) } : null;
+}
+
+/** 최고 단계에서 게이지를 채워 둘 때 쓰는 마지막 조건 */
+export function topRule(topic: Topic) {
+  const last = STAGE_LADDER[STAGE_LADDER.length - 1];
+  return { ...last, practice: practiceNeeded(topic, last.stage) };
 }
 
 /**
