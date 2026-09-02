@@ -142,7 +142,7 @@ export async function getClosed(childId: string, take = 5) {
 
 export type SavingsResult =
   | { ok: true }
-  | { ok: false; reason: "ALREADY_OPEN" | "BAD_AMOUNT" | "BAD_MONTHS" | "BAD_GOAL" | "NOT_ENOUGH" | "NOT_FOUND" | "NO_RATE" | "PAID_THIS_WEEK" | "ALL_PAID" };
+  | { ok: false; reason: "ALREADY_OPEN" | "BAD_AMOUNT" | "BAD_MONTHS" | "BAD_GOAL" | "NOT_ENOUGH" | "NOT_FOUND" | "NO_RATE" | "PAID_THIS_WEEK" | "ALL_PAID" | "BAD_PCT" };
 
 /**
  * 아이가 신청한다 — 🔴 **여기서 돈이 묶이지 않는다.** 보호자가 받아들여야 묶인다.
@@ -225,6 +225,24 @@ export async function accept(
   });
   if (!p) return { ok: false, reason: "NOT_FOUND" };
 
+  /**
+   * 🔴 **범위 밖 이자율을 조용히 무시하지 않는다** (어긋남 대장 D66).
+   *
+   *    예전엔 아래에서 `finalPct = … ? Math.floor(pct) : undefined` 로 떨어뜨렸다.
+   *    보호자가 50% 를 넣으면 **「승인됐어요」가 뜨는데 실제로는 기본 이율로 체결**됐다.
+   *    아무도 모른다 — 아이 저금 이율이 부모 의도와 다르게 박히고 만기에 돈이 나간다.
+   *    **조용한 실패보다 조용한 «다른 결과»가 나쁘다.**
+   *
+   * 🔴 **돈이 움직이기 전에 본다.** 아래 `recordAllowance` 가 첫 회를 묶으므로,
+   *    검사가 그 뒤에 오면 거절해도 돈은 이미 빠져 있다.
+   *
+   * 🔴 `undefined` 는 그대로 통과시킨다 — 「칸이 아예 없다」는 **안 바꾼다**는 뜻이고,
+   *    그건 잘못된 값이 아니다.
+   */
+  if (pct !== undefined && (!Number.isFinite(pct) || pct < 0 || pct > MAX_PCT)) {
+    return { ok: false, reason: "BAD_PCT" };
+  }
+
   // 🔴 예금은 전액을, 적금은 **첫 회만** 묶는다. 적금에서 전액을 묶으면 그건 예금이다
   const first = p.kind === "INSTALLMENT" ? (p.perPeriod ?? 0) : p.amount;
   const locked = await recordAllowance(
@@ -238,7 +256,8 @@ export async function accept(
   if (p.kind === "INSTALLMENT") matures.setDate(matures.getDate() + 7 * (p.periods ?? 0));
   else matures.setMonth(matures.getMonth() + p.months);
 
-  const finalPct = Number.isFinite(pct) && pct! >= 0 && pct! <= MAX_PCT ? Math.floor(pct!) : undefined;
+  // 🔴 범위는 위에서 이미 봤다. 여기 남은 일은 「안 바꾼다」와 정수화뿐이다
+  const finalPct = pct === undefined ? undefined : Math.floor(pct);
 
   /**
    * 🔴 **이 값이 그 집의 기본 이자율이 된다.** 통장의 이자율 설정 칸을 없앴기 때문에

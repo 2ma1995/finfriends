@@ -31,7 +31,7 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 export default async function ParentSavingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ accepted?: string; rejected?: string; done?: string; error?: string }>;
+  searchParams: Promise<{ accepted?: string; rejected?: string; done?: string; error?: string; pct?: string }>;
 }) {
   const g = await currentGuardian();
   if (!g) {
@@ -97,10 +97,24 @@ export default async function ParentSavingsPage({
                   <input type="hidden" name="planId" value={s.id} />
                   <label className="flex items-center gap-2">
                     <span className="text-cap text-ink-mute">{pctLabel}</span>
-                    <input name="pct" type="number" inputMode="numeric" min={0} max={MAX_PCT} step={1}
-                           defaultValue={s.interestPct}
+                    {/*
+                      🔴 **`min`·`max` 를 걸지 않는다** (어긋남 대장 D66).
+                         범위 밖 값을 넣으면 브라우저가 조용히 막고 자기 말풍선만 띄운다 —
+                         화면은 아무 반응이 없어 「버튼이 안 눌린다」로 읽힌다.
+
+                      🔴 **떼기 전에 모듈부터 고쳤다.** 예전엔 `modules/savings.accept` 가
+                         범위 밖을 **거절하지 않고 조용히 기본 이율로 떨어뜨렸다** —
+                         그 상태로 `max` 만 떼면 50% 를 넣고 「승인됐어요」를 보는데
+                         실제로는 다른 이율로 체결된다. 이제 `BAD_PCT` 로 거절하고,
+                         그 문구가 이 화면 맨 위에 뜨며, 넣은 값은 아래에 되채워진다.
+                    */}
+                    <input name="pct" type="number" inputMode="numeric" step={1}
+                           defaultValue={sp.pct ?? s.interestPct}
                            className="min-h-touch w-20 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
                     <span className="text-sub">%</span>
+                    {/* 🔴 `max` 를 뗐으니(D66) 한도를 **틀리기 전에** 말해 준다.
+                           오류 문구로만 알리면 몇 번을 더 눌러 봐야 한다 */}
+                    <span className="text-cap text-ink-mute">0–{MAX_PCT}</span>
                   </label>
                   <p className="text-cap text-ink-mute">{interestPreview(s.interestWon)}</p>
                   {/*

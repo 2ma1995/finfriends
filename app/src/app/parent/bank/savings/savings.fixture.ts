@@ -1,3 +1,4 @@
+import { MAX_PCT } from "@/modules/savings";
 // 🔴 데이터는 DB(`@/modules/savings`)가 준다. 여기 남은 것은 문구뿐이다.
 
 export const title = "우리 집 적금";
@@ -49,6 +50,13 @@ export const doneNotice = "원금과 이자를 줬어요. ⭐10이 붙었습니�
 export const errors: Record<string, string> = {
   NOT_ENOUGH: "아이가 쓸 수 있는 돈이 신청 금액보다 적어졌어요. 용돈을 채워 주시거나 아이에게 다시 신청하게 해주세요.",
   NOT_FOUND: "찾을 수 없어요. 만기 전이라면 아직 줄 수 없습니다.",
+  /**
+   * 🔴 **없어서 「찾을 수 없어요」가 뜰 뻔했다.** `errors[sp.error] ?? errors.NOT_FOUND`
+   *    라서 키가 없으면 엉뚱한 말이 나간다 — 이자율을 잘못 넣었는데 「찾을 수 없어요」다.
+   *
+   * 🔴 **얼마까지 되는지 적는다.** 「안 됩니다」로 끝내면 몇 번을 더 눌러 봐야 한다.
+   */
+  BAD_PCT: `이자율은 0%부터 ${MAX_PCT}%까지 정할 수 있어요. 다시 넣어 주세요.`,
 };
 
 export const needLogin = { title: "로그인이 필요해요", body: "보호자 계정으로 로그인해 주세요" };

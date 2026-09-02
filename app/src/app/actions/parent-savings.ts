@@ -19,12 +19,22 @@ function back(q: string) {
 
 export async function acceptSavingsAction(formData: FormData) {
   const g = await requireGuardian();
-  const pct = Number(formData.get("pct") ?? NaN);
-  const r = await accept(
-    g.guardianId,
-    String(formData.get("planId") ?? ""),
-    Number.isFinite(pct) ? pct : undefined,
-  );
+  /**
+   * 🔴 **「칸이 비었다」와 「값이 잘못됐다」를 가른다** (D66).
+   *    예전엔 `Number.isFinite(pct) ? pct : undefined` 라 잘못된 값도 `undefined` 로
+   *    떨어져 **모듈이 판단할 기회 자체가 없었다.** 이제 그대로 넘기고 모듈이 거절한다.
+   */
+  const raw = formData.get("pct");
+  const pct = raw === null || String(raw).trim() === "" ? undefined : Number(raw);
+
+  const r = await accept(g.guardianId, String(formData.get("planId") ?? ""), pct);
+  /**
+   * 🔴 **넣은 값을 돌려준다.** `max` 를 뗐으니(D66) 틀린 값은 서버까지 왔다가
+   *    되돌아가는데, 칸이 비어 버리면 무엇을 잘못 넣었는지도 안 보인다.
+   */
+  if (!r.ok && r.reason === "BAD_PCT") {
+    back(`error=BAD_PCT&pct=${encodeURIComponent(String(raw ?? ""))}`);
+  }
   back(r.ok ? "accepted=1" : `error=${r.reason}`);
 }
 
