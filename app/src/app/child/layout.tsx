@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { ModeFrame } from "@/components/shared/ModeFrame";
 import { Suspense } from "react";
 import { ChildTabs } from "@/components/child/ChildTabs";
 import { TourReturn } from "@/components/child/TourReturn";
 import { tourReturnLabel } from "@/app/child/welcome/welcome.fixture";
 import { currentChild } from "@/lib/session/current-child";
+import { MODE_COOKIE, readMode } from "@/lib/session/device-mode";
 import { getMissionBoard } from "@/modules/mission";
 
 // Fun Mode — 아동 뷰.
@@ -12,6 +15,26 @@ import { getMissionBoard } from "@/modules/mission";
 export default async function ChildLayout({ children }: { children: ReactNode }) {
   // 탭의 「할 게 남음」 표시. 기기가 안 열렸으면 조회하지 않는다
   const access = await currentChild();
+
+  /**
+   * 🔴 **해제·만료된 기기는 스스로 연결을 끊는다** (어긋남 대장 D68).
+   *
+   *    부모가 「이 기기 해제」를 누르면 서버 세션만 죽고 이 기기의 쿠키는 남는다 —
+   *    부모 브라우저에서 **다른 기기의 쿠키를 지울 수는 없다.**
+   *    그러면 모드 쿠키가 계속 「나는 아이 기기」라고 말해서
+   *    부모 화면은 막히고(「여긴 어른 화면이에요」) 아이 화면은 안 열린다.
+   *    **어느 쪽으로도 못 나간다.** 그래서 다음 진입에서 여기가 푼다.
+   *
+   * 🔴 **모드가 아이일 때만 푼다.** 모드 쿠키가 없는 사람은 그냥 방문자다 —
+   *    아무 것도 안 지우고 「아직 준비가 안 됐어요」를 보면 된다.
+   *
+   * 🔴 **동의 철회는 풀지 않는다.** 그때는 기기 등록이 살아 있어야 한다 —
+   *    재동의하면 바로 이어져야 하고, 토큰까지 지우면 기기를 다시 등록해야 한다.
+   */
+  if (!access.ok && access.reason !== "CONSENT_REQUIRED") {
+    const jar = await cookies();
+    if (readMode(jar.get(MODE_COOKIE)?.value) === "CHILD") redirect("/child/left");
+  }
   const todoCount = access.ok ? (await getMissionBoard(access.childId)).todo.length : 0;
 
   return (

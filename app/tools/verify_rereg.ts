@@ -4,6 +4,16 @@ import { verifyDbUrl } from "./verify_db.mjs";
 // 🔴 앱의 DB 를 쓰지 않는다 (D64). @/db 는 불러올 때 읽으므로 미리 바꾼다
 process.env.DATABASE_URL = verifyDbUrl();
 
+import { readFileSync } from "node:fs";
+
+/**
+ * 주석을 뺀 소스. 🔴 있어서는 안 되는 것을 찾는 검사는 이쪽을 쓴다 —
+ *    주석이 그 패턴을 인용하면 검사가 속는다 (`verify_logic` 에서 겪었다).
+ */
+const code = (rel: string) =>
+  readFileSync(new URL(`../src/${rel}`, import.meta.url), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+
 let failed = 0;
 const check = (n: string, ok: boolean, d = "") => {
   console.log(`${ok ? "  OK  " : "  실패"} ${n}${d ? ` — ${d}` : ""}`);
@@ -64,6 +74,33 @@ async function main() {
 
   const live = await prisma.deviceSession.count({ where: { guardianId: g.guardianId, mode: "CHILD", revokedAt: null } });
   check("해제된 기기가 살아 남지 않는다", live === 1, `살아 있는 기기 ${live}개 — 새 것 하나여야 한다`);
+
+  /**
+   * 🔴 **해제된 기기가 갇히지 않아야 한다** (어긋남 대장 D68).
+   *
+   *    해제는 부모 브라우저에서 일어나고 서버는 **다른 기기의 쿠키를 못 지운다.**
+   *    그래서 모드 쿠키가 남아 「나는 아이 기기」라고 말하면 —
+   *    부모 화면은 미들웨어가 막고 아이 화면은 토큰이 죽어서 안 열린다.
+   *    **어느 쪽으로도 못 나간다.** 실기기에서 그렇게 나왔다.
+   *
+   *    아이 레이아웃이 그 상태를 알아보고 `/child/left` 로 보내며,
+   *    그 Route Handler 가 쿠키 셋을 지운다. 화면(RSC)은 쿠키를 못 지우므로
+   *    **Route Handler 여야 한다** — 그 사실을 검사로 못박는다.
+   */
+  const layout = code("app/child/layout.tsx");
+  check("🔴 해제된 기기를 스스로 풀어 준다", /redirect\("\/child\/left"\)/.test(layout),
+    "안 풀면 부모 화면도 아이 화면도 못 여는 상태로 갇힌다");
+  check("  모드가 아이일 때만 푼다", /readMode\([\s\S]{0,80}?\) === "CHILD"/.test(layout),
+    "모드 쿠키가 없는 사람은 그냥 방문자다 — 아무 것도 지우지 않는다");
+  check("  🔴 동의 철회는 풀지 않는다", /reason !== "CONSENT_REQUIRED"/.test(layout),
+    "재동의하면 바로 이어져야 한다 — 토큰을 지우면 기기를 다시 등록해야 한다");
+
+  const left = code("app/child/left/route.ts");
+  check("🔴 쿠키 셋을 다 지운다",
+    /DEVICE_COOKIE, MODE_COOKIE, UNLOCK_COOKIE/.test(left),
+    "하나라도 남으면 갇힌 상태가 이어진다");
+  check("  Route Handler 다", /export async function GET/.test(left),
+    "화면(RSC)은 쿠키를 지울 수 없다");
 
   // 🔴 뒷정리 — 시험 데이터를 남기지 않는다
   const { withdrawAccount } = await import("@/modules/account");
