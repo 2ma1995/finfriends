@@ -16,13 +16,27 @@ export default async function ChildLayout({ children }: { children: ReactNode })
 
   return (
     <ModeFrame mode="fun">
-      {/* 🔴 튜토리얼에서 보러 나왔으면 돌아갈 줄을 맨 위에 둔다 —
-             화면마다 붙이면 새 화면에서 반드시 빠뜨린다 */}
-      <Suspense fallback={null}><TourReturn label={tourReturnLabel} /></Suspense>
+      {/*
+        🔴 **부모 화면(나무)과 같은 방식으로 맞췄다** (사용자 지적 — PWA 에서 아이 화면만
+           하단 탭 위치가 어긋났다).
 
-      {/* 하단 탭이 내용을 가리지 않게 자리를 비운다 */}
-      <div className="pb-[92px]">{children}</div>
-      <ChildTabs todoCount={todoCount} />
+           예전엔 탭이 `fixed` 라 본문에 `pb-[92px]` 로 자리를 **손으로 비워** 뒀다.
+           그 숫자가 틀렸다 — 탭은 `min-h-[68px]` + 테두리 + **안전영역**이라,
+           홈 인디케이터가 있는 기기(34px)에서는 103px 가 필요한데 92px 만 비어서
+           **내용 아래가 탭에 가렸다.** 기기마다 값이 다르니 손으로 맞출 수가 없다.
+
+           이제 탭이 흐름 안에서 자기 자리를 차지한다 — 비워 줄 필요가 없고,
+           어떤 기기에서도 어긋나지 않는다.
+      */}
+      <div className="flex min-h-dvh flex-col">
+        {/* 🔴 튜토리얼에서 보러 나왔으면 돌아갈 줄을 맨 위에 둔다 —
+               화면마다 붙이면 새 화면에서 반드시 빠뜨린다.
+            🔴 **열 안에 둔다.** 밖에 두면 이 줄 높이만큼 화면이 100dvh 를 넘겨
+               내용이 짧은데도 스크롤이 생긴다 */}
+        <Suspense fallback={null}><TourReturn label={tourReturnLabel} /></Suspense>
+        <div className="flex-1">{children}</div>
+        <ChildTabs todoCount={todoCount} />
+      </div>
     </ModeFrame>
   );
 }

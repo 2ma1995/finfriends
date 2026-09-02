@@ -227,10 +227,23 @@ export default async function ParentMyPage({
                    「PIN 바꾸기」처럼 길어질 때 **줄어들 수 없는 쪽이 밖으로 밀린다.**
                    네 자리 입력은 좁아도 되지만 버튼은 그렇지 않다 — 쌓는 것이 맞다.
               */}
+              {/*
+                🔴 **`pattern`·`required` 를 뗐다.** 세 자리만 넣고 누르면 브라우저가
+                   폼을 조용히 막고 제 말풍선만 띄운다 — 화면은 아무 반응이 없고,
+                   사용자는 **버튼이 고장 난 줄 안다.** 오늘 아이 사진칸에서 온 제보와
+                   같은 모양이다.
+
+                   `setPinAction` 이 이미 검사하고 `?pinErr=BAD_FORMAT` 으로 돌려보내며,
+                   그 문구(「네 자리 숫자로 넣어 주세요.」)는 바로 위에 그려진다.
+                   **막는 것은 서버 하나면 된다.**
+
+                🔴 `maxLength` 는 남긴다 — 이건 막는 게 아니라 **더 못 치게** 하는 것이라
+                   조용히 실패하지 않는다.
+              */}
               <form action={setPinAction} className="mt-2 grid gap-1.5">
                 <input
                   name="pin" type="password" inputMode="numeric" autoComplete="off"
-                  pattern="\d{4}" maxLength={4} required placeholder={pinLabel}
+                  maxLength={4} placeholder={pinLabel}
                   className="min-h-touch w-full rounded-card border border-line bg-surface px-3 text-center text-title tracking-[0.4em] tabular-nums"
                 />
                 <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
@@ -276,9 +289,11 @@ export default async function ParentMyPage({
                 🔴 **PIN 과 같은 이유로 쌓는다.** `type="time"` 은 브라우저가 기본 폭을
                    갖고 있어 더 잘 밀린다 — 좁은 폰에서 버튼이 화면 밖으로 나갔다.
               */}
+              {/* 🔴 PIN 과 같은 이유로 `required` 를 뗐다 — `saveSchoolEndAction` 이
+                     검사하고 `?schoolErr=BAD_TIME` 으로 돌려보낸다 */}
               <form action={saveSchoolEndAction} className="mt-2 grid gap-1.5">
                 <input
-                  name="clock" type="time" required defaultValue={schoolClock ?? ""}
+                  name="clock" type="time" defaultValue={schoolClock ?? ""}
                   className="min-h-touch w-full rounded-card border border-line bg-surface px-3 text-title tabular-nums"
                 />
                 <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">

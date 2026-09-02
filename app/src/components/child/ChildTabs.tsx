@@ -42,7 +42,17 @@ export function ChildTabs({ todoCount = 0 }: { todoCount?: number }) {
   if (HIDDEN.some((h) => path.startsWith(h))) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-frame border-t border-line bg-surface/95 backdrop-blur">
+    /*
+      🔴 **`fixed` 를 버리고 `sticky` 로 간다** — 부모 화면(`ParentTabs`)과 같은 방식이다.
+
+         `fixed` 는 뷰포트에 붙는다. 그래서 (1) 본문에 `pb-[92px]` 로 자리를 손으로
+         비워 줘야 했고 그 숫자가 기기마다 틀렸으며, (2) PWA 에서 화면을 끝까지 밀면
+         문서가 튕길 때 **탭이 같이 흔들렸다.**
+
+         `sticky bottom-0 mt-auto` 는 레이아웃 흐름 안에 자기 자리를 갖는다 —
+         내용이 짧으면 `mt-auto` 가 바닥으로 밀고, 길면 바닥에 붙어 따라온다.
+    */
+    <nav className="sticky bottom-0 z-20 mt-auto border-t border-line bg-surface/95 backdrop-blur">
       {/* 🔴 **칸 수를 문자열로 만들지 않는다.** `grid-cols-${TABS.length}` 로 쓰면
              Tailwind 가 그 클래스를 못 찾아 CSS 를 아예 안 만든다 — 탭이 세로로 쌓인다 */}
       <ul className="grid grid-cols-4">

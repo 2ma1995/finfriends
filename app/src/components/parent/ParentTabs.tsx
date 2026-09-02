@@ -47,9 +47,10 @@ export function ParentTabs() {
        *    한 기기에서 부모와 아이가 번갈아 쓰는데 탭 높이가 다르면
        *    **손가락이 기억한 자리가 어긋난다.**
        *
-       *    `sticky` 를 유지한다 — 아이 쪽은 `fixed` 라 본문에 `pb-[92px]` 를 비워 줘야 하고,
-       *    이쪽은 `flex` 열 + `mt-auto` 로 자리를 차지하므로 본문을 건드릴 필요가 없다.
-       *    **높이만 맞추면 되고 배치 방식을 바꿀 이유는 없다.**
+       *    🔴 **배치 방식도 이제 같다.** 예전엔 아이 쪽만 `fixed` 라 본문에
+       *       `pb-[92px]` 로 자리를 손으로 비워 뒀는데, 그 숫자가 기기마다 틀려서
+       *       PWA 에서 위치가 어긋났다. 아이 쪽을 이쪽(`sticky` + `mt-auto`)에
+       *       맞췄다 — 흐름 안에 자리를 가지므로 본문을 건드릴 필요가 없다.
        */
       className="sticky bottom-0 mt-auto border-t border-line bg-surface/95 backdrop-blur"
     >
