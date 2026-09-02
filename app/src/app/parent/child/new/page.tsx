@@ -62,9 +62,13 @@ export default async function NewChildPage({
             name="birthYear"
             type="number"
             inputMode="numeric"
-            required
-            min={thisYear - AGE_LIMIT + 1}
-            max={thisYear}
+            /**
+             * 🔴 **`min`·`max`·`required` 를 걸지 않는다** (어긋남 대장 D66).
+             *    범위를 벗어난 값을 넣으면 브라우저가 **조용히 막고 자기 말풍선만** 띄운다 —
+             *    화면은 아무 반응이 없어 「버튼이 안 눌린다」로 읽힌다. 오늘 세 번 제보됐다.
+             *    막는 것은 서버 하나면 된다. 서버가 검사하고 이 화면으로 문구를 돌려보낸다.
+             */
+            // `createChildProfile` 이 검사하고 BIRTH_YEAR_INVALID · TOO_OLD 를 돌려보낸다
             defaultValue={year}
             placeholder={`예: ${thisYear - 9}`}
             className="min-h-touch rounded-card border-line bg-surface px-3 text-body tabular-nums text-ink placeholder:text-ink-mute"

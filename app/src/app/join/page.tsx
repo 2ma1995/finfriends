@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import { findChild } from "@/modules/consent";
-import { registerChildDeviceAction } from "@/app/actions/device";
+import { issueInvite } from "@/lib/session/child-invite";
 import { whatHappens, notCollected, parentExitNotice } from "./join.fixture";
 
 // CON-001 · D5-b — 아이 기기 등록. 로그인이 아니라 **기기 등록**이다
@@ -51,6 +51,17 @@ export default async function JoinPage({
     );
   }
 
+  /**
+   * 🔴 **여기서 초대 코드를 만든다.** 소유 확인은 위 `findChild` 가 이미 했다 —
+   *    세션의 보호자에게서 찾은 아이이므로 남의 아이가 올 수 없다.
+   *
+   *    동의 전에는 만들지 않는다. 링크가 나가면 화면에 「등록됐다」는
+   *    잘못된 신호가 남는다.
+   */
+  const invite = guardian.consentCompleted
+    ? (await issueInvite(guardian.guardianId, child.id)).token
+    : null;
+
   return (
     <Screen title={`${child.displayName}의 기기가 맞나요?`}
       sub={`${child.birthYear}년생 · 부모가 눌러 주세요`}
@@ -80,12 +91,28 @@ export default async function JoinPage({
         </p>
       ) : null}
 
-      {guardian.consentCompleted ? (
-        <form action={registerChildDeviceAction}>
-          <input type="hidden" name="childId" value={child.id} />
+      {guardian.consentCompleted && invite ? (
+        /**
+         * 🔴 **평범한 GET 이동이다. Server Action 이 아니다** (어긋남 대장 D66).
+         *
+         *    전에는 Server Action 이 초대 코드를 만들고 `redirect("/child/enter?t=…")`
+         *    했다. `/child/enter` 는 **쿠키를 굽는 Route Handler** 인데,
+         *    Server Action 의 `redirect` 는 브라우저 문서 이동이 아니라
+         *    **클라이언트 라우터 이동**이다 — 라우터가 등록 «전»에 받아 둔
+         *    `/child/home` 화면을 캐시에서 돌려주면 부모가 눌러도
+         *    「아직 준비가 안 됐어요」가 계속 뜬다. 실기기 운영에서 그렇게 나왔다.
+         *
+         *    `method="get"` 폼 제출은 **진짜 문서 이동**이라 라우터가 끼지 않는다.
+         *    쿠키가 그 응답에서 붙고, 이어지는 `/child/home` 은 새 요청으로 받는다.
+         *
+         * 🔴 초대 코드는 이 화면을 그릴 때 만든다. 24시간 1회용이므로
+         *    안 누르고 떠나도 스스로 죽는다.
+         */
+        <form method="get" action="/child/enter">
+          <input type="hidden" name="t" value={invite} />
           <button
             type="submit"
-            className="mt-3 min-h-touch w-full rounded-card bg-primary px-3 text-sub font-bold text-white"
+            className="mt-3 min-h-touch w-full rounded-card bg-primary px-3 text-body font-bold text-white"
           >
             이 기기를 {child.displayName}의 화면으로 등록하기
           </button>

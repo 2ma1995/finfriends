@@ -64,7 +64,16 @@ export default async function ParentPlanNewPage({
             {CATEGORIES.map((c, i) => (
               <li key={c.code}>
                 <label className="block cursor-pointer">
-                  <input type="radio" name="category" value={c.code} defaultChecked={i === 0} className="peer sr-only" required />
+                  {/*
+                    🔴 **`sr-only` 라디오에 `required` 를 걸지 않는다** (어긋남 대장 D66).
+
+                       안 보이는 컨트롤이라 브라우저가 **말풍선을 띄울 자리조차 없다** —
+                       아무 반응 없이 폼이 죽는다. 지금은 `defaultChecked` 덕에 안 터지지만,
+                       기본 선택을 빼는 순간 원인을 못 찾는 버그가 된다.
+
+                       하나는 늘 선택돼 있고, 서버(`parent-plan`)가 값을 다시 본다.
+                  */}
+                  <input type="radio" name="category" value={c.code} defaultChecked={i === 0} className="peer sr-only" />
                   <span className="grid min-h-touch place-items-center rounded-card border border-line bg-surface text-center text-cap peer-checked:border-primary-l peer-checked:bg-primary-bg peer-checked:font-bold">
                     <span className="text-[1.3em]">{c.icon}</span>{c.label}
                   </span>
@@ -76,9 +85,17 @@ export default async function ParentPlanNewPage({
 
         <label className="grid gap-1">
           <span className="text-cap text-ink-mute">{labels.amount}</span>
-          {/* 🔴 `step` 은 검사 도구가 아니다. 100 으로 두면 1500 이 조용히 막힌다 — 실제로 겪었다 */}
+          {/*
+            🔴 `step` 은 검사 도구가 아니다. 100 으로 두면 1500 이 조용히 막힌다 — 실제로 겪었다.
+
+            🔴 **`min`·`max`·`required` 도 안 건다** (어긋남 대장 D66).
+               범위를 벗어난 값을 넣으면 브라우저가 **조용히 막고 자기 말풍선만** 띄운다 —
+               화면은 아무 반응이 없어 「버튼이 안 눌린다」로 읽힌다. 오늘 세 번 제보됐다.
+               `parent-plan` 이 검사하고 `?error=too_big` 으로 돌려보내며
+               그 문구(「금액이 너무 커요. 백만 원까지 적을 수 있어요.」)가 이 화면에 그려진다.
+          */}
           <input name="limitAmount" type="number" inputMode="numeric"
-                 min={1} max={1000000} step={1} required placeholder={placeholders.amount}
+                 step={1} placeholder={placeholders.amount}
                  className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-title font-bold tabular-nums" />
         </label>
 

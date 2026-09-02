@@ -3548,6 +3548,113 @@ const url = process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:5543
 지금까지는 그것이 막다른 길이었다.
 
 
+---
+
+## D66 🔴 실기기에서 **기기 등록이 안 됐다** — Server Action 이 쿠키 굽는 Route Handler 로 보냈다
+
+| | |
+| --- | --- |
+| 신고 | 2026-09-02 사용자 — 실기기 · 운영(`finfriends.vercel.app`) · 「등록하면 계속 「아직 준비가 안 됐어요」가 떠서 연결이 안 된다」 |
+| 경로 | `/join` 「이 기기를 …의 화면으로 등록하기」 → `registerChildDeviceAction` → `redirect("/child/enter?t=…")` |
+
+### 원인 — `redirect` 가 문서 이동이 아니다
+
+`/child/enter` 는 **쿠키를 굽는 Route Handler** 다. 그런데 **Server Action 의
+`redirect` 는 브라우저 문서 이동이 아니라 클라이언트 라우터 이동**이다.
+라우터가 등록 **전**에 받아 둔 `/child/home` 화면을 캐시에서 돌려주면,
+부모가 눌러도 「아직 준비가 안 됐어요」가 **계속** 뜬다.
+
+**로컬에서는 안 드러났다.** 초대 링크 경로(`/parent/invite`)는 평범한 GET 이라
+정상이었고, 그쪽만 확인하고 있었다.
+
+Route Handler 자체는 멀쩡했다 — 평범한 GET 으로 부르면 이렇게 나온다:
+
+```
+HTTP/1.1 307 → /child/home
+set-cookie: ff_device_token=…; HttpOnly; SameSite=lax
+set-cookie: ff_device=CHILD;   SameSite=lax
+```
+
+### 고친 방법 — 진짜 문서 이동으로 바꿨다
+
+`/join` 이 화면을 그릴 때 초대 코드를 만들어 **`method="get"` 폼**에 싣는다.
+GET 폼 제출은 문서 이동이라 라우터가 끼지 않는다.
+
+```html
+<form action="/child/enter" method="get">
+  <input type="hidden" name="t" value="…" />
+```
+
+`registerChildDeviceAction` 은 **지웠다.** 같은 파일 주석이 이미
+「길이 둘이면 한쪽만 고쳐진다(`D24`)」고 적어 뒀는데 **이번에도 그 두 번째 길이 문제였다.**
+이제 「기기 등록」 버튼과 초대 링크가 같은 코드를 같은 방식으로 소진한다.
+
+등록 → 아이 첫 화면까지 확인했다 — `/child/enter` 307 → `/child/home` 307 →
+`/child/welcome`「처음이지? 1 / 7」.
+
+### 🔴 같이 나온 것 — 기기 쿠키에 `secure` 가 없었다
+
+```
+보호자 세션 (actions/auth.ts)   secure: NODE_ENV === "production"   ✅ 처음부터
+기기 토큰 · 모드 (child/enter)  없음                                🔴
+```
+
+기기 토큰은 **180일을 사는 아이 화면 열쇠**다 — 평문으로 한 번 새면 그동안 계속 유효하다.
+운영에서만 켠다(로컬 `http` 에서 켜면 쿠키가 아예 안 붙는다).
+
+### 브라우저 기본 검사가 **조용히** 막는다 — 두 번째로 겪었다
+
+저쪽 세션이 아이 사진칸의 네이티브 `required` 때문에 「했어요 버튼이 안 눌려요」를
+제보받았다. 내 `TopUpForm` 에 같은 함정이 있었다 — `min={1}` 인데
+빈 칸만 막고 있어서 **`0` 을 넣으면 버튼이 켜지고**, 누르면 브라우저가
+조용히 막고 자기 말풍선만 띄운다.
+
+```
+전  disabled={amount.trim().length === 0 || total > MAX_TOPUP}
+후  disabled={total < 1 || total > MAX_TOPUP}
+```
+
+**폼에 `required`·`min`·`max` 를 걸었으면 「그 값으로는 누를 수 없게」까지 해야 한다.**
+안 그러면 화면은 아무 반응이 없고 사용자는 버튼이 고장 난 줄 안다.
+
+### 부모 화면의 같은 함정 넷 — 셋을 고치고 하나를 남겼다
+
+저쪽 세션이 전수 조사해 15곳쯤을 찾았고 그중 **부모 쪽이 넷**이었다.
+서버가 이미 검사하고 **그 화면으로 문구를 돌려보내는지** 하나씩 확인한 뒤 뗐다.
+
+| 자리 | 서버가 돌려주는 문구 | 조치 |
+| --- | --- | --- |
+| `parent/plan/new` 금액 | 「금액이 너무 커요. 백만 원까지 적을 수 있어요.」 | `min`·`max`·`required` 제거 |
+| `parent/bank/missions/new` 금액 | 「금액은 0원부터 100,000원까지 정할 수 있어요.」 | `min`·`max` 제거 |
+| `parent/child/new` 태어난 해 | 「태어난 해를 다시 확인해 주세요.」 · 「만 14세 미만…」 | `min`·`max`·`required` 제거 |
+| `parent/bank/savings` 이자율 | 🔴 **없다** | **남겼다** — 아래 |
+
+🔴 **저금 이자율은 떼면 더 나빠진다.** `modules/savings` 가 범위를 벗어난 값을
+**조용히 기본값으로 떨어뜨린다**(`finalPct = … ? Math.floor(pct) : undefined`).
+네이티브를 떼면 부모가 50%를 넣고 「됐다」를 보는데 실제로는 기본 이율로 승인된다 —
+**조용한 실패가 조용한 «다른 결과»로 바뀐다.** 문구를 만들고 서버가 거절하게 고쳐야 하고,
+그건 판정 동작을 바꾸는 일이라 따로 다룬다.
+
+### 🔴 `sr-only` 라디오의 `required` — 말풍선 띄울 자리조차 없다
+
+`parent/plan/new` 의 갈래 선택이 `className="peer sr-only"` + `required` 였다.
+**안 보이는 컨트롤**이라 브라우저가 말풍선을 띄울 자리가 없다 — 아무 반응 없이 폼이 죽는다.
+지금은 `defaultChecked={i === 0}` 덕에 안 터지고 있었다. **기본 선택을 빼는 순간
+원인을 못 찾는 버그**가 된다. 뗐다 — 하나는 늘 선택돼 있고 서버가 값을 다시 본다.
+
+### 텍스트칸 `required` 는 남겼다
+
+빈 칸에 걸리면 브라우저가 **그 칸을 가리킨다** — 사용자가 어디가 문제인지 본다.
+조용히 죽는 것과 다르므로 그대로 둔다. 규칙은 「걸지 말라」가 아니라
+**「그 값으로 못 누르게 하거나, 최소한 어디가 문제인지 보이게 하라」** 다.
+
+### 좁은 폰에서 버튼이 밀리던 것도 같이
+
+flex 한 줄에 `input`(flex-1) + `button`(shrink-0) 을 두면, 입력칸이 자기
+min-content 폭 아래로 안 줄어 **버튼이 화면 밖으로 나간다.** `min-w-0` 이 푼다.
+저쪽이 PIN·하교 시각에서 겪은 것과 같은 자리다. 검사로 남겼다.
+
+
 ```
 tools/tasks_data.py 를 고치고 재생성해야 하는 것 — D2 · D3 · D5 · D6 · D8 · D10 · D11 · D13 · D14 · D15 · D16 · D17 · D18 · D23
 🔴 기준 문서 교체 — D30. tools/tasks_data.py 를 **새 SRS 로 다시 뽑는다**. 아래 항목의 절 번호가 전부 어긋나 있다
