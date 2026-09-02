@@ -4,9 +4,10 @@ import {
   autoCompleteStaleMissions, countOverdue, listPendingForGuardian, markMissionsSeen,
   photoMissionIds, remindStaleMissions, unseenMissionIds,
 } from "@/modules/mission";
+import { photoRuleOf } from "@/contracts/mission";
 import { approveMissionAction, rejectMissionAction, approveAllAction } from "@/app/actions/parent-mission";
 import {
-  approveLabel, BULK_THRESHOLD, bulkLabel, empty, expireNotice, fromLessonBadge,
+  approveLabel, BULK_THRESHOLD, bulkLabel, checkInPersonNotice, empty, expireNotice, fromLessonBadge,
   needLogin, newBadge, overdueNotice, photoAlt, photoNotice, reasonPlaceholder,
   reasonRequired, rejectLabel, retroNotice,
 } from "./mission.fixture";
@@ -125,6 +126,17 @@ export default async function ParentMissionsPage({
                     />
                     <p className="mt-1 text-cap leading-relaxed text-ink-mute">{photoNotice}</p>
                   </div>
+                ) : photoRuleOf(p.topic, p.fromLesson) === "REQUIRED" ? (
+                  /*
+                    🔴 **사진칸이 그냥 비면 「아직 안 올라왔나」로 읽힌다.**
+                       이 영역은 사진이 필수인데, 아이가 「부모님이 직접 보실래요」를
+                       고르면 사진 없이 온다 — 그걸 말해 주지 않으면 부모는
+                       근거 없이 승인하게 된다.
+                  */
+                  <p className="mt-2 rounded-card border border-star bg-star-bg px-2.5 py-2 text-cap leading-relaxed text-ink">
+                    <b className="block">👀 {checkInPersonNotice.title}</b>
+                    {checkInPersonNotice.body}
+                  </p>
                 ) : null}
 
                 {/*

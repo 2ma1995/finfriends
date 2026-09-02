@@ -1,7 +1,8 @@
 import { photoRuleOf, type MissionView } from "@/contracts/mission";
 import { attachMissionPhoto, markMissionDone, undoMissionDone } from "@/app/actions/mission";
 import {
-  autoDoneNotice, backfilledNotice, doneLabel, expiredBody, expiredTitle, noPhotoWhy,
+  autoDoneNotice, backfilledNotice, checkLaterLabel, checkLaterWhy,
+  doneLabel, expiredBody, expiredTitle, noPhotoWhy,
   photoAttached, photoLabel, photoLabelOptional, photoLater, photoNotice, photoReplace,
   photoWhy, photoWhyOptional, rejectedPrefix, source, undoLabel, waitingNotice,
 } from "@/app/child/missions/missions.fixture";
@@ -141,6 +142,24 @@ export function MissionRow(
           <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
             {doneLabel}
           </button>
+          {/*
+            🔴 **사진이 증거의 유일한 형태가 아니다** (사용자 지적).
+               부모가 와서 직접 보고 확인하면 그게 더 확실하다 — 원래 그렇게 하던 일이다.
+               이 길이 없으면 사진을 못 찍는 아이는 **한 일을 올릴 방법이 아예 없다.**
+
+            🔴 **같은 폼 · 같은 액션**이다. `name` 이 실린 버튼만 값을 보내므로,
+               위 「했어요」를 누르면 `checkLater` 는 안 실린다 — 고른 것만 전해진다.
+            🔴 버튼을 **아래에 · 약하게** 둔다. 기본은 여전히 사진이다.
+          */}
+          {rule === "REQUIRED" ? (
+            <>
+              <button name="checkLater" value="1"
+                      className="min-h-touch w-full rounded-card border border-primary bg-primary-bg text-sub font-bold text-primary-d">
+                👀 {checkLaterLabel}
+              </button>
+              <p className="text-cap leading-relaxed text-ink-mute">{checkLaterWhy}</p>
+            </>
+          ) : null}
         </form>
       ) : null}
       {/*

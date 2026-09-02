@@ -34,8 +34,18 @@ export async function markMissionDone(formData: FormData) {
    * 🔴 **필수인 건 올리기 전에 본다.** 올린 뒤에 막으면 아이가 한 일이
    *    「기다리는 중」에 사진 없이 남고, 부모는 판정할 근거가 없다.
    */
+  /**
+   * 🔴 **사진 대신 「부모님이 직접 보실래요」를 고를 수 있다** (사용자 지적).
+   *    사진은 증거의 유일한 형태가 아니다 — 부모가 와서 직접 보고 확인하면
+   *    그게 더 확실하고, 원래 그렇게 하던 일이다.
+   *
+   * 🔴 **빠뜨린 것과 고른 것을 가른다.** 그냥 「사진 없으면 통과」로 두면
+   *    필수라고 적어 둔 뜻이 사라진다. 아이가 **버튼을 눌러야** 열린다.
+   */
+  const checkLater = formData.get("checkLater") === "1";
+
   const m = await findForPhoto(access.childId, id);
-  if (m && photoRuleOf(m.topic, m.fromLesson) === "REQUIRED" && !hasFile) {
+  if (m && photoRuleOf(m.topic, m.fromLesson) === "REQUIRED" && !hasFile && !checkLater) {
     /**
      * 🔴 **어느 미션이 막혔는지까지 실어 보낸다.** 화면 맨 위 띠 하나로만 말하면,
      *    아래로 스크롤해 누른 아이는 그 띠를 못 본다 — 그게 「버튼이 안 눌려요」였다.
