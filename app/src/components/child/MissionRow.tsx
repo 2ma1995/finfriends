@@ -23,17 +23,30 @@ import {
 function PhotoField({ required }: { required: boolean }) {
   return (
     <label className="grid gap-1">
-      <span className="text-cap text-ink-mute">{required ? photoLabel : photoLabelOptional}</span>
-      {/* 🔴 `required` 는 **거드는 것**이다. 막는 것은 서버다 — 폼은 주소만 알면 던진다 (§6.6) */}
-      <input type="file" name="photo" accept="image/*" required={required}
-             className="min-h-touch w-full rounded-card border border-line bg-surface px-2 py-2 text-cap" />
+      <span className={`text-cap ${required ? "font-bold text-ink" : "text-ink-mute"}`}>
+        {required ? photoLabel : photoLabelOptional}
+      </span>
+      {/*
+        🔴 **`required` 를 뗐다.** 이게 「했어요 버튼이 안 눌려요」의 정체였다 —
+           브라우저가 폼을 조용히 막고 제 말풍선(「파일을 선택하세요」)만 띄운다.
+           그 말풍선은 폰에서 금방 사라지고, 어른 말이고, 우리가 못 고친다.
+           아이 눈에는 **버튼이 죽은 것**으로 보인다.
+
+           막는 것은 그대로 서버다 (`markMissionDone`) — 대신 아이 말로 답한다.
+           `markDone` 보다 먼저 막으므로 눌러도 미션이 올라가지는 않는다.
+      */}
+      <input type="file" name="photo" accept="image/*"
+             className={`min-h-touch w-full rounded-card border bg-surface px-2 py-2 text-cap ${
+               required ? "border-primary" : "border-line"}`} />
       <span className="text-cap text-ink-mute">{required ? photoWhy : photoWhyOptional}</span>
       <span className="text-cap text-ink-mute">{photoNotice}</span>
     </label>
   );
 }
 
-export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "undo" }) {
+export function MissionRow(
+  { m, action, notice }: { m: MissionView; action?: "done" | "undo"; notice?: string | null },
+) {
   // 🔴 아이 화면과 서버가 **같은 함수**를 본다. 갈라지면 한쪽만 사진을 기다린다
   const rule = photoRuleOf(m.topic, m.fromLesson);
   /**
@@ -119,6 +132,12 @@ export function MissionRow({ m, action }: { m: MissionView; action?: "done" | "u
           ) : (
             <PhotoField required={rule === "REQUIRED"} />
           )}
+          {/* 🔴 **버튼 바로 위에서 말한다.** 화면 맨 위 띠는 눌러 놓고 못 본다 */}
+          {notice ? (
+            <p className="rounded-card border border-miss-line bg-miss-bg px-2.5 py-2 text-cap font-bold text-miss">
+              {notice}
+            </p>
+          ) : null}
           <button className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white">
             {doneLabel}
           </button>

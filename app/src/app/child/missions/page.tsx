@@ -13,7 +13,7 @@ export const metadata = { title: "미션 · 핀프렌즈" };
 export default async function ChildMissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ photo?: string }>;
+  searchParams: Promise<{ photo?: string; m?: string }>;
 }) {
   const access = await currentChild();
   if (!access.ok) {
@@ -47,7 +47,10 @@ export default async function ChildMissionsPage({
       {board.todo.length > 0 ? (
         <>
           <h2 className="mb-2 text-title font-bold leading-none">{sections.todo}</h2>
-          <ul className="grid gap-1.5">{board.todo.map((m) => <MissionRow key={m.id} m={m} action="done" />)}</ul>
+          <ul className="grid gap-1.5">{board.todo.map((m) => (
+            <MissionRow key={m.id} m={m} action="done"
+              notice={sp.photo === "NEED" && sp.m === m.id ? photoResult.NEED : null} />
+          ))}</ul>
         </>
       ) : null}
 

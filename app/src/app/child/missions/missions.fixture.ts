@@ -35,7 +35,7 @@ export const doneLabel = "했어요";
  * 🔴 **벌기 부모 미션만 사진이 필수다** (D49). 「안 해도 돼요」를 지웠다 —
  *    필수인데 안 해도 된다고 적으면 아이가 그냥 눌렀다가 막힌다.
  */
-export const photoLabel = "사진 보여주기";
+export const photoLabel = "사진 보여주기 (꼭 있어야 해요)";
 /** 🔴 선택인 칸은 **안 해도 된다고 적는다.** 필수와 같은 말을 쓰면 아이가 눌렀다가 막힌 줄 안다 */
 export const photoLabelOptional = "사진 보여주기 (안 해도 돼요)";
 export const photoNotice = "부모님만 보시고 바로 지워져요.";

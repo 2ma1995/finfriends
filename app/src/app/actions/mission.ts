@@ -36,7 +36,11 @@ export async function markMissionDone(formData: FormData) {
    */
   const m = await findForPhoto(access.childId, id);
   if (m && photoRuleOf(m.topic, m.fromLesson) === "REQUIRED" && !hasFile) {
-    redirect("/child/missions?photo=NEED");
+    /**
+     * 🔴 **어느 미션이 막혔는지까지 실어 보낸다.** 화면 맨 위 띠 하나로만 말하면,
+     *    아래로 스크롤해 누른 아이는 그 띠를 못 본다 — 그게 「버튼이 안 눌려요」였다.
+     */
+    redirect(`/child/missions?photo=NEED&m=${encodeURIComponent(id)}`);
   }
 
   /**
