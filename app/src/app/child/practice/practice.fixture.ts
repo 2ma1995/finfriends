@@ -25,6 +25,8 @@ export const done = "✓ 별 받았어요";
 export const rejected = "다시 해볼까요?";
 
 export const quizToday = "오늘의 문제";
+/** 🔴 **눌러서 막히게 두지 않는다.** 안 열린 이유를 칸에서 미리 말한다 (D65) */
+export const quizLocked = "먼저 한 편 읽어요";
 export const quizDone = "오늘 문제 다 풀었어요";
 /**
  * 🔴 **왜 「오늘의 문제」가 넷인지 화면이 말한 적이 없다.** `FR-011` 은

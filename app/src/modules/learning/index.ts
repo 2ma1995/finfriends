@@ -93,6 +93,28 @@ export async function getLessonList(childId: string, topic: Topic, now = new Dat
 }
 
 /**
+ * 이 영역의 퀴즈를 열어도 되나 — 🔴 **한 편이라도 읽었어야 한다** (어긋남 대장 D65).
+ *
+ * 「배우고 → 해본다」가 이 제품의 규칙인데 **퀴즈는 아무 때나 열려 있었다.**
+ * 그래서 읽은 편 0인 아이가 퀴즈를 맞히고 별을 받았고, 화면은 「읽은 이야기 0/4」로
+ * 나와 **오류처럼 보였다** (사용자 피드백). 숫자가 아니라 순서가 틀린 것이었다.
+ *
+ * 🔴 **전부가 아니라 한 편이다.** 하루에 한 편만 열리므로(`D47`) 전부를 요구하면
+ *    첫 퀴즈까지 나흘을 기다린다 — 그건 배우기를 막는 것이지 순서를 세우는 게 아니다.
+ *
+ * 🔴 **판정을 한 곳에 둔다.** 화면·액션이 같은 함수를 본다 —
+ *    화면만 막으면 주소를 직접 치는 것으로 통한다 (SRS-Tech §6.6).
+ */
+export async function canTakeQuiz(childId: string, topic: Topic) {
+  const row = await prisma.learningProgress.findUnique({
+    where: { childId_topic: { childId, topic } },
+    select: { completedLessons: true },
+  });
+  const all = lessonsOf(topic);
+  return (row?.completedLessons ?? []).some((id) => all.some((l) => l.id === id));
+}
+
+/**
  * 이 편을 지금 열어도 되나 — 🔴 **화면과 서버가 같은 답을 내야 한다.**
  *    목록에서 회색으로 만들어도 주소를 직접 치면 그대로 열린다 (SRS-Tech §6.6).
  */

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
-import { answeredToday, getQuiz, QUIZ_TOPICS, quizTitle, todayIndex } from "@/modules/quiz";
+import { answeredToday, getQuiz, QUIZ_TOPICS, quizTitle, quizTopic, todayIndex } from "@/modules/quiz";
 import { submitAnswer } from "@/app/actions/quiz";
+import { canTakeQuiz } from "@/modules/learning";
 import {
   backToPractice, consentRequired, correctLabel, doneToday, explainTitle,
-  limitNotice, noDevice, starNotice, todayLabel, tomorrow, wrongLabel, wrongNotice, wrongPractice,
+  limitNotice, needLesson, noDevice, starNotice, todayLabel, tomorrow,
+  wrongLabel, wrongNotice, wrongPractice,
 } from "./quiz.fixture";
 
 // LRN-001 — 퀴즈. 🔴 맞히면 **별이 DB 에 남는다**
@@ -24,6 +26,23 @@ export default async function ChildQuizPage({
     return (
       <Screen title="퀴즈" back={{ href: "/child/learn", label: "배우기" }}>
         <Empty emoji="❓" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
+      </Screen>
+    );
+  }
+
+  /**
+   * 🔴 **읽기 전엔 문제가 안 열린다** (D65). 「배우고 → 해본다」가 이 제품의 규칙인데
+   *    퀴즈는 아무 때나 열려 있었다 — 읽은 편 0인 아이가 별을 받고, 화면은
+   *    「읽은 이야기 0/4」로 나와 오류처럼 보였다.
+   */
+  if (!(await canTakeQuiz(access.childId, quizTopic(topic)))) {
+    return (
+      <Screen title={quizTitle(topic)} back={{ href: "/child/practice", label: "실천하기" }}>
+        <Empty emoji="📖" title={needLesson.title} body={needLesson.body} />
+        <Link href={`/child/learn/${topic}`}
+              className="mt-3 grid min-h-touch w-full place-items-center rounded-card bg-primary text-body font-bold text-white">
+          {needLesson.cta}
+        </Link>
       </Screen>
     );
   }

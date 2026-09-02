@@ -27,7 +27,13 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
   }
 
   const { lessons, quizCorrect, readToday } = await getLessonList(access.childId, topic);
-  const allRead = lessons.every((l) => l.read);
+  /**
+   * 🔴 **퀴즈는 「한 편이라도」 읽으면 열린다** (D65). 여기는 `allRead`(전부)로
+   *    흐리게만 하고 있었는데, 실제 관문(`canTakeQuiz`)은 한 편이다 —
+   *    **화면과 서버가 다른 규칙을 말하면** 아이는 흐린 버튼을 눌러 보고 열려서
+   *    「되는 건가 안 되는 건가」가 된다.
+   */
+  const quizOpen = lessons.some((l) => l.read);
 
 
   return (
@@ -83,7 +89,7 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
       {/* 🔴 퀴즈는 **읽은 다음**에 온다. 배우기 화면이 곧장 퀴즈로 뛰던 것이 이 화면의 오류였다 */}
       <Link href={`/child/quiz/${slug}?n=1`}
             className={`mt-3 flex min-h-touch items-center justify-center rounded-card text-body font-bold ${
-              allRead ? "bg-primary text-white" : "border border-line-2 bg-surface text-ink-soft"}`}>
+              quizOpen ? "bg-primary text-white" : "border border-line-2 bg-surface text-ink-soft"}`}>
         {quizLabel} · {quizCorrect} / {quizTotal(slug)}개 맞힘
       </Link>
 

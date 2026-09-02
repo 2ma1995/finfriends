@@ -10,7 +10,7 @@ import {
   claim, claimed, comeTomorrow, consentRequired, creditsLabel, creditsNone, wishGoing,
   done, hint, intro, lessonWaiting,
   missionDiff, missionNone, needsLesson, noDevice, nudge,
-  practicedToday as practicedTodayLabel, quizDone, quizRule, quizToday,
+  practicedToday as practicedTodayLabel, quizDone, quizLocked, quizRule, quizToday,
   readFirst, rejected, savingsCta, savingsGoing, savingsNone, savingsStage, savingsStarred,
   sub, title, waiting,
 } from "./practice.fixture";
@@ -195,10 +195,13 @@ export default async function ChildPracticePage({
               ) : null}
 
               {/* 🔴 하루에 한 문제. 다 풀었으면 그렇게 말한다 */}
-              <Link href={`/child/quiz/${slug}`}
+              {/* 🔴 **읽기 전엔 문제가 안 열린다** (D65). 눌러서 막히면 아이는
+                     「고장났나」가 된다 — 칸에서 미리 말하고 배우기로 보낸다 */}
+              <Link href={c.needsLesson ? `/child/learn/${slug}` : `/child/quiz/${slug}`}
                     className={`mt-1.5 grid min-h-touch place-items-center rounded-card border border-dashed text-cap ${
-                      c.quizDone ? "border-line-2 text-ink-mute" : "border-primary-l text-primary-d"}`}>
-                {c.quizDone ? quizDone : quizToday}
+                      c.needsLesson ? "border-line-2 text-ink-mute"
+                      : c.quizDone ? "border-line-2 text-ink-mute" : "border-primary-l text-primary-d"}`}>
+                {c.needsLesson ? quizLocked : c.quizDone ? quizDone : quizToday}
               </Link>
             </li>
           );

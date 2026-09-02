@@ -21,3 +21,13 @@ export const backToPractice = "실천하러 가기";
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
 export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };
+
+/**
+ * 🔴 **읽기 전엔 문제가 안 열린다** (D65). 「안 돼요」로 끝내지 않고
+ *    **무엇을 하면 열리는지** 적는다 (`ACE-1.1`).
+ */
+export const needLesson = {
+  title: "먼저 한 편 읽어요",
+  body: "이야기를 읽으면 오늘의 문제가 열려요.",
+  cta: "배우러 가기 →",
+};
