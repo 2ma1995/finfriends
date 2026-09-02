@@ -37,7 +37,19 @@ export async function GET(req: NextRequest) {
   url.pathname = "/child/home";
   const res = NextResponse.redirect(url);
 
-  const common = { path: "/", sameSite: "lax" as const };
+  /**
+   * 🔴 **`secure` 를 빠뜨리고 있었다** (어긋남 대장 D66).
+   *
+   *    보호자 세션 쿠키(`actions/auth.ts`)는 처음부터 `secure` 를 붙였는데
+   *    **기기 토큰과 모드 표시만 빠져 있었다.** 기기 토큰은 180일을 사는
+   *    아이 화면 열쇠다 — 평문으로 한 번 새면 그동안 계속 유효하다.
+   *
+   *    로컬(`http://localhost`)에서는 켜면 쿠키가 아예 안 붙으므로 운영에서만 켠다.
+   */
+  const common = {
+    path: "/", sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+  };
   res.cookies.set(DEVICE_COOKIE, r.token, {
     ...common, httpOnly: true, expires: r.expiresAt,
   });

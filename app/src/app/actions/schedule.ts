@@ -27,7 +27,7 @@ export async function dismissPlanAskAction() {
  *    호출되는 공개 엔드포인트다** — 화면이 막아도 액션 자체는 열려 있었다.
  *
  * 🔴 **`childId` 는 클라이언트가 보낸 값이다.** 소유를 확인하지 않으면
- *    남의 아이 하교 시각을 바꿀 수 있다 (`registerChildDeviceAction` 과 같은 이유).
+ *    남의 아이 하교 시각을 바꿀 수 있다 (`createInviteLinkAction` 과 같은 이유).
  *    보호자는 **세션에서** 오고, 아이는 **그 보호자 밑에서** 찾는다.
  */
 export async function setSchoolEndAction(childId: string, clock: string) {

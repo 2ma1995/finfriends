@@ -91,13 +91,27 @@ export function TopUpForm({
           min={1} max={MAX_TOPUP} step={1} required placeholder={labels.placeholder}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums"
+          /**
+           * 🔴 **`min-w-0` 이 있어야 좁은 폰에서 버튼이 안 밀린다.**
+           *    flex 항목은 기본으로 자기 min-content 폭 아래로 줄지 않고,
+           *    `input` 의 그 최소 폭은 브라우저 기본 `size` 라 제법 크다 —
+           *    `flex-1` 을 줘도 입력칸이 안 줄고 줄 수 없는 버튼이 화면 밖으로 나간다.
+           */
+          className="min-h-touch min-w-0 flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums"
         />
         <span className="shrink-0 text-sub text-ink-mute">원</span>
         <button
           type="submit"
           // 🔴 빈 칸으로 누르면 서버까지 갔다가 오류로 돌아온다. 미리 막는다
-          disabled={amount.trim().length === 0 || total > MAX_TOPUP}
+          /**
+           * 🔴 **`min={1}` 에 걸릴 값이면 아예 못 누르게 한다.**
+           *
+           *    전에는 `amount` 가 비었는지만 봤다. `0` 을 넣으면 「비지 않았다」라
+           *    버튼이 켜지고, 누르면 **브라우저가 조용히 막고 자기 말풍선만** 띄운다 —
+           *    화면은 아무 반응이 없어 「버튼이 안 눌린다」로 읽힌다.
+           *    아이 화면에서 같은 일이 사진칸 `required` 로 실제 제보됐다.
+           */
+          disabled={total < 1 || total > MAX_TOPUP}
           className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white disabled:cursor-not-allowed disabled:bg-line-2 disabled:font-normal disabled:text-ink-mute"
         >
           {labels.submit}
