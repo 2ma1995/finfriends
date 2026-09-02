@@ -19,24 +19,15 @@
 }
 html{scroll-behavior:smooth;scroll-padding-top:92px}
 /*
-  🔴 **「동작 줄이기」에서도 효과는 보인다** (2026-09-02 사용자 결정).
+  🔴 **「동작 줄이기」로도 효과를 끄지 않는다** (2026-09-02 사용자 결정, 재확인).
 
-     예전엔 `*{animation:none!important;transition:none!important}` 로 **전부** 껐다.
-     그러면 폰 목업 전환도, 숫자 세기도, 구역 넘김도 하나도 안 보인다 —
-     페이지가 무엇을 말하려는지 자체가 사라진다.
+     요구는 **「웹 화면과 핸드폰이 똑같이 나오는 것」** 하나다.
+     기기·설정에 따라 길이를 달리하면 그때부터 「왜 다르지」가 생긴다.
+     그래서 갈래를 아예 두지 않는다 — 어디서나 같은 애니메이션, 같은 길이다.
 
-  🔴 **대신 짧게 지나간다.** 이 페이지의 움직임은 화면 전체가 흔들리는 종류가
-     아니라 목업 «안»의 전환과 페이드다. 어지럼의 원인이 되는 큰 이동은
-     구역 넘김 하나뿐이고, 그건 아래 스크립트가 이 설정을 보고 **절반 길이**로 줄인다.
-
-     `scroll-behavior` 는 여전히 끈다 — 앵커 링크가 길게 미끄러질 이유는 없고,
-     구역 넘김은 우리가 직접 굴리므로 이 값을 쓰지 않는다.
+     🔴 이 페이지는 화면 전체가 흔들리는 종류의 움직임이 없다. 목업 «안»의
+        전환과 페이드, 그리고 구역 넘김 하나뿐이다.
 */
-@media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  /* 큰 폭으로 움직이는 것만 잦아들게 — 사라지고 나타나는 것(페이드)은 남긴다 */
-  .demo-panel{transition-duration:.22s!important}
-  .demo-step{transition-duration:.16s!important}
 }
 
 /*
@@ -729,7 +720,6 @@ footer a{color:var(--ink-2)}
 
   const steps = [...demo.querySelectorAll('[data-step]')];
   const panels = [...demo.querySelectorAll('[data-panel]')];
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let activeIndex = 0;
   let visibleStepIndex = -1;
 
@@ -744,11 +734,6 @@ footer a{color:var(--ink-2)}
     panel.querySelectorAll('[data-count-to]').forEach((counter) => {
       const from = Number(counter.dataset.countFrom);
       const to = Number(counter.dataset.countTo);
-      if (reduceMotion.matches) {
-        counter.textContent = String(to);
-        return;
-      }
-
       const startedAt = performance.now();
       const updateCount = (now) => {
         if (!panel.classList.contains('active')) return;
@@ -842,7 +827,7 @@ footer a{color:var(--ink-2)}
      *    예전엔 즉시 점프였는데, 그러면 「효과가 하나도 없다」가 된다.
      *    구역 넘김은 이 페이지에서 폭이 가장 큰 움직임이라, 끄는 대신 **짧게** 지나간다.
      */
-    const DURATION = reduceMotion.matches ? 300 : 620;
+    const DURATION = 620;   // 🔴 어디서나 같다 — 기기로 갈래를 두지 않는다
     const startedAt = performance.now();
     const previous = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = 'auto';
@@ -979,7 +964,7 @@ footer a{color:var(--ink-2)}
    *
    * 🔴 대신 **짧게** 지나간다. 세는 시간과 쉬는 시간을 절반으로 줄인다.
    */
-  const gentle = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 🔴 기기·설정으로 갈래를 두지 않는다 — 어디서나 같은 연출, 같은 길이다 (사용자 결정)
 
   stage.classList.add('seq');
 
@@ -993,7 +978,7 @@ footer a{color:var(--ink-2)}
     stage.classList.remove('asked');
 
     const startedAt = performance.now();
-    const DUR = gentle ? 550 : 1100;
+    const DUR = 1100;
     const tick = (now) => {
       const t = Math.min(1, (now - startedAt) / DUR);
       // 🔴 끝에서 감속시킨다. 등속이면 「세는 것」이 아니라 「돌아가는 것」으로 보인다
@@ -1010,7 +995,7 @@ footer a{color:var(--ink-2)}
     requestAnimationFrame(tick);
 
     // 🔴 다 센 뒤 **한 박자 쉬고** 넘긴다. 바로 지우면 읽을 새가 없다
-    timer = setTimeout(() => stage.classList.add('asked'), DUR + (gentle ? 450 : 900));
+    timer = setTimeout(() => stage.classList.add('asked'), DUR + 900);
   };
 
   if ('IntersectionObserver' in window) {
