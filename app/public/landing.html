@@ -53,6 +53,20 @@ html{scroll-behavior:smooth;scroll-padding-top:92px}
 @media (hover:none) and (pointer:coarse){
   html{scroll-snap-type:y proximity}
   [data-snap]{scroll-snap-align:start}
+
+  /*
+    🔴 **데모 단계는 붙잡지 않는다** (2026-09-02 사용자 지적 — 「짧게짧게만
+       내려가고 움직이는 것도 없다」).
+
+       이 셋은 «지나가면서» 폰 목업을 움직이는 자리다. 모바일에서는
+       각각 `min-height:100vh` 에 `padding-top:500px` 이라, 스냅이 시작점을
+       붙잡으면 **글은 화면 밖에 있고 지나갈 수도 없다.**
+       애니메이션은 이 구간을 «통과하는 스크롤»이 돌린다 —
+       `IntersectionObserver` 가 화면 중간 띠에서 단계를 바꾼다.
+
+       그래서 붙잡는 것은 **큰 구역만**이다. 데모 안에서는 자유롭게 흐른다.
+  */
+  .demo-step{scroll-snap-align:none}
 }
 body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);
      line-height:1.65;-webkit-font-smoothing:antialiased;word-break:keep-all}
