@@ -18,7 +18,26 @@
   --wrap:1180px;
 }
 html{scroll-behavior:smooth;scroll-padding-top:92px}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+/*
+  🔴 **「동작 줄이기」에서도 효과는 보인다** (2026-09-02 사용자 결정).
+
+     예전엔 `*{animation:none!important;transition:none!important}` 로 **전부** 껐다.
+     그러면 폰 목업 전환도, 숫자 세기도, 구역 넘김도 하나도 안 보인다 —
+     페이지가 무엇을 말하려는지 자체가 사라진다.
+
+  🔴 **대신 짧게 지나간다.** 이 페이지의 움직임은 화면 전체가 흔들리는 종류가
+     아니라 목업 «안»의 전환과 페이드다. 어지럼의 원인이 되는 큰 이동은
+     구역 넘김 하나뿐이고, 그건 아래 스크립트가 이 설정을 보고 **절반 길이**로 줄인다.
+
+     `scroll-behavior` 는 여전히 끈다 — 앵커 링크가 길게 미끄러질 이유는 없고,
+     구역 넘김은 우리가 직접 굴리므로 이 값을 쓰지 않는다.
+*/
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  /* 큰 폭으로 움직이는 것만 잦아들게 — 사라지고 나타나는 것(페이드)은 남긴다 */
+  .demo-panel{transition-duration:.22s!important}
+  .demo-step{transition-duration:.16s!important}
+}
 
 /*
   🔴 **폰에서는 스냅을 걸지 않는다** (2026-09-02 사용자 지적, **두 번째**).
@@ -812,13 +831,18 @@ footer a{color:var(--ink-2)}
     animToken += 1;
     const token = animToken;
 
-    if (reduceMotion.matches || Math.abs(distance) < 2) {
+    if (Math.abs(distance) < 2) {
       window.scrollTo(0, top);
       whenDone();
       return;
     }
 
-    const DURATION = 620;
+    /**
+     * 🔴 **「동작 줄이기」에서도 미끄러진다 — 대신 절반 길이다** (사용자 결정).
+     *    예전엔 즉시 점프였는데, 그러면 「효과가 하나도 없다」가 된다.
+     *    구역 넘김은 이 페이지에서 폭이 가장 큰 움직임이라, 끄는 대신 **짧게** 지나간다.
+     */
+    const DURATION = reduceMotion.matches ? 300 : 620;
     const startedAt = performance.now();
     const previous = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = 'auto';
@@ -948,7 +972,14 @@ footer a{color:var(--ink-2)}
    *    「전환을 0초로」가 아니다 — 그러면 숫자가 사라진 마지막 상태만 남아
    *    **숫자를 영영 못 본다.**
    */
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  /**
+   * 🔴 **「동작 줄이기」에서도 돌린다** (사용자 결정). 예전엔 여기서 그냥 돌아섰다 —
+   *    그러면 숫자와 질문이 나란히 보일 뿐, **「숫자가 쌓여도 확신은 안 쌓인다」는
+   *    말 자체가 전달되지 않는다.** 이 연출은 장식이 아니라 그 페이지의 논지다.
+   *
+   * 🔴 대신 **짧게** 지나간다. 세는 시간과 쉬는 시간을 절반으로 줄인다.
+   */
+  const gentle = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   stage.classList.add('seq');
 
@@ -962,7 +993,7 @@ footer a{color:var(--ink-2)}
     stage.classList.remove('asked');
 
     const startedAt = performance.now();
-    const DUR = 1100;
+    const DUR = gentle ? 550 : 1100;
     const tick = (now) => {
       const t = Math.min(1, (now - startedAt) / DUR);
       // 🔴 끝에서 감속시킨다. 등속이면 「세는 것」이 아니라 「돌아가는 것」으로 보인다
@@ -979,7 +1010,7 @@ footer a{color:var(--ink-2)}
     requestAnimationFrame(tick);
 
     // 🔴 다 센 뒤 **한 박자 쉬고** 넘긴다. 바로 지우면 읽을 새가 없다
-    timer = setTimeout(() => stage.classList.add('asked'), DUR + 900);
+    timer = setTimeout(() => stage.classList.add('asked'), DUR + (gentle ? 450 : 900));
   };
 
   if ('IntersectionObserver' in window) {
