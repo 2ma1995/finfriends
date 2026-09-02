@@ -38,8 +38,16 @@ export const practice = {
  *    **버튼이 어디로 가는지 미리 말한다.** 눌러 보고 아는 건 늦다.
  */
 export const finishLabel = "다 읽었어요 · 오늘의 문제로";
+/**
+ * 🔴 **「0 / 4편」이 오류로 읽혔다** (사용자 피드백). 정확한 숫자인데도 그랬다 —
+ *    「편」이 **읽은 이야기 수**인 것이 문구에 없어서, 퀴즈를 풀고 온 아이는
+ *    「방금 했는데 왜 0이지」가 된다.
+ *
+ * 🔴 **두 숫자를 각각 무엇인지 말한다.** 퀴즈를 읽기 진도에 섞지 않는다 —
+ *    섞으면 「읽지 않고 퀴즈만 푼 아이」가 읽은 것처럼 보인다.
+ */
 export const progressLabel = (done: number, total: number, quiz: number) =>
-  `${done} / ${total}편 · 퀴즈 ${quiz}개`;
+  `읽은 이야기 ${done}/${total} · 맞힌 문제 ${quiz}개`;
 
 export const noDevice = { title: "아직 준비가 안 됐어요", body: "부모님이 이 기기를 등록해 주셔야 열려요" };
 export const consentRequired = { title: "보호자 동의가 필요해요", body: "부모님께 알려 주세요" };

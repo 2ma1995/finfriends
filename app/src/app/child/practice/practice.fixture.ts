@@ -42,7 +42,12 @@ export const quizRule = "문제는 칸마다 하루 한 개예요. 넷 다 안 �
  *    적금은 매주 넣어야 하고 예금은 넣어 두고 기다린다.
  *    「저금」으로 뭉뚱그리면 자기가 뭘 골랐는지 잊는다.
  */
-export const savingsCta = "저금하러 가기 →";
+/**
+ * 🔴 **「저금하러 가기」가 무엇을 하는 건지 안 말한다.** 아이가 혼자 저금통에 넣는
+ *    것이 아니라 **부모에게 신청하는 것**이다 — 부모가 받아들여야 시작된다.
+ *    그 말을 그대로 쓴다 (사용자 피드백).
+ */
+export const savingsCta = "부모님께 예금·적금 신청하기";
 export const savingsGoing = { DEPOSIT: "예금 진행중 →", INSTALLMENT: "적금 진행중 →" };
 export const savingsNone = "저금을 시작하면 실천이 돼요";
 
@@ -80,7 +85,14 @@ export const consentRequired = { title: "보호자 동의가 필요해요", body
 export const nudge = {
   earn: "미션 {n}개 하러 가기",
   spend: "오늘 쓸 계획 적기",
+  /**
+   * 🔴 **모으기는 「모을 것」이 있어야 시작된다.** 갖고 싶은 게 없으면 모을 이유가
+   *    없고, 위시리스트가 그 자리다. 없으면 흔들고 있으면 가만히 둔다.
+   */
+  save: "갖고 싶은 것 만들기",
 };
+/** 갖고 싶은 게 이미 있을 때 — 흔들지 않고 길만 둔다 */
+export const wishGoing = "갖고 싶은 것 보기";
 
 /**
  * 🔴 **네 칸이 같은 말을 해야 한다.** 실천이 쌓였는지는 영역마다 길이 다르지만

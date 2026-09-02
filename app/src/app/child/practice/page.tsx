@@ -4,9 +4,10 @@ import { currentChild } from "@/lib/session/current-child";
 import { getTodayBoard } from "@/modules/practice";
 import { getMissionBoard } from "@/modules/mission";
 import { hasPlanToday } from "@/modules/plan";
+import { getWishlist } from "@/modules/wishlist";
 import { claimPracticeAction } from "@/app/actions/learn";
 import {
-  claim, claimed, comeTomorrow, consentRequired, creditsLabel, creditsNone,
+  claim, claimed, comeTomorrow, consentRequired, creditsLabel, creditsNone, wishGoing,
   done, hint, intro, lessonWaiting,
   missionDiff, missionNone, needsLesson, noDevice, nudge,
   practicedToday as practicedTodayLabel, quizDone, quizRule, quizToday,
@@ -37,13 +38,16 @@ export default async function ChildPracticePage({
    *    벌기는 **부모가 걸어 둔 미션**이고 쓰기는 **나가기 전에 세우는 계획**이다 —
    *    둘 다 미루면 그날이 그냥 지나간다. 남아 있으면 칸이 둠칫둠칫 움직인다.
    */
-  const [cells, board, plannedToday, sp] = await Promise.all([
+  const [cells, board, plannedToday, wish, sp] = await Promise.all([
     getTodayBoard(access.childId),
     getMissionBoard(access.childId),
     hasPlanToday(access.childId),
+    getWishlist(access.childId),
     searchParams,
   ]);
   const missionsLeft = board.todo.length;
+  // 🔴 모으기 칸이 「모을 것이 있나」를 본다 — 갖고 싶은 게 없으면 모을 이유가 없다
+  const wishes = wish.wishes.length;
 
   return (
     <Screen title={title} sub={sub} back={{ href: "/child/learn", label: "배우기" }}>
@@ -166,6 +170,20 @@ export default async function ChildPracticePage({
                       className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-sub font-bold text-star-d">
                   📝 {nudge.spend}
                 </Link>
+              ) : c.topic === "SAVE" ? (
+                /* 🔴 **모으기는 「모을 것」이 있어야 시작된다.** 갖고 싶은 게 없으면
+                      모을 이유가 없다 — 없으면 흔들고, 있으면 길만 둔다 */
+                wishes === 0 ? (
+                  <Link href="/child/wishlist"
+                        className="ff-nudge mt-1.5 grid min-h-touch place-items-center rounded-card border border-star bg-star-bg text-sub font-bold text-star-d">
+                    🎁 {nudge.save}
+                  </Link>
+                ) : (
+                  <Link href="/child/wishlist"
+                        className="mt-1.5 grid min-h-touch place-items-center rounded-card border border-line-2 bg-surface text-cap text-ink-soft">
+                    🎁 {wishGoing}
+                  </Link>
+                )
               ) : null}
 
               {/* 🔴 **읽기가 실천보다 먼저다.** 오늘 읽을 편이 남았으면 그렇게 말한다 (D47) */}
