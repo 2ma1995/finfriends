@@ -172,6 +172,8 @@ node tools/verify_cycle_audit.mjs   # 주기 전환 · 스냅샷 · 원장 정�
 npm run verify:logic                # 🔴 순수 판정 — **실제 코드를 부른다** (사본이 아니다)
 npm run db:cleanup                  # 검증이 남긴 계정·고아 보호자 거두기 (--yes 로 실제 삭제)
 npm run gate:origin                 # 오리진 분리 — 아이 화면에 부모 기능 0건
+npm run gate:landing                # 랜딩 원본(web/)과 배포본(app/public/)이 맞는가
+npm run landing:sync                # 원본을 고친 뒤 옮긴다 (--write)
 ```
 
 🔴 **검증은 앱의 DB 를 쓰지 않는다** (어긋남 대장 D64). 계정·미션·원장을 만들고
