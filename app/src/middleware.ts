@@ -32,7 +32,23 @@ export function middleware(req: NextRequest) {
   if (req.nextUrl.pathname === "/"
       && !req.cookies.get(GUARDIAN_COOKIE)
       && !req.cookies.get(DEVICE_COOKIE)) {
-    return NextResponse.rewrite(new URL("/landing.html", req.url));
+    const res = NextResponse.rewrite(new URL("/landing.html", req.url));
+    /**
+     * 🔴 **랜딩은 브라우저에 저장시키지 않는다** (사용자 요청 · 어긋남 대장 D70).
+     *
+     *    기본값은 `public, max-age=0, must-revalidate` 였다. 「매번 물어보라」는 뜻이라
+     *    이론상 최신이 와야 하는데, **실제로는 옛 랜딩이 계속 보였다.**
+     *    사파리는 뒤로가기·홈 화면 앱에서 `must-revalidate` 를 자주 무시한다.
+     *
+     *    `?v=3` 같은 꼬리표를 붙이면 보이긴 했는데, 그건 **서버가 다른 것을 준 게 아니라
+     *    브라우저 캐시 한 칸을 피해간 것**뿐이다 — `/` 와 `/?v=3` 의 ETag 가 같았다.
+     *    주소에 꼬리표를 달아야 최신이 보이는 페이지는 남에게 보낼 수도 없다.
+     *
+     * 🔴 `no-store` 는 **랜딩에만** 건다. 아래 화면들은 각자 캐시 규칙이 있고,
+     *    여기는 로그인 전 마케팅 문서 하나뿐이라 매번 받아도 값이 싸다.
+     */
+    res.headers.set("Cache-Control", "no-store, must-revalidate");
+    return res;
   }
 
   const mode = readMode(req.cookies.get(MODE_COOKIE)?.value);
