@@ -35,3 +35,17 @@ export const rules: readonly { k: string; v: string }[] = [
 ];
 
 export const previewLink = { href: "/join", label: "이 기기를 아이 기기로 등록하기" };
+
+/**
+ * 🔴 **아이 폰에 부모 비밀번호를 치게 하지 않는다** (D63).
+ *    「쓰는 법」은 그 기기에서 부모로 로그인하라고 하는데, 그건 아이 앞에서
+ *    부모 비밀번호를 치는 흐름이다. 링크를 보내면 그럴 일이 없다.
+ */
+export const inviteLink = {
+  make: "초대 링크 만들기",
+  remake: "링크 다시 만들기",
+  hint: "아이 폰에 보내면 그 폰이 아이 화면이 됩니다. 24시간 · 한 번만 쓸 수 있어요.",
+  copyLabel: "링크 복사",
+  copied: "복사했어요",
+  failed: "복사가 안 됐어요. 주소를 직접 골라 복사해 주세요.",
+};

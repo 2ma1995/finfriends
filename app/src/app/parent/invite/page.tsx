@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
+import { InviteLink } from "@/components/parent/InviteLink";
 import { findChild } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { howTo, noCredentialNotice, rules, previewLink } from "./invite.fixture";
+import { howTo, inviteLink, noCredentialNotice, rules, previewLink } from "./invite.fixture";
 
 // CON-003 — 자녀 초대. 온보딩 4단계. 링크는 자격증명이 아니라 기기 등록 수단이다
 export const metadata = { title: "자녀 초대 · 핀프렌즈" };
@@ -72,6 +73,11 @@ export default async function ParentInvitePage({
           <p className="mt-1 text-sub leading-relaxed text-ink-soft">{noCredentialNotice.body}</p>
         </Card>
       </div>
+
+        {/* 🔴 **길이 둘이다.** 이 폰을 아이 기기로 만들거나, 링크를 아이 폰에 보내거나 —
+               둘 다 같은 1회용 코드를 같은 `/child/enter` 로 소진한다 (D63) */}
+        <InviteLink make={inviteLink.make} remake={inviteLink.remake} hint={inviteLink.hint}
+                    copyLabel={inviteLink.copyLabel} copied={inviteLink.copied} failed={inviteLink.failed} />
 
       <section className="mt-2.5">
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">등록 규칙</h2>

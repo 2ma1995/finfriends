@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/db";
 import { requireGuardian } from "@/lib/session/guardian-session";
@@ -47,4 +48,48 @@ export async function registerChildDeviceAction(formData: FormData) {
    */
   const { token } = await issueInvite(guardian.guardianId, child.id);
   redirect(`/child/enter?t=${encodeURIComponent(token)}`);
+}
+
+
+/**
+ * 초대 **링크를 만들어 돌려준다** — 어긋남 대장 D63.
+ *
+ * 🔴 **아이 폰에서 부모 비밀번호를 치게 하고 있었다.** 기존 등록은 누른 브라우저를
+ *    곧장 아이 기기로 바꾼다. 그래서 아이 폰에 넘기려면 **그 폰에서 부모로 로그인**해야
+ *    했다 — 아이 앞에서 부모 비밀번호를 치는 흐름이다.
+ *
+ *    `consumeInvite` 는 이미 **어느 기기에서든** 되게 돼 있었다(`AC-002-3`).
+ *    없던 것은 길이 아니라 **링크를 보여주는 화면**뿐이었다.
+ *
+ * 🔴 **주소창에 안 싣는다.** 리다이렉트로 돌려주면 토큰이 부모의 방문 기록에 남는다 —
+ *    `D24` 가 지적한 그 모양이다. 값으로 돌려주고 화면이 보여준다.
+ *
+ * 🔴 **24시간 1회용이다.** 링크가 새도 한 번 쓰면 죽고, 하루면 스스로 만료된다 (`D33`).
+ */
+export async function createInviteLinkAction(): Promise<
+  { ok: true; url: string; expiresAt: string } | { ok: false; reason: string }
+> {
+  const guardian = await requireGuardian();
+  if (!guardian.consentCompleted) return { ok: false, reason: "CONSENT" };
+
+  const child = await prisma.childAccount.findFirst({
+    where: { guardianId: guardian.guardianId },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!child) return { ok: false, reason: "NO_CHILD" };
+
+  const { token, expiresAt } = await issueInvite(guardian.guardianId, child.id);
+
+  // 🔴 배포 주소를 코드에 박지 않는다. 요청이 온 주소를 그대로 쓴다 —
+  //    로컬·프리뷰·운영이 각자 자기 주소를 준다
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+
+  return {
+    ok: true,
+    url: `${proto}://${host}/child/enter?t=${encodeURIComponent(token)}`,
+    expiresAt: expiresAt.toISOString(),
+  };
 }
