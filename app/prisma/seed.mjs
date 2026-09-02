@@ -7,11 +7,33 @@
  *    이 시드 보호자는 인증 사용자를 갖지 않으므로 기기 토큰으로만 아이 화면에 들어간다 —
  *    부모 화면을 보려면 화면에서 직접 가입해 로그인한다(CON-001).
  */
+import "dotenv/config";
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-const url = process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:55432/finfriends";
+/**
+ * 🔴 **어느 DB 를 보는지 첫 줄에 찍는다** (어긋남 대장 D64).
+ *
+ * 이 파일들은 `process.env.DATABASE_URL ?? "localhost:55432"` 였다.
+ * `.mjs` 는 `dotenv` 를 스스로 안 읽으므로 **그 값이 늘 비어 있었고**,
+ * `.env` 가 Supabase 를 가리키게 바뀐 뒤에도 **조용히 로컬 도커를 봤다.**
+ *
+ * 앱은 Supabase 를 보는데 도구는 로컬을 보고 있었다 — 「아이 목록」이 다르게 나와도
+ * **아무도 이유를 몰랐다.** 조용한 기본값이 원인이다.
+ */
+function dbUrl() {
+  const u = process.env.DATABASE_URL;
+  if (!u) {
+    console.error("🔴 DATABASE_URL 이 없다. app/.env 를 채운다 — 조용히 로컬로 떨어지지 않는다");
+    process.exit(1);
+  }
+  console.log(`  (대상 DB: ${new URL(u).hostname})`);
+  return u;
+}
+
+
+const url = dbUrl();
 
 // 🔴 로컬만. 운영 접속 문자열로 이 스크립트가 도는 사고를 구조로 막는다
 if (!/@(localhost|127\.0\.0\.1)[:/]/.test(url)) {

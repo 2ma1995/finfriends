@@ -13,11 +13,33 @@
  *            별 원장·온보딩도 비운다. 처음 쓰는 아이한테 지난 미션이 있으면 안 된다.
  *   --demo   화면 확인용 — 네 가지 상태(대기·승인·소급·거절)를 전부 깐다
  */
+import "dotenv/config";
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-const url = process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:55432/finfriends";
+/**
+ * 🔴 **어느 DB 를 보는지 첫 줄에 찍는다** (어긋남 대장 D64).
+ *
+ * 이 파일들은 `process.env.DATABASE_URL ?? "localhost:55432"` 였다.
+ * `.mjs` 는 `dotenv` 를 스스로 안 읽으므로 **그 값이 늘 비어 있었고**,
+ * `.env` 가 Supabase 를 가리키게 바뀐 뒤에도 **조용히 로컬 도커를 봤다.**
+ *
+ * 앱은 Supabase 를 보는데 도구는 로컬을 보고 있었다 — 「아이 목록」이 다르게 나와도
+ * **아무도 이유를 몰랐다.** 조용한 기본값이 원인이다.
+ */
+function dbUrl() {
+  const u = process.env.DATABASE_URL;
+  if (!u) {
+    console.error("🔴 DATABASE_URL 이 없다. app/.env 를 채운다 — 조용히 로컬로 떨어지지 않는다");
+    process.exit(1);
+  }
+  console.log(`  (대상 DB: ${new URL(u).hostname})`);
+  return u;
+}
+
+
+const url = dbUrl();
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 const h = (t) => createHash("sha256").update(t).digest("hex");
 const day = (n) => new Date(Date.now() - n * 864e5);
