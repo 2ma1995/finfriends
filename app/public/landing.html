@@ -786,22 +786,21 @@ footer a{color:var(--ink-2)}
   let wheelAmount = 0;
   let wheelResetTimer;
 
-  window.addEventListener('wheel', (event) => {
-    if (event.ctrlKey || event.metaKey || !event.deltaY) return;
-    if (event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
+  const IGNORE = 'input, select, textarea, [contenteditable="true"]';
 
-    if (wheelLocked) {
-      event.preventDefault();
-      return;
-    }
-
-    event.preventDefault();
-    wheelAmount += event.deltaY;
-    window.clearTimeout(wheelResetTimer);
-    wheelResetTimer = window.setTimeout(() => { wheelAmount = 0; }, 140);
-    if (Math.abs(wheelAmount) < 8) return;
-
-    const direction = wheelAmount > 0 ? 1 : -1;
+  /**
+   * 🔴 **한 번에 한 구역씩 옮긴다 — 마우스와 손가락이 같은 함수를 쓴다.**
+   *
+   *    예전엔 이 계산이 `wheel` 리스너 안에만 있었다. **터치는 `wheel` 을
+   *    발생시키지 않으므로** 폰에서는 한 번도 돌지 않았고, 그래서
+   *    「구역이 안 잡힌다」가 됐다. CSS 스냅으로 흉내 내 봤지만 그건
+   *    손가락을 뗀 뒤 **즉시 당기는** 것이라 느낌이 반대였다 —
+   *    「짧게 짧게 끊긴다」가 그것이다.
+   *
+   *    멈추는 자리 목록(`snapPoints`)이 같으므로, 이제 폰과 데스크톱이
+   *    **같은 지점에 같은 속도로** 선다.
+   */
+  const goToNeighbour = (direction) => {
     const headerOffset = 92;
     const currentY = window.scrollY + headerOffset;
     const positions = snapPoints.map((point) => point.getBoundingClientRect().top + window.scrollY);
@@ -815,9 +814,7 @@ footer a{color:var(--ink-2)}
         }
       }
     }
-
-    wheelAmount = 0;
-    if (nextIndex < 0) return;
+    if (nextIndex < 0) return false;
 
     wheelLocked = true;
     window.scrollTo({
@@ -825,7 +822,77 @@ footer a{color:var(--ink-2)}
       behavior: reduceMotion.matches ? 'auto' : 'smooth'
     });
     window.setTimeout(() => { wheelLocked = false; }, reduceMotion.matches ? 120 : 780);
+    return true;
+  };
+
+  window.addEventListener('wheel', (event) => {
+    if (event.ctrlKey || event.metaKey || !event.deltaY) return;
+    if (event.target.closest(IGNORE)) return;
+
+    if (wheelLocked) {
+      event.preventDefault();
+      return;
+    }
+
+    event.preventDefault();
+    wheelAmount += event.deltaY;
+    window.clearTimeout(wheelResetTimer);
+    wheelResetTimer = window.setTimeout(() => { wheelAmount = 0; }, 140);
+    if (Math.abs(wheelAmount) < 8) return;
+
+    const direction = wheelAmount > 0 ? 1 : -1;
+    wheelAmount = 0;
+    goToNeighbour(direction);
   }, { passive: false });
+
+  /**
+   * 손가락 — 🔴 **데스크톱의 `wheel` 과 같은 자리에서 같은 일을 한다.**
+   *
+   * 🔴 `touchmove` 를 막는 것은 마우스 휠을 막는 것과 **같은 결정**이다.
+   *    안 막으면 브라우저가 먼저 관성으로 밀어 버려서, 우리가 옮기려는 것과
+   *    다툰다 — 그게 「짧게 짧게」의 정체였다.
+   *
+   * 🔴 **글자를 넣는 칸에서 시작한 손짓은 건드리지 않는다** (초대 코드 칸).
+   *    거기까지 막으면 아이가 붙여넣기도 못 한다.
+   *
+   * 🔴 **막다가 오류가 나면 스스로 손을 뗀다.** `touchmove` 를 막아 놓고
+   *    옮기는 쪽이 죽으면 **화면이 아예 안 움직인다.** 그때는 리스너를 떼서
+   *    브라우저에게 돌려준다 — 연출을 잃을지언정 페이지가 굳지는 않는다.
+   */
+  let touchStartY = null;
+
+  const blockTouchMove = (event) => {
+    if (touchStartY === null) return;
+    event.preventDefault();
+  };
+
+  window.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1 || event.target.closest(IGNORE)) {
+      touchStartY = null;
+      return;
+    }
+    touchStartY = event.touches[0].clientY;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', blockTouchMove, { passive: false });
+
+  window.addEventListener('touchend', (event) => {
+    const startY = touchStartY;
+    touchStartY = null;
+    if (startY === null || wheelLocked) return;
+
+    const touch = event.changedTouches && event.changedTouches[0];
+    if (!touch) return;
+    // 🔴 34px 은 「밀었다」와 「눌렀다」를 가르는 선이다. 링크를 누를 때도 손은 조금 움직인다
+    const delta = startY - touch.clientY;
+    if (Math.abs(delta) < 34) return;
+
+    try {
+      goToNeighbour(delta > 0 ? 1 : -1);
+    } catch {
+      window.removeEventListener('touchmove', blockTouchMove);
+    }
+  }, { passive: true });
 })();
 </script>
 
