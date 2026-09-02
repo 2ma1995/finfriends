@@ -3750,6 +3750,91 @@ min-content 폭 아래로 안 줄어 **버튼이 화면 밖으로 나간다.** `
 저쪽이 PIN·하교 시각에서 겪은 것과 같은 자리다. 검사로 남겼다.
 
 
+---
+
+## D67 🔴 홈 화면에 추가해도 **앱으로 열리지 않았다** — 매니페스트도, `viewport-fit` 도 없었다
+
+| | |
+| --- | --- |
+| 신고 | 2026-09-02 사용자 — 홈 화면에 추가해 실기기 확인 중 「슬라이드를 내리면 하단 탭이 내용을 덮는다. 나무 화면만 안 그렇다」 |
+| 사용자 짐작 | 「pwa가 이렇게 해야 진행되는거 아니야?」 — **맞았다** |
+
+스크린샷에 **Safari 크롬(주소창 · 하단 툴바)이 그대로** 있었다.
+홈 화면 바로가기인데 앱으로 안 열리고 있었다.
+
+### 없던 것 둘
+
+```
+public/manifest.json · app/manifest.ts     없음
+export const viewport                      없음  → Next 기본값만 나갔다
+```
+
+Next 는 `width=device-width, initial-scale=1` 을 기본으로 넣어 준다.
+그래서 폭은 맞았고 **아무도 이상한 줄 몰랐다.**
+
+### 🔴 `viewport-fit=cover` 가 핵심이었다
+
+`ParentTabs` · `ChildTabs` 가 안전영역 칸을 이렇게 만든다:
+
+```html
+<div className="h-[env(safe-area-inset-bottom)]" />
+```
+
+**`viewport-fit=cover` 가 없으면 `env(safe-area-inset-bottom)` 은 항상 `0`이다.**
+칸이 무너져 홈 인디케이터 기기에서 탭이 화면 맨 끝에 붙고, 위로 Safari 툴바까지
+겹치니 마지막 내용이 가려진다. 저쪽 세션이 「92px 가 아니라 103px 이 필요하다」고
+계산한 것도 **안전영역이 0이라 손으로 메우고 있었던 것**이다.
+
+### 나무 화면만 괜찮았던 이유
+
+내용이 짧아 **스크롤이 안 생긴다.** 탭이 `sticky` 라 스크롤이 없으면 겹칠 일도 없다.
+「한 화면만 다르다」가 오히려 단서였다 — 화면이 아니라 **길이**의 문제였다.
+
+### 넣은 것
+
+| | |
+| --- | --- |
+| `app/manifest.ts` | `display: "standalone"` · `start_url: "/"` · 아이콘 3 |
+| `viewport` | `viewportFit: "cover"` · `themeColor` |
+| `appleWebApp` | `capable` · `title` · `statusBarStyle: "default"` |
+
+🔴 **시작점은 `/` 다.** 그 화면이 기기를 보고 갈라 준다(`app/page.tsx`) —
+아이 기기면 `/child/home`, 보호자면 착지, 아니면 로그인.
+**부모 폰과 아이 폰이 같은 바로가기를 쓴다.**
+
+🔴 **아이콘은 푸시용으로 만든 것을 그대로 썼다**(`D56`). 두 벌을 두면 한쪽만 바뀐다.
+
+🔴 **확대를 막지 않았다.** `maximumScale: 1` 이나 `userScalable: false` 는 넣지 않는다 —
+글자를 키워 읽는 사람이 이 앱을 못 쓴다. **금액을 다루는 화면이다.**
+
+🔴 `statusBarStyle` 은 `default` 다. `black-translucent` 는 상태바 밑으로 내용을
+밀어 넣어서 시각과 화면 제목이 겹친다.
+
+### `apple-mobile-web-app-capable` 은 트리에 직접 썼다
+
+Next 의 `appleWebApp.capable` 은 **표준 이름**(`mobile-web-app-capable`)만 낸다.
+iOS 16.4 부터는 매니페스트를 보므로 충분하지만 그 아래는 **애플 접두 이름만** 본다.
+`metadata.other` 로는 안 됐다 — Next 가 자기 `appleWebApp` 처리와 겹치는 키를 버린다.
+React 가 트리의 `<meta>` 를 head 로 올려 주므로 루트 레이아웃에 직접 썼다.
+
+### 🔴 이 건에서 두 시간 중 대부분은 **좀비 서버** 때문이었다
+
+메타가 안 나온다고 세 번 고쳤다. `.next` 도 지웠다. 원인은 코드가 아니었다 —
+`next dev` 래퍼만 죽이고 **자식 `next-server` 가 살아남아** :3000 을 붙들고 있었다.
+`npm start` 는 `EADDRINUSE` 로 **아예 뜨지 못했고**, 나는 계속 **옛 프로세스를 재고 있었다.**
+빌드 로그에는 `/manifest.webmanifest` 가 찍히는데 요청하면 404 였던 것이 그 증거였다.
+
+**교훈 — 「빌드에는 있는데 응답에 없다」면 코드가 아니라 «누가 응답하는가»를 본다.**
+
+```bash
+# 래퍼만 죽이면 자식이 남는다
+lsof -ti:3000            # 실제로 붙들고 있는 것
+tail 프로덕션.log         # EADDRINUSE 가 조용히 찍혀 있다
+```
+
+README 증상표에 넣었다.
+
+
 ```
 tools/tasks_data.py 를 고치고 재생성해야 하는 것 — D2 · D3 · D5 · D6 · D8 · D10 · D11 · D13 · D14 · D15 · D16 · D17 · D18 · D23
 🔴 기준 문서 교체 — D30. tools/tasks_data.py 를 **새 SRS 로 다시 뽑는다**. 아래 항목의 절 번호가 전부 어긋나 있다
