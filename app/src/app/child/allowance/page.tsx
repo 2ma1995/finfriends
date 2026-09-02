@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentChild } from "@/lib/session/current-child";
 import { getPassbook } from "@/modules/allowance";
-import { getWishlist, MAX_TARGET, MAX_WISHES, MIN_TARGET } from "@/modules/wishlist";
+import { getWishlist, MAX_WISHES } from "@/modules/wishlist";
 import { addWishAction } from "@/app/actions/wishlist";
 import {
   addLabel as wishAddSubmit, addOpenLabel as wishAddLabel, addTitle as wishAddTitle,
@@ -188,6 +188,7 @@ export default async function ChildPassbookPage({
               totalPreview: savings.totalPreview, depositPreview: savings.depositPreview,
               wantLabel: savings.wantLabel, wantWho: savings.wantWho,
               interestPreview: savings.interestPreview, noInterest: savings.noInterest,
+                balanceHint: savings.balanceHint, overBalance: savings.overBalance,
               ask: savings.ask,
             }}
           />
@@ -266,8 +267,10 @@ export default async function ChildPassbookPage({
             </label>
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{wishTargetLabel}</span>
-              <input name="targetAmount" type="number" inputMode="numeric"
-                     min={MIN_TARGET} max={MAX_TARGET} step={1} required placeholder={wishTargetPlaceholder}
+              {/* 🔴 D66 — `addWish` 가 `BAD_TARGET` 으로 거절하고 그 문구가 이 화면에 뜬다.
+                     문구는 방금 `allowance.fixture` 에 채웠다 — 없어서 「찾을 수 없어요」가 떴었다 */}
+              <input name="targetAmount" type="number" inputMode="numeric" step={1}
+                     placeholder={wishTargetPlaceholder}
                      className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-body font-bold tabular-nums" />
             </label>
             <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">

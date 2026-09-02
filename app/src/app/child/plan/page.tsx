@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { CATEGORIES } from "@/contracts/plan";
 import { currentChild } from "@/lib/session/current-child";
-import { getPlanCards, MAX_ACTUAL } from "@/modules/plan";
+import { getPlanCards } from "@/modules/plan";
 import { getBalance } from "@/modules/allowance";
 import { getUnmatched } from "@/modules/card";
 import { recordActualAction } from "@/app/actions/plan";
@@ -90,8 +90,10 @@ export default async function ChildPlanListPage({
                   <div className="flex gap-1.5">
                     <label className="flex-1">
                       <span className="sr-only">{amountLabel}</span>
-                      <input name="actualAmount" type="number" inputMode="numeric"
-                             min={0} max={MAX_ACTUAL} step={1} required placeholder={String(c.limitAmount)}
+                      {/* 🔴 D66 — `recordActual` 이 범위 밖을 `BAD_AMOUNT` 로 거절하고
+                             「0원부터 1,000,000원까지 적을 수 있어요.」가 이 화면에 뜬다 */}
+                      <input name="actualAmount" type="number" inputMode="numeric" step={1}
+                             placeholder={String(c.limitAmount)}
                              className="min-h-touch w-full rounded-card border border-line bg-surface px-3 text-right text-body font-bold tabular-nums" />
                     </label>
                     <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white">

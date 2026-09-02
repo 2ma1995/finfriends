@@ -1,7 +1,7 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { AddModal } from "@/components/child/AddModal";
 import { currentChild } from "@/lib/session/current-child";
-import { getWishlist, MAX_DEPOSIT, MAX_TARGET, MAX_WISHES, MIN_TARGET } from "@/modules/wishlist";
+import { getWishlist, MAX_WISHES } from "@/modules/wishlist";
 import { getBalance } from "@/modules/allowance";
 import { addWishAction, depositAction, raiseRankAction, removeWishAction } from "@/app/actions/wishlist";
 import {
@@ -97,13 +97,25 @@ export default async function ChildWishlistPage({
                 </span>
               </div>
 
-              {/* 🔴 모은 돈은 아이가 스스로 적는다 — 용돈기입장과 같다. 한 번 상한은 모듈이 건다 */}
+              {/*
+                🔴 모은 돈은 아이가 스스로 적는다 — 용돈기입장과 같다. 한 번 상한은 모듈이 건다.
+
+                🔴 **`min`·`max`·`required` 를 걸지 않는다** (어긋남 대장 D66).
+                   범위 밖 값을 넣으면 브라우저가 **조용히 막고 자기 말풍선만** 띄운다 —
+                   화면은 아무 반응이 없어 아이는 「버튼이 고장 났다」고 읽는다.
+
+                   `modules/wishlist.deposit` 이 검사한다 — 한도를 넘으면 `BAD_AMOUNT`,
+                   용돈보다 많으면 `NOT_ENOUGH` 로 돌려보내고, 그 문구가 이 화면 위에 뜬다.
+
+                🔴 `disabled` 는 남긴다 — 용돈이 0이면 **눈에 보이게** 꺼진다(`opacity-40`).
+                   조용히 실패하는 것과 다르다.
+                🔴 `min-w-0` — 없으면 입력칸이 자기 최소 폭 아래로 안 줄어 버튼이 밖으로 밀린다.
+              */}
               <form action={depositAction} className="mt-2 flex gap-1.5">
                 <input type="hidden" name="wishId" value={w.id} />
-                <input name="amount" type="number" inputMode="numeric"
-                       min={1} max={Math.min(MAX_DEPOSIT, allowance || 1)} step={1}
-                       disabled={allowance <= 0} required placeholder={depositPlaceholder}
-                       className="min-h-touch w-full flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums" />
+                <input name="amount" type="number" inputMode="numeric" step={1}
+                       disabled={allowance <= 0} placeholder={depositPlaceholder}
+                       className="min-h-touch w-full min-w-0 flex-1 rounded-card border border-line bg-surface px-3 text-right text-body tabular-nums" />
                 <button disabled={allowance <= 0}
                         className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white disabled:opacity-40">
                   {depositLabel}
@@ -144,8 +156,10 @@ export default async function ChildWishlistPage({
             </label>
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{targetLabel}</span>
-              <input name="targetAmount" type="number" inputMode="numeric"
-                     min={MIN_TARGET} max={MAX_TARGET} step={1} required placeholder={targetPlaceholder}
+              {/* 🔴 D66 — `addWish` 가 `BAD_TARGET` 으로 거절하고
+                     「1,000원부터 1,000,000원까지 적을 수 있어요.」가 이 화면에 뜬다 */}
+              <input name="targetAmount" type="number" inputMode="numeric" step={1}
+                     placeholder={targetPlaceholder}
                      className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-body font-bold tabular-nums" />
             </label>
             <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">

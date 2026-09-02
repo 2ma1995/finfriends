@@ -22,12 +22,23 @@ export async function savePlanCard(formData: FormData) {
   const limitAmount = Math.floor(Number(formData.get("limitAmount") ?? 0));
 
   const back = String(formData.get("from") ?? "") === "home" ? "/child/home" : "/child/plan/new";
-  if (!where || !category || !Number.isFinite(limitAmount) || limitAmount <= 0) {
-    redirect(`${back}?error=1`);
-  }
-  if (limitAmount > 1_000_000) {
-    redirect(`${back}?error=too_big`);
-  }
+
+  /**
+   * 🔴 **적은 것을 돌려준다.** 금액 하나가 틀렸다고 「어디서」까지 지우면
+   *    아이는 처음부터 다시 적어야 한다 — 고치라고 해 놓고 고칠 것을 뺏는 셈이다.
+   *
+   *    예전엔 입력칸의 `min`·`max` 가 브라우저 수준에서 막아 여기까지 오지 않았다.
+   *    그 검사를 뗐으니(D66) **되돌려주는 일은 이제 서버 몫이다.**
+   */
+  const keep = (reason: string) => {
+    const q = new URLSearchParams({ error: reason });
+    if (where) q.set("where", where);
+    if (limitAmount > 0) q.set("amount", String(limitAmount));
+    redirect(`${back}?${q}`);
+  };
+
+  if (!where || !category || !Number.isFinite(limitAmount) || limitAmount <= 0) keep("1");
+  if (limitAmount > 1_000_000) keep("too_big");
 
   await createPlanCard(access.childId, {
     where, category, limitAmount,

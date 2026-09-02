@@ -35,6 +35,9 @@ export type SavingsFormCopy = {
   /** 「끝나면 {won}원을 더 받아요」 */
   interestPreview: string;
   noInterest: string;
+  /** 「지금 쓸 수 있는 돈: {won}원」 */
+  balanceHint: string;
+  overBalance: string;
   ask: string;
 };
 
@@ -98,18 +101,29 @@ export function SavingsForm({
 
       {inst ? (
         <>
+          {/*
+            🔴 **`min`·`max` 를 걸지 않는다** (어긋남 대장 D66).
+               범위 밖 값을 넣으면 브라우저가 **조용히 막고 자기 말풍선만** 띄운다 —
+               화면은 아무 반응이 없어 아이는 「버튼이 고장 났다」고 읽는다.
+
+               `modules/savings.requestSavings` 가 전부 검사한다 —
+               적으면 `BAD_AMOUNT`, 회차·개월이 범위 밖이면 `BAD_MONTHS`,
+               잔액을 넘으면 `NOT_ENOUGH`. 문구는 셋 다 `allowance.fixture` 에 있고
+               통장 화면 맨 위에 뜬다.
+
+            🔴 **`step` 을 100 에서 1 로 내렸다.** `step` 은 증감 폭이 아니라 **검사 규칙**이다 —
+               100 으로 두면 1,550원 같은 값이 조용히 막힌다. 실제로 겪은 함정이다.
+          */}
           <div className="grid grid-cols-2 gap-2">
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{copy.perPeriodLabel}</span>
-              <input name="perPeriod" type="number" inputMode="numeric" step={100}
-                     min={limits.minPerPeriod} max={Math.max(limits.minPerPeriod, balance)}
+              <input name="perPeriod" type="number" inputMode="numeric" step={1}
                      value={perPeriod} onChange={(e) => setPerPeriod(Number(e.target.value) || 0)}
                      className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{copy.periodsLabel}</span>
               <input name="periods" type="number" inputMode="numeric" step={1}
-                     min={limits.minPeriods} max={limits.maxPeriods}
                      value={periods} onChange={(e) => setPeriods(Number(e.target.value) || 0)}
                      className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
@@ -123,15 +137,13 @@ export function SavingsForm({
           <div className="grid grid-cols-2 gap-2">
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{copy.amountLabel}</span>
-              <input name="amount" type="number" inputMode="numeric" step={100}
-                     min={limits.minAmount} max={Math.max(limits.minAmount, balance)}
+              <input name="amount" type="number" inputMode="numeric" step={1}
                      value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)}
                      className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{copy.monthsLabel}</span>
               <input name="months" type="number" inputMode="numeric" step={1}
-                     min={1} max={limits.maxMonths}
                      value={months} onChange={(e) => setMonths(Number(e.target.value) || 0)}
                      className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
@@ -141,6 +153,15 @@ export function SavingsForm({
           </p>
         </>
       )}
+
+      {/*
+        🔴 **한도를 말해 준다.** `max` 를 뗐으니(D66) 브라우저가 대신 막아 주지 않는다 —
+           대신 **누르기 전에** 얼마까지 되는지 보이고, 넘으면 그 자리에서 알려준다.
+           막는 것은 여전히 서버(`NOT_ENOUGH`)다.
+      */}
+      <p className={`text-cap ${total > balance ? "font-bold text-miss" : "text-ink-mute"}`}>
+        {total > balance ? copy.overBalance : fill(copy.balanceHint, { won: won(balance) })}
+      </p>
 
       {/* 🔴 **내가 모을 금액 기준**으로 보여준다. `%` 는 쓰지 않는다 (AC-031-5) */}
       <div className="grid gap-1">
@@ -163,7 +184,14 @@ export function SavingsForm({
         <p className="text-cap font-bold text-ink-soft">{copy.wantWho}</p>
       </div>
 
-      <button disabled={total <= 0}
+      {/*
+        🔴 **한도를 넘으면 눌리기 전에 꺼진다 — 다만 이유가 바로 위에 있다.**
+           `max` 를 뗐으니(D66) 그냥 두면 서버까지 갔다가 되돌아오는데,
+           이 폼은 **목표 글까지 다시 적어야 한다.** 조용히 막는 것과 다른 점은
+           버튼이 **눈에 보이게** 꺼지고(`opacity-40`) 바로 위 줄이
+           「쓸 수 있는 돈보다 많아요. 줄여 볼래요?」라고 말한다는 것이다.
+      */}
+      <button disabled={total <= 0 || total > balance}
               className="min-h-touch w-full rounded-card bg-primary text-sub font-bold text-white disabled:opacity-40">
         {copy.ask}
       </button>

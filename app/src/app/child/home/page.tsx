@@ -119,6 +119,14 @@ export default async function ChildHomePage({
         </p>
       ) : null}
 
+      {/* 🔴 하교 모달에서 적다가 막힌 경우 — 말해 주지 않으면 아이는
+             **적은 계획이 그냥 사라진 것으로 본다** (D66) */}
+      {sp.error ? (
+        <p className="mb-2 rounded-card border border-miss-line bg-miss-bg px-3 py-2 text-center text-sub font-bold text-miss">
+          {ask.askErrors[sp.error] ?? ask.askErrors["1"]}
+        </p>
+      ) : null}
+
       {sp.planned ? (
         <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-sub font-bold text-primary-d">
           {ask.plannedNotice}

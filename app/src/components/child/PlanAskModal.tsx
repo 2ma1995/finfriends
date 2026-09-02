@@ -83,7 +83,9 @@ export function PlanAskModal({
                 {CATEGORIES.map((c, i) => (
                   <li key={c.code}>
                     <label className="block cursor-pointer">
-                      <input type="radio" name="category" value={c.code} defaultChecked={i === 0} className="peer sr-only" required />
+                      {/* 🔴 **`sr-only` 라디오에 `required` 를 걸지 않는다** (D66) — 안 보이는 컨트롤이라
+                             브라우저가 말풍선 띄울 자리조차 없다. 아무 반응 없이 폼이 죽는다 */}
+                      <input type="radio" name="category" value={c.code} defaultChecked={i === 0} className="peer sr-only" />
                       <span className="grid min-h-touch place-items-center rounded-card border border-line bg-canvas text-center text-cap peer-checked:border-primary-l peer-checked:bg-primary-bg peer-checked:font-bold">
                         <span className="text-[1.25em]">{c.icon}</span>{c.label}
                       </span>
@@ -97,7 +99,7 @@ export function PlanAskModal({
               <span className="text-cap text-ink-mute">{labels.amount}</span>
               {/* 🔴 `step` 은 검사 도구가 아니다. 100 으로 두면 1500 이 조용히 막힌다 — 실제로 겪었다 */}
               <input name="limitAmount" type="number" inputMode="numeric"
-                     min={1} max={1000000} step={1} required placeholder={placeholders.amount}
+                     step={1} placeholder={placeholders.amount}
                      className="min-h-touch rounded-card border border-line bg-canvas px-3 text-right text-title font-bold tabular-nums" />
             </label>
 

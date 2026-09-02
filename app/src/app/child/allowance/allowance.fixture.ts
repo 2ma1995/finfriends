@@ -98,6 +98,13 @@ export const savings = {
   matured: "다 됐어요! 부모님이 확인해 주실 거예요",
   willGet: (won: number) => `끝나면 이자 ${won.toLocaleString("ko-KR")}원을 받아요`,
   noInterest: "이번엔 이자가 없어요",
+  /**
+   * 🔴 **입력칸이 더 이상 막지 않으니, 한도를 말해 준다** (D66).
+   *    예전엔 `max={잔액}` 이 브라우저 수준에서 조용히 막았다 — 아이는 왜 안 되는지
+   *    몰랐다. 이제 서버가 `NOT_ENOUGH` 로 답하는데, **누르기 전에 알면 더 좋다.**
+   */
+  balanceHint: "지금 쓸 수 있는 돈: {won}원",
+  overBalance: "쓸 수 있는 돈보다 많아요. 줄여 볼래요?",
   breakLabel: "지금 깨기",
   /** 🔴 누르기 전에 대가를 말한다. 자료가 가르치는 그대로다 */
   breakWarn: "지금 깨면 이자를 못 받아요. 넣은 돈만 돌아와요.",
@@ -123,6 +130,15 @@ export const errors: Record<string, string> = {
   NOT_ENOUGH: "쓸 수 있는 돈보다 많이 넣을 수 없어요.",
   PAID_THIS_WEEK: "이번 주는 이미 넣었어요. 다음 주에 또 넣어요.",
   ALL_PAID: "다 넣었어요. 더 넣지 않아도 돼요.",
+  /**
+   * 🔴 **갖고 싶은 것을 여기서도 적을 수 있다.** `addWishAction` 은 적은 자리로
+   *    돌려보내므로 그 사유가 **이 화면으로 온다** — 그런데 여기 없어서
+   *    `errors[sp.error] ?? errors.NOT_FOUND` 가 「찾을 수 없어요.」를 띄웠다.
+   *    엉뚱한 말이다. 위시리스트 화면과 **같은 문구**를 쓴다.
+   */
+  BAD_TARGET: "1,000원부터 1,000,000원까지 적을 수 있어요.",
+  BAD_NAME: "무엇을 갖고 싶은지 적어 주세요.",
+  TOO_MANY: "갖고 싶은 건 5개까지 적을 수 있어요. 하나를 지우고 적어 봐요.",
   NOT_FOUND: "찾을 수 없어요.",
 };
 
