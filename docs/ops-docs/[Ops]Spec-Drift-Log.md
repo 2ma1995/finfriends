@@ -4120,6 +4120,63 @@ service-example.html 361줄
 (`D67`). 손으로 넣은 머리말은 생성기 것으로 바뀌었고, 그 안의 근거는 옮겨 적었다.
 
 
+---
+
+## D70 🟠 랜딩이 **폰에서는 섹션을 안 잡았다** — 스냅이 `wheel` 하나로만 돼 있었다
+
+| | |
+| --- | --- |
+| 신고 | 2026-09-02 사용자 — 「핸드폰 화면은 섹션이 안 잡혀. 슬라이드시 확인해봐」 |
+
+원인이 한 줄이다. 랜딩의 섹션 스냅이 **전부** 이 리스너 하나였다.
+
+```js
+window.addEventListener('wheel', (event) => { … }, { passive: false });
+```
+
+**터치 스크롤은 `wheel` 을 발생시키지 않는다.** 손가락으로 밀면 `touchmove` 와
+`scroll` 만 온다 — 그래서 폰에서는 스냅 코드가 **한 번도 실행되지 않았다.**
+`data-snap` 이 13곳에 붙어 있어도 그것을 읽는 코드가 안 돌았다.
+
+CSS 스냅은 아예 없었다(`scroll-snap-type` 0건). 데스크톱에서 잘 되니까
+**「스냅이 구현돼 있다」로 보였다.**
+
+### 고친 방법 — 터치 기기에만 CSS 스냅
+
+```css
+@media (hover:none) and (pointer:coarse){
+  html{scroll-snap-type:y proximity}
+  [data-snap]{scroll-snap-align:start}
+}
+```
+
+🔴 **터치 기기에만 켠다.** 데스크톱은 위 스크립트가 이미 잡아 주므로,
+둘을 같이 켜면 **JS 가 옮기는 것과 CSS 가 붙이는 것이 서로 다툰다.**
+`(hover:none) and (pointer:coarse)` 는 터치스크린 노트북을 제외한다 —
+마우스가 있으면 `hover: hover` 라 안 걸린다.
+
+🔴 **`proximity` 다. `mandatory` 가 아니다.** 뷰포트보다 큰 구역이 있다
+(`.demo-step` 은 `min-height:64vh`, `section` 은 위아래 116px 여백).
+`mandatory` 면 긴 글의 가운데를 읽으려고 멈출 수가 없어서 **손가락을 떼는 순간
+튕겨 나간다.** 읽는 것을 방해하는 스냅은 없는 것보다 나쁘다.
+
+🔴 **헤더 자리는 따로 안 준다.** `html` 에 이미 `scroll-padding-top:92px` 가 있고
+**스냅도 그 값을 쓴다.** `scroll-margin` 을 또 주면 이중으로 밀린다.
+
+### 남은 것 — 데스크톱 쪽은 손대지 않았다
+
+`wheel` 리스너는 모든 휠 이벤트에 `preventDefault()` 를 건다. 그래서
+**키보드 스크롤(Space · PageDown)은 스냅되지 않고**, 트랙패드 관성도 끊긴다.
+사용자가 지적한 것은 폰이고 데스크톱은 잘 돌고 있으므로 **이번 범위에 넣지 않았다.**
+바꾸려면 「CSS 스냅 하나로 통일하고 `wheel` 하이재킹을 버린다」가 방향이다.
+
+### 이 건은 게이트를 처음 쓴 자리다
+
+`D69` 로 넣은 규칙대로 **`web/landing.html` 만 고치고** `npm run landing:sync` 를 돌렸다.
+`gate:landing` 이 통과하고 두 파일에 CSS 가 각각 하나씩 들어갔다.
+**손으로 배포본을 고쳤으면 다음 빌드가 섰을 것이다** — 규칙이 바로 값을 했다.
+
+
 ```
 tools/tasks_data.py 를 고치고 재생성해야 하는 것 — D2 · D3 · D5 · D6 · D8 · D10 · D11 · D13 · D14 · D15 · D16 · D17 · D18 · D23
 🔴 기준 문서 교체 — D30. tools/tasks_data.py 를 **새 SRS 로 다시 뽑는다**. 아래 항목의 절 번호가 전부 어긋나 있다
