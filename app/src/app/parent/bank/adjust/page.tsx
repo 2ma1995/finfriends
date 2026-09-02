@@ -76,7 +76,7 @@ export default async function BankAdjustPage({
               <form action={reverseEntryAction} className="mt-2 flex gap-1.5">
                 <input type="hidden" name="entryId" value={h.id} />
                 <input name="reason" maxLength={30} placeholder={fixReasonPlaceholder}
-                       className="min-h-touch flex-1 rounded-card border border-line-2 bg-surface px-2 text-cap" />
+                       className="min-h-touch min-w-0 flex-1 rounded-card border border-line-2 bg-surface px-2 text-cap" />
                 <button className="min-h-touch shrink-0 rounded-card border border-miss-line bg-miss-bg px-3 text-sub text-miss">
                   {fixLabel}
                 </button>

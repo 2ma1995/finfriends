@@ -221,16 +221,22 @@ export default async function ParentMyPage({
               🔴 `type="password"` 다. 아이가 옆에서 보는 상황을 전제로 만든다.
                  서버가 형식과 「너무 쉬운 값」을 다시 검사한다 — 화면 검사는 우회된다.
             */}
-            <form action={setPinAction} className="mt-2 flex gap-1.5">
-              <input
-                name="pin" type="password" inputMode="numeric" autoComplete="off"
-                pattern="\d{4}" maxLength={4} required placeholder={pinLabel}
-                className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-center tracking-[0.3em] tabular-nums"
-              />
-              <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white">
-                {view.pinSet ? pinChangeLabel : pinSetLabel}
-              </button>
-            </form>
+              {/*
+                🔴 **버튼을 아래로 내렸다** (사용자: 좁은 폰에서 화면을 넘어간다).
+                   입력칸(`flex-1`)과 버튼(`shrink-0`)을 한 줄에 두면, 버튼 글자가
+                   「PIN 바꾸기」처럼 길어질 때 **줄어들 수 없는 쪽이 밖으로 밀린다.**
+                   네 자리 입력은 좁아도 되지만 버튼은 그렇지 않다 — 쌓는 것이 맞다.
+              */}
+              <form action={setPinAction} className="mt-2 grid gap-1.5">
+                <input
+                  name="pin" type="password" inputMode="numeric" autoComplete="off"
+                  pattern="\d{4}" maxLength={4} required placeholder={pinLabel}
+                  className="min-h-touch w-full rounded-card border border-line bg-surface px-3 text-center text-title tracking-[0.4em] tabular-nums"
+                />
+                <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
+                  {view.pinSet ? pinChangeLabel : pinSetLabel}
+                </button>
+              </form>
 
             <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{pinNotice.rule}</p>
 
@@ -266,15 +272,19 @@ export default async function ParentMyPage({
               </p>
             ) : null}
 
-            <form action={saveSchoolEndAction} className="mt-2 flex gap-1.5">
-              <input
-                name="clock" type="time" required defaultValue={schoolClock ?? ""}
-                className="min-h-touch flex-1 rounded-card border border-line bg-surface px-3 text-body tabular-nums"
-              />
-              <button className="min-h-touch shrink-0 rounded-card bg-primary px-4 text-sub font-bold text-white">
-                {schoolSaveLabel}
-              </button>
-            </form>
+              {/*
+                🔴 **PIN 과 같은 이유로 쌓는다.** `type="time"` 은 브라우저가 기본 폭을
+                   갖고 있어 더 잘 밀린다 — 좁은 폰에서 버튼이 화면 밖으로 나갔다.
+              */}
+              <form action={saveSchoolEndAction} className="mt-2 grid gap-1.5">
+                <input
+                  name="clock" type="time" required defaultValue={schoolClock ?? ""}
+                  className="min-h-touch w-full rounded-card border border-line bg-surface px-3 text-title tabular-nums"
+                />
+                <button className="min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
+                  {schoolSaveLabel}
+                </button>
+              </form>
 
             {/* 🔴 바꾸면 그날 다시 묻는다 — 안 적으면 잘못 넣었다 고친 날 하루를 잃는다 */}
             <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{schoolNotice.change}</p>
