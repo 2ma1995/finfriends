@@ -242,6 +242,41 @@ check("  점선을 정보성 안내에 쓰지 않는다", !/border-dashed/.test(
 check("🔴 임의 글자 크기가 없다", !/text-\[[\d.]+(px|em|rem)\]/.test(tree),
   "토큰이 바뀌면 이 화면만 옛 크기로 남는다");
 
+// ── 로그아웃이 서는 자리 (D71) ──
+
+/**
+ * 🔴 **로그아웃은 `/` 로 보낸다. `/login` 이 아니다.**
+ *
+ *    홈 화면 앱(standalone)은 다시 열 때 **마지막 화면을 복원**한다 —
+ *    `start_url` 로 새로 가지 않는다. 로그아웃하고 `/login` 에 서 있었으면
+ *    껐다 켜도 **로그인 화면이 되살아나고 랜딩을 볼 수 없다.**
+ *    실기기에서 그렇게 나왔다.
+ *
+ *    「로그아웃 → 로그인 화면」이 자연스러워 보여서 되돌리기 쉬운 자리다.
+ */
+const authSrc = code("app/actions/auth.ts");
+{
+  const out = authSrc.slice(authSrc.indexOf("export async function signOutAction"));
+  const body = out.slice(0, out.indexOf("\n}") + 2);
+  check("🔴 로그아웃이 / 로 보낸다", /redirect\("\/"\)/.test(body),
+    "`/login` 으로 보내면 홈 화면 앱이 그 화면을 복원해 랜딩을 못 본다");
+  check("  로그아웃이 쿠키를 다 지운다", /clearChildMode\(\)/.test(body) && /delete\(GUARDIAN_COOKIE\)/.test(body),
+    "하나라도 남으면 미들웨어가 랜딩으로 안 보낸다");
+}
+
+/**
+ * 🔴 **랜딩에 나가는 길이 있어야 한다.** 로그아웃을 `/` 로 보내는 것이
+ *    랜딩에 「로그인」이 있다는 전제 위에 서 있다 — 없으면 다시 들어올 방법이 없다.
+ *    홈 화면 앱은 주소창이 없어서 `/login` 을 칠 수도 없다 (D67).
+ */
+{
+  const landing = readFileSync(new URL("../public/landing.html", import.meta.url), "utf8");
+  check("🔴 랜딩에 로그인 길이 있다", /href="\/login"/.test(landing),
+    "홈 화면 앱은 주소창이 없다 — 없으면 갇힌다");
+  check("  초대 코드를 넣을 자리도 있다", /action="\/child\/enter"/.test(landing),
+    "아이 기기가 랜딩에 닿으면 거기서 등록할 수 있어야 한다");
+}
+
 // ── 「언제」 (D59) ──
 
 /**
