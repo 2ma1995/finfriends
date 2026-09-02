@@ -302,13 +302,28 @@ footer a{color:var(--ink-2)}
        목업을 키우거나 줄여도 글이 알아서 그 아래에서 시작한다.
   */
   :root{
-    --demo-top:88px;
-    /* 작은 폰에서는 화면에 맞춰 줄인다 — 고정 410px 면 글 자리가 안 남는다 */
-    --demo-h:min(410px,42svh);
+    /*
+      🔴 **목업을 데스크톱 크기(356×500)에 맞춘다** (2026-09-02 사용자 지적 —
+         「핸드폰에서는 크기를 키워줘, 내용들이 안 보여」).
+
+         내가 앞서 `42svh`(≈367px)로 줄여 놨는데, 목업 안 화면은 **500px 높이로
+         짜여 있고 `.demo-viewport` 가 `overflow:hidden`** 이다.
+         그래서 아래쪽 130px 이 **잘려 나가고 있었다** — 「안 보인다」가 그것이다.
+         글 자리를 벌자고 목업을 줄인 것이 목업의 내용을 지운 셈이다.
+
+      🔴 붙는 자리(`--demo-top`)도 88 → 68 로 올렸다. 목업이 커진 만큼
+         위를 아껴야 아래 글이 화면에 남는다.
+
+      🔴 아주 짧은 화면에서는 `62svh` 가 먼저 걸려 여전히 조금 잘린다.
+         고정 목업과 글을 한 화면에 같이 두는 이상 피할 수 없다 —
+         **자르더라도 최대한 늦게** 자르는 값이다.
+    */
+    --demo-top:68px;
+    --demo-h:min(500px,62svh);
   }
   .demo-phone-wrap{top:var(--demo-top);z-index:5;padding:16px 0;background:linear-gradient(#fff 88%,rgba(255,255,255,0))}
-  /* 폭도 화면을 넘지 않게 — 320px 폰에서 310px 는 양옆이 붙는다 */
-  .demo-phone{width:min(310px,86vw)}
+  /* 🔴 데스크톱과 같은 356px 를 목표로 하되 화면을 넘지 않게 */
+  .demo-phone{width:min(360px,94vw)}
   .demo-viewport{height:var(--demo-h)}
   .demo-panel{padding:8px 14px 18px}
   .demo-step{
@@ -331,7 +346,7 @@ footer a{color:var(--ink-2)}
   .screen-intro{padding-top:82px}
   .scroll-demo{margin-top:42px}
   /* 🔴 `top` 을 직접 안 쓴다 — 변수를 바꾸면 글 여백도 같이 따라온다 */
-  :root{--demo-top:76px}
+  :root{--demo-top:60px}
 }
 </style>
 </head>
@@ -832,15 +847,43 @@ footer a{color:var(--ink-2)}
     const previous = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = 'auto';
 
+    /**
+     * 🔴 **`requestAnimationFrame` 이 «안 돌 수도» 있다.** 탭을 뒤로 보내면
+     *    브라우저가 프레임을 아예 안 준다. 그러면 이 애니메이션은 **중간에 굳고**
+     *    도착 콜백도 영영 안 온다 — 화면 전환도 안 돌고 다음 손짓도 안 먹는다.
+     *
+     *    그래서 **끝나야 할 시각에 시계로도 한 번 더 두드린다.** 둘 중 먼저 오는 쪽이
+     *    마무리하고, `settled` 가 두 번 실행되는 것을 막는다.
+     */
+    let settled = false;
+    let guard = 0;
+
+    const settle = (jump) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(guard);
+      // 🔴 **점프가 먼저, 되돌리기가 나중.** 순서를 바꾸면 `scroll-behavior:smooth` 가
+      //    되살아난 뒤에 점프해서 **그 점프까지 애니메이션이 된다** —
+      //    프레임이 안 오는 상황에서 쓰는 보험인데, 그 상황에서 정확히 안 듣는다
+      if (jump) window.scrollTo(0, top);
+      document.documentElement.style.scrollBehavior = previous;
+      whenDone();
+    };
+    guard = window.setTimeout(() => settle(true), DURATION + 250);
+
     const frame = (now) => {
-      if (token !== animToken) return;                 // 새 손짓이 왔으면 이건 버린다
+      if (token !== animToken) {                       // 새 손짓이 왔으면 이건 버린다
+        settled = true;
+        window.clearTimeout(guard);
+        document.documentElement.style.scrollBehavior = previous;
+        return;
+      }
       const t = Math.min(1, (now - startedAt) / DURATION);
       // 시작과 끝에서 느리게 — 가운데만 빠르면 「튕겼다」로 보인다
       const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       window.scrollTo(0, from + distance * eased);
       if (t < 1) { requestAnimationFrame(frame); return; }
-      document.documentElement.style.scrollBehavior = previous;
-      whenDone();
+      settle(false);
     };
     requestAnimationFrame(frame);
   };
@@ -861,8 +904,25 @@ footer a{color:var(--ink-2)}
     }
     if (nextIndex < 0) return false;
 
+    /**
+     * 🔴 **도착하면 그 화면을 «반드시» 돌린다** (2026-09-02 사용자 지적 —
+     *    「다음 섹션 넘어갈 때 화면 안 화면들이 동작을 안 해」).
+     *
+     *    지금까지는 `IntersectionObserver` 하나에만 맡겼다. 그건 **띠를 지나갈 때**
+     *    울리는 물건이라, 우리가 한 번에 옮겨 버리면 지나가는 순간에 울리고
+     *    **도착했을 때는 이미 끝나 있다.** 손가락으로 넘긴 사람은 아무것도 못 본다.
+     *
+     *    우리가 옮기는 것이니 **도착 시점을 우리가 안다.** 그 자리가 데모 단계면
+     *    그 화면을 그 자리에서 다시 튼다 — 관찰자가 울렸든 안 울렸든 같다.
+     */
+    const target = snapPoints[nextIndex];
+    const stepIndex = target && target.dataset ? Number(target.dataset.step) : NaN;
+
     wheelLocked = true;
-    glideTo(Math.max(0, positions[nextIndex] - headerOffset), () => { wheelLocked = false; });
+    glideTo(Math.max(0, positions[nextIndex] - headerOffset), () => {
+      wheelLocked = false;
+      if (Number.isInteger(stepIndex)) activate(stepIndex, true);
+    });
     // 🔴 되돌림 보험 — 애니메이션이 어떤 이유로 끝을 못 봐도 잠금이 영원히 남지 않는다
     window.setTimeout(() => { wheelLocked = false; }, 1200);
     return true;
