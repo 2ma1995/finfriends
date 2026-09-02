@@ -170,12 +170,28 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
 .quote .who{font-size:.76rem;color:var(--ink-3);margin-bottom:9px}
 .quote .q{font-family:var(--serif);font-size:1.12rem;line-height:1.6;color:var(--ink);margin:0 0 11px}
 .quote .why{font-size:.86rem;color:var(--ink-2);margin:0}
-.nums{display:flex;gap:9px;flex-wrap:wrap;margin-top:26px;justify-content:center}
-.num{background:var(--paper);border:1px solid var(--line);border-radius:14px;
-   padding:12px 18px;text-align:center;min-width:104px}
-.num b{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums;color:var(--ink-3)}
-.num span{font-size:.73rem;color:var(--ink-3)}
-.strike{margin-top:18px;font-family:var(--serif);font-size:1.2rem;color:var(--clay)}
+/* 숫자 → 질문 교차 연출 */
+.numstage{display:grid;justify-items:center;margin-top:26px;min-height:150px;align-content:center}
+/* 🔴 겹치기는 `.seq` 가 붙었을 때만. 스크립트가 못 돌면 예전처럼 위아래로 보인다 */
+.numstage.seq>*{grid-area:1/1;margin:0}
+.nums{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+   transition:opacity .55s ease,transform .55s ease}
+.num{background:var(--paper);border:1px solid var(--line);border-radius:18px;
+   padding:20px 26px;text-align:center;min-width:148px}
+.num b{display:block;font-size:2.6rem;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.num span{display:block;margin-top:4px;font-size:.82rem;color:var(--ink-3)}
+.strike{margin-top:18px;font-family:var(--serif);
+   font-size:clamp(1.5rem,5.4vw,2.9rem);line-height:1.3;color:var(--clay)}
+/* 🔴 질문은 **숨지 않는다.** `.seq` 안에서만 숨었다가 나온다 —
+      스크립트가 안 돌면 처음부터 보여야 한다 */
+.numstage.seq .strike{margin-top:0;opacity:0;transform:scale(.9);
+   transition:opacity .55s ease,transform .55s ease}
+.numstage.seq.asked .nums{opacity:0;transform:translateY(-14px) scale(.94);pointer-events:none}
+.numstage.seq.asked .strike{opacity:1;transform:none}
+@media (max-width:560px){
+  .num{padding:16px 20px;min-width:120px}
+  .num b{font-size:2.1rem}
+}
 /* 해법 */
 .split{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center}
 .split.rev>div:first-child{order:2}
@@ -403,12 +419,23 @@ footer a{color:var(--ink-2)}
       <p class="eyebrow">부모가 겪는 것</p>
       <h2>숫자는 쌓이는데,<br>확신은 안 쌓입니다</h2>
       <p class="lead">용돈 앱을 쓰면 이런 숫자가 남습니다.</p>
-      <div class="nums">
-        <div class="num"><b>116</b><span>학습 일수</span></div>
-        <div class="num"><b>75</b><span>푼 문제</span></div>
-        <div class="num"><b>6,650</b><span>받은 보상액</span></div>
+      <!--
+        🔴 **숫자와 질문을 같은 칸에 겹쳐 둔다.** 숫자가 사라지고 질문이 커지는
+           연출인데, 둘을 위아래로 두면 사라질 때 **아래 내용이 위로 튄다.**
+           `grid-area:1/1` 로 겹쳐 두면 칸 높이가 둘 중 큰 쪽으로 잡혀 안 움직인다.
+
+        🔴 **`.seq` 가 붙어야 겹친다.** 스크립트가 못 돌면(구형 · 오류) 겹치기가
+           안 걸려 **지금처럼 둘 다 위아래로 보인다.** 연출이 실패해도 내용은 남는다.
+      -->
+      <div class="numstage" data-numstage>
+        <div class="nums">
+          <!-- 🔴 `data-count-to` 는 이 파일이 이미 쓰는 관용구다 (아래 스크롤 데모) -->
+          <div class="num"><b data-count-to="116">116</b><span>학습 일수</span></div>
+          <div class="num"><b data-count-to="75">75</b><span>푼 문제</span></div>
+          <div class="num"><b data-count-to="6650">6,650</b><span>받은 보상액</span></div>
+        </div>
+        <p class="strike">그래서 우리 아이가 <b>달라졌나요?</b></p>
       </div>
-      <p class="strike">그래서 우리 아이가 <b>달라졌나요?</b></p>
     </div>
 
     <div class="quotes">
@@ -742,6 +769,72 @@ footer a{color:var(--ink-2)}
     });
     window.setTimeout(() => { wheelLocked = false; }, reduceMotion.matches ? 120 : 780);
   }, { passive: false });
+})();
+</script>
+
+
+<!--
+  숫자 → 질문 연출.
+
+  🔴 **기존 스크롤 데모 코드와 섞지 않는다.** 저건 이미 도는 물건이라,
+     건드리면 랜딩 전체가 같이 죽는다. 여기만 보는 작은 덩이로 따로 둔다.
+-->
+<script>
+(() => {
+  const stage = document.querySelector('[data-numstage]');
+  if (!stage) return;
+
+  /**
+   * 🔴 **움직임을 줄이라는 사람에게는 연출을 아예 안 건다.**
+   *    `.seq` 를 안 붙이면 겹치기도 숨기기도 안 걸려 숫자와 질문이 **둘 다** 보인다.
+   *    「전환을 0초로」가 아니다 — 그러면 숫자가 사라진 마지막 상태만 남아
+   *    **숫자를 영영 못 본다.**
+   */
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  stage.classList.add('seq');
+
+  const counters = [...stage.querySelectorAll('[data-count-to]')];
+  // 🔴 최종 표기(6,650)를 미리 챙겨 둔다 — 끝나면 이 글자를 그대로 되돌린다
+  const finals = counters.map((el) => el.textContent);
+  let timer;
+
+  const run = () => {
+    clearTimeout(timer);
+    stage.classList.remove('asked');
+
+    const startedAt = performance.now();
+    const DUR = 1100;
+    const tick = (now) => {
+      const t = Math.min(1, (now - startedAt) / DUR);
+      // 🔴 끝에서 감속시킨다. 등속이면 「세는 것」이 아니라 「돌아가는 것」으로 보인다
+      const eased = 1 - Math.pow(1 - t, 3);
+      counters.forEach((el, i) => {
+        const to = Number(el.dataset.countTo);
+        el.textContent = t < 1
+          ? Math.round(to * eased).toLocaleString('ko-KR')
+          : finals[i];
+      });
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    counters.forEach((el) => { el.textContent = '0'; });
+    requestAnimationFrame(tick);
+
+    // 🔴 다 센 뒤 **한 박자 쉬고** 넘긴다. 바로 지우면 읽을 새가 없다
+    timer = setTimeout(() => stage.classList.add('asked'), DUR + 900);
+  };
+
+  if ('IntersectionObserver' in window) {
+    // 🔴 나갔다 들어오면 다시 돈다. 이 구역은 스냅 화면이라 되돌아오는 일이 잦다
+    new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) run();
+        else clearTimeout(timer);
+      });
+    }, { threshold: .5 }).observe(stage);
+  } else {
+    run();
+  }
 })();
 </script>
 
