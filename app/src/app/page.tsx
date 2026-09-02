@@ -23,9 +23,22 @@ export default async function RootPage() {
   if (child.ok) redirect("/child/home");
   if (child.reason === "CONSENT_REQUIRED") redirect("/consent");
 
-  // ② 보호자
+  /**
+   * ② 보호자
+   *
+   * 🔴 **로그인이 아니라 `/leave` 로 보낸다** (사용자 요청 · 어긋남 대장 D72).
+   *
+   *    여기까지 왔다는 것은 **쿠키는 있는데 세션이 죽었다**는 뜻이다 —
+   *    쿠키가 없으면 미들웨어가 이미 랜딩으로 보냈다.
+   *
+   *    예전엔 `/login` 으로 보냈다. 그러면 로그인 화면의 「처음으로」가 `/` 로 오고,
+   *    쿠키가 그대로라 다시 여기로 와서 **또 로그인으로 튕겼다** — 원이었다.
+   *
+   *    `/leave` 가 죽은 쿠키를 털고 `/` 로 돌려보내면, 그때는 미들웨어가
+   *    랜딩을 준다. **나가는 길이 실제로 나간다.**
+   */
   const guardian = await currentGuardian();
-  if (!guardian) redirect("/login");
+  if (!guardian) redirect("/leave");
   if (!guardian.consentCompleted) redirect("/consent");
 
   // ③ 온보딩을 끝냈는가 — 아이가 없으면 볼 나무도 없다

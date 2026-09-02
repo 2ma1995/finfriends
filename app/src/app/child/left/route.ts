@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { DEVICE_COOKIE } from "@/lib/session/device-session";
-import { MODE_COOKIE } from "@/lib/session/device-mode";
-import { UNLOCK_COOKIE } from "@/lib/session/child-mode-pin";
+import { forgetSession } from "@/lib/session/forget";
 
 /**
  * 아이 기기 연결 끊기 — 어긋남 대장 D68.
@@ -27,11 +25,7 @@ export async function GET(req: NextRequest) {
   url.pathname = "/";
   url.search = "";
 
-  const res = NextResponse.redirect(url);
-
-  // 🔴 셋을 다 지운다. 하나라도 남으면 갇힌 상태가 이어진다
-  for (const name of [DEVICE_COOKIE, MODE_COOKIE, UNLOCK_COOKIE]) {
-    res.cookies.delete(name);
-  }
-  return res;
+  // 🔴 지우는 목록은 `lib/session/forget` 하나뿐이다. 여기에 또 적으면
+  //    쿠키를 하나 늘렸을 때 한쪽만 고쳐지고 기기가 계속 갇힌다 (D24)
+  return forgetSession(NextResponse.redirect(url));
 }
