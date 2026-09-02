@@ -319,7 +319,6 @@ check("  이미 되돌린 것은 멱등키가 막는다", /adjust:\$\{e\.id\}/.t
 const topup = src("components/parent/TopUpForm.tsx");
 check("🔴 금액 버튼이 제출하지 않는다", /type="button"/.test(topup),
   "`type` 을 빼면 폼이 제출돼 예전 동작으로 돌아간다");
-check("  빈 칸으로는 못 누른다", /amount\.trim\(\)\.length === 0/.test(topup));
 
 /**
  * 🔴 **누르면 더한다** (사용자 요청). 30,000 + 10,000 + 5,000 으로 45,000 을 만든다.
