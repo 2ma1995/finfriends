@@ -800,6 +800,53 @@ footer a{color:var(--ink-2)}
    *    멈추는 자리 목록(`snapPoints`)이 같으므로, 이제 폰과 데스크톱이
    *    **같은 지점에 같은 속도로** 선다.
    */
+  /**
+   * 🔴 **미끄러지는 것을 우리가 직접 굴린다** (2026-09-02 사용자 지적 —
+   *    「슬라이드 효과 없이 바로 해당 섹션이 나온다」).
+   *
+   *    예전엔 `scrollTo({behavior:'smooth'})` 로 브라우저에 맡겼다. 데스크톱에서는
+   *    돌았지만 **폰에서는 즉시 점프**했다 — 그 값을 안 지키는 브라우저가 있고,
+   *    지켜도 「움직임 줄이기」가 켜져 있으면 즉시로 바뀐다.
+   *    **맡긴 쪽이 안 해 주면 우리가 알 방법이 없다.**
+   *
+   *    직접 굴리면 어디서나 같은 속도로 같게 움직인다.
+   *
+   * 🔴 `scroll-behavior:smooth` 를 **잠시 끄고** 한 프레임씩 옮긴다.
+   *    안 끄면 우리가 옮기는 매 프레임을 브라우저가 또 애니메이션하려 들어
+   *    질질 끌린다. 끝나면 되돌려 놓는다 — 앵커 링크(`#how`)는 그 값을 쓴다.
+   */
+  let animToken = 0;
+
+  const glideTo = (top, whenDone) => {
+    const from = window.scrollY;
+    const distance = top - from;
+    animToken += 1;
+    const token = animToken;
+
+    if (reduceMotion.matches || Math.abs(distance) < 2) {
+      window.scrollTo(0, top);
+      whenDone();
+      return;
+    }
+
+    const DURATION = 620;
+    const startedAt = performance.now();
+    const previous = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+
+    const frame = (now) => {
+      if (token !== animToken) return;                 // 새 손짓이 왔으면 이건 버린다
+      const t = Math.min(1, (now - startedAt) / DURATION);
+      // 시작과 끝에서 느리게 — 가운데만 빠르면 「튕겼다」로 보인다
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      window.scrollTo(0, from + distance * eased);
+      if (t < 1) { requestAnimationFrame(frame); return; }
+      document.documentElement.style.scrollBehavior = previous;
+      whenDone();
+    };
+    requestAnimationFrame(frame);
+  };
+
   const goToNeighbour = (direction) => {
     const headerOffset = 92;
     const currentY = window.scrollY + headerOffset;
@@ -817,11 +864,9 @@ footer a{color:var(--ink-2)}
     if (nextIndex < 0) return false;
 
     wheelLocked = true;
-    window.scrollTo({
-      top: Math.max(0, positions[nextIndex] - headerOffset),
-      behavior: reduceMotion.matches ? 'auto' : 'smooth'
-    });
-    window.setTimeout(() => { wheelLocked = false; }, reduceMotion.matches ? 120 : 780);
+    glideTo(Math.max(0, positions[nextIndex] - headerOffset), () => { wheelLocked = false; });
+    // 🔴 되돌림 보험 — 애니메이션이 어떤 이유로 끝을 못 봐도 잠금이 영원히 남지 않는다
+    window.setTimeout(() => { wheelLocked = false; }, 1200);
     return true;
   };
 
