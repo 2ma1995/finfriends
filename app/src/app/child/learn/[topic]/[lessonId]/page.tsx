@@ -15,7 +15,7 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="배우기" back={{ href: "/child/learn", label: "배우기" }}>
+      <Screen title="배우기" back={{ href: "/child/learn", label: "배우기" }}>
         <Empty emoji="📚" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -30,7 +30,7 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
   const here = lessons.find((l) => l.id === lesson.id);
   if (here?.locked) {
     return (
-      <Screen role="아이 화면" title={TOPIC_LABEL[lesson.topic]} back={{ href: `/child/learn/${slug}`, label: "목록" }}>
+      <Screen title={TOPIC_LABEL[lesson.topic]} back={{ href: `/child/learn/${slug}`, label: "목록" }}>
         <Empty emoji="🔒" title={lockedLesson.title} body={lockedLesson.body} />
       </Screen>
     );
@@ -39,7 +39,7 @@ export default async function LessonPage({ params }: { params: Promise<{ topic: 
   const at = lessons.findIndex((l) => l.id === lesson.id);
 
   return (
-    <Screen role="아이 화면" title={TOPIC_LABEL[lesson.topic]}
+    <Screen title={TOPIC_LABEL[lesson.topic]}
             sub={`${at + 1} / ${lessons.length}편`}
             back={{ href: `/child/learn/${slug}`, label: "목록" }}>
       <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-line">

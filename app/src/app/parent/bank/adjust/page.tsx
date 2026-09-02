@@ -40,7 +40,7 @@ export default async function BankAdjustPage({
   const fixable = history.filter((h) => h.reversible);
 
   return (
-    <Screen role="부모 화면" title={title} sub={child ? `${child.displayName} · ${sub}` : sub}
+    <Screen title={title} sub={child ? `${child.displayName} · ${sub}` : sub}
             back={{ href: "/parent/bank", label: "아이 통장" }}>
       {sp.fixed ? (
         <div className="mb-2"><Card tone={sp.short ? "miss" : "grow"}>

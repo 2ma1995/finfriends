@@ -19,7 +19,7 @@ export default async function ChildShopPage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="상점" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title="상점" back={{ href: "/child/home", label: "내 방" }}>
         <Empty emoji="🛍" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -41,7 +41,7 @@ export default async function ChildShopPage({
   return (
     /* 🔴 **돌아갈 길이 없었다.** 기기가 안 열렸을 때 화면에만 `back` 이 있고
           정작 상점 본 화면에는 없어서, 들어오면 탭으로만 나갈 수 있었다 */
-    <Screen role="아이 화면" title="상점" sub={`내 별 ⭐ ${room.stars}`}
+    <Screen title="상점" sub={`내 별 ⭐ ${room.stars}`}
             back={{ href: "/child/home", label: "내 방" }}>
       {bought ? (
         <div className="mb-2"><Card tone="grow"><p className="text-sub">{boughtNotice(bought.name)}</p></Card></div>

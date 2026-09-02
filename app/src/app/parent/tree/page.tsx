@@ -79,7 +79,7 @@ export default async function ParentTreePage() {
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title="성장 나무">
+      <Screen title="성장 나무">
         <Empty
           emoji="🐣"
           title="아직 등록한 아이가 없어요"
@@ -102,7 +102,7 @@ export default async function ParentTreePage() {
   ]);
 
   return (
-    <Screen role="부모 화면" title="성장 나무" sub={`${view.childName} · ${view.cycleLabel}`}>
+    <Screen title="성장 나무" sub={`${view.childName} · ${view.cycleLabel}`}>
       {/*
         🔴 **안 읽은 알림이 있을 때만 보인다.** 0이면 자리도 없다 —
            빈 배지를 늘 띄우면 아무도 안 본다.

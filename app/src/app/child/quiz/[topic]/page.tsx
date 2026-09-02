@@ -22,7 +22,7 @@ export default async function ChildQuizPage({
   const { topic } = await params;
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="퀴즈" back={{ href: "/child/learn", label: "배우기" }}>
+      <Screen title="퀴즈" back={{ href: "/child/learn", label: "배우기" }}>
         <Empty emoji="❓" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -40,7 +40,7 @@ export default async function ChildQuizPage({
   const alreadyDone = !answered && (await answeredToday(access.childId, topic));
 
   return (
-    <Screen role="아이 화면" title={quizTitle(topic)} sub={todayLabel}
+    <Screen title={quizTitle(topic)} sub={todayLabel}
             back={{ href: "/child/practice", label: "실천하기" }}>
       {/* 🔴 오늘 이미 맞혔으면 다시 풀 게 없다. 같은 문제를 또 내면 별이 안 붙어 아이가 혼란스럽다 */}
       {alreadyDone ? (

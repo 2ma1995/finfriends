@@ -36,7 +36,7 @@ export default async function ParentSavingsPage({
   const g = await currentGuardian();
   if (!g) {
     return (
-      <Screen role="부모 화면" title={title} back={{ href: "/parent/bank", label: "아이 통장" }}>
+      <Screen title={title} back={{ href: "/parent/bank", label: "아이 통장" }}>
         <Empty emoji="🔒" {...needLogin} />
       </Screen>
     );
@@ -49,7 +49,7 @@ export default async function ParentSavingsPage({
   ]);
 
   return (
-    <Screen role="부모 화면" title={title} sub={houseLabel(rate)}
+    <Screen title={title} sub={houseLabel(rate)}
             back={{ href: "/parent/bank", label: "아이 통장" }}>
       {sp.error ? (
         <div className="mb-2"><Card tone="miss">

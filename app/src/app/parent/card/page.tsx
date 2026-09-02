@@ -19,7 +19,7 @@ export default async function ParentCardPage() {
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title="카드 신청" back={{ href: "/parent/mypage", label: "내 정보" }}>
+      <Screen title="카드 신청" back={{ href: "/parent/mypage", label: "내 정보" }}>
         <Empty
           emoji="🐣"
           title="등록한 아이가 없어요"
@@ -41,9 +41,7 @@ export default async function ParentCardPage() {
   const nextStep = CARD_STEPS[card.stepIndex + 1] ?? null;
 
   return (
-    <Screen
-      role="부모 화면"
-      title="카드 신청"
+    <Screen title="카드 신청"
       sub={`${child.displayName} · ${card.status === null ? "시작 전" : `${card.stepIndex + 1} / ${CARD_STEPS.length}단계`}`}
       back={{ href: "/parent/mypage", label: "내 정보" }}
     >

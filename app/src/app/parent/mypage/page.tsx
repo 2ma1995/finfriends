@@ -59,7 +59,7 @@ export default async function ParentMyPage({
   const pushDevices = await countSubscriptions(guardian.guardianId);
 
   return (
-    <Screen role="부모 화면" title="내 정보">
+    <Screen title="내 정보">
       {/* ── 계정 ── */}
       <section>
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">계정</h2>

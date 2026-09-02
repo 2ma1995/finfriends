@@ -1,21 +1,28 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-/** 화면 머리 — 모든 라우트가 같은 순서로 연다. 역할 → 제목 → 부제 */
+/**
+ * 화면 머리 — 모든 라우트가 같은 순서로 연다. 제목 → 부제.
+ *
+ * 🔴 **「아이 화면」·「부모 화면」 라벨을 지웠다** (사용자 요청).
+ *    프로토타입 때 **두 모드를 나란히 보여주려고** 붙인 것이다. 실제 제품에서
+ *    아이는 자기가 아이 화면을 본다는 것을 알고, 부모도 마찬가지다 —
+ *    **아무도 안 읽는 글자가 모든 화면 맨 위 한 줄**을 차지하고 있었다.
+ */
 export function Screen({
-  role, title, sub, back, children,
-}: { role: string; title: string; sub?: string; back?: { href: string; label: string }; children: ReactNode }) {
+  title, sub, back, children,
+}: { title: string; sub?: string; back?: { href: string; label: string }; children: ReactNode }) {
   return (
     <main className="px-gap pb-10 pt-4">
-      <div className="flex items-baseline justify-between">
-        <span className="text-cap tracking-[0.06em] text-ink-mute">{role}</span>
-        {back ? (
+      {/* 🔴 돌아갈 길만 남는다. 없으면 줄 자체를 안 그린다 — 빈 줄이 여백처럼 남으면 안 된다 */}
+      {back ? (
+        <div className="flex items-baseline justify-end">
           <Link href={back.href} className="text-cap text-ink-mute underline underline-offset-2">
             {back.label}
           </Link>
-        ) : null}
-      </div>
-      <h1 className="ff-serif mt-1 text-title font-bold tracking-[-0.01em]">{title}</h1>
+        </div>
+      ) : null}
+      <h1 className={`ff-serif text-title font-bold tracking-[-0.01em] ${back ? "mt-1" : ""}`}>{title}</h1>
       {sub ? <p className="mb-3 mt-0.5 text-sub text-ink-mute">{sub}</p> : <div className="mb-3" />}
       {children}
     </main>

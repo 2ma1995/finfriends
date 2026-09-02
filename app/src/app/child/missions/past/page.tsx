@@ -20,7 +20,7 @@ export default async function ChildPastMissionsPage() {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title={sections.settled} back={{ href: "/child/missions", label: "미션" }}>
+      <Screen title={sections.settled} back={{ href: "/child/missions", label: "미션" }}>
         <Empty emoji="🎯" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -29,7 +29,7 @@ export default async function ChildPastMissionsPage() {
   const board = await getMissionBoard(access.childId);
 
   return (
-    <Screen role="아이 화면" title={sections.settled} back={{ href: "/child/missions", label: "미션" }}>
+    <Screen title={sections.settled} back={{ href: "/child/missions", label: "미션" }}>
       {board.settled.length === 0 ? (
         <Empty emoji="🎯" title={pastEmpty.title} body={pastEmpty.body} />
       ) : (

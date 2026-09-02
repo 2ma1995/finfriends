@@ -16,7 +16,7 @@ export default async function ChildLockedPage({
   const view = failed ?? guardianArea;
 
   return (
-    <Screen role="아이 화면" title={view.title} back={{ href: "/child/home", label: "내 방" }}>
+    <Screen title={view.title} back={{ href: "/child/home", label: "내 방" }}>
       <Card tone="grow">
         <p className="text-body leading-relaxed">
           {view.body.map((line) => <span key={line} className="block">{line}</span>)}

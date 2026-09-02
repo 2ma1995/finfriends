@@ -25,7 +25,7 @@ export default async function ChildWishlistPage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="갖고 싶은 것" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title="갖고 싶은 것" back={{ href: "/child/home", label: "내 방" }}>
         <Empty emoji="🎁" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -39,7 +39,7 @@ export default async function ChildWishlistPage({
   const full = wishes.length >= MAX_WISHES;
 
   return (
-    <Screen role="아이 화면" title="갖고 싶은 것" sub={`${wishes.length} / ${MAX_WISHES}개`}
+    <Screen title="갖고 싶은 것" sub={`${wishes.length} / ${MAX_WISHES}개`}
             back={{ href: "/child/home", label: "내 방" }}>
       {/* 🔴 별이 아니라 용돈이다. 여기서 떼어 목표에 넣는다 (D18) */}
       <a href="/child/allowance"

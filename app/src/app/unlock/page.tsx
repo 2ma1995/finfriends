@@ -26,7 +26,7 @@ export default async function UnlockPage({
   const locked = sp.err === "LOCKED";
 
   return (
-    <Screen role="부모 화면" title={title}>
+    <Screen title={title}>
       <Card>
         <p className="text-sub leading-relaxed">{lead}</p>
       </Card>

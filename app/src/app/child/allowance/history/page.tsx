@@ -22,7 +22,7 @@ export default async function ChildHistoryPage() {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title={historyTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
+      <Screen title={historyTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
         <Empty emoji="📒" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -31,7 +31,7 @@ export default async function ChildHistoryPage() {
   const p = await getPassbook(access.childId, access.guardianId);
 
   return (
-    <Screen role="아이 화면" title={historyTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
+    <Screen title={historyTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
       {p.history.length === 0 ? <Empty emoji="📒" {...empty} /> : (
         <ul className="grid gap-1">
           {p.history.map((h) => (

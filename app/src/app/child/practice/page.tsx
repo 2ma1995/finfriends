@@ -26,7 +26,7 @@ export default async function ChildPracticePage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title={title} back={{ href: "/child/learn", label: "배우기" }}>
+      <Screen title={title} back={{ href: "/child/learn", label: "배우기" }}>
         <Empty emoji="✋" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -46,7 +46,7 @@ export default async function ChildPracticePage({
   const missionsLeft = board.todo.length;
 
   return (
-    <Screen role="아이 화면" title={title} sub={sub} back={{ href: "/child/learn", label: "배우기" }}>
+    <Screen title={title} sub={sub} back={{ href: "/child/learn", label: "배우기" }}>
       {sp.claimed ? (
         <p className="mb-2 rounded-card border border-star bg-star-bg px-3 py-2 text-center text-sub font-bold text-star-d">
           {claimed}

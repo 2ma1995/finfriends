@@ -30,7 +30,7 @@ export default async function WithdrawPage({
   const [sp, p] = await Promise.all([searchParams, getWithdrawPreview(g.guardianId)]);
 
   return (
-    <Screen role="부모 화면" title={title} back={{ href: "/parent/mypage", label: "내 정보" }}>
+    <Screen title={title} back={{ href: "/parent/mypage", label: "내 정보" }}>
       {sp.error ? (
         <div className="mb-2">
           <Card tone="miss">

@@ -33,7 +33,7 @@ export default async function ChildRetroPage({ params }: { params: Promise<{ rec
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="계획 ↔ 실제" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title="계획 ↔ 실제" back={{ href: "/child/home", label: "내 방" }}>
         <Empty emoji="📝" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -42,7 +42,7 @@ export default async function ChildRetroPage({ params }: { params: Promise<{ rec
   const r = await getRetro(access.childId, (await params).recordId);
   if (!r) {
     return (
-      <Screen role="아이 화면" title="계획 ↔ 실제" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title="계획 ↔ 실제" back={{ href: "/child/home", label: "내 방" }}>
         <Empty emoji="📝" {...notFound} />
       </Screen>
     );
@@ -51,7 +51,7 @@ export default async function ChildRetroPage({ params }: { params: Promise<{ rec
   const met = r.match === "MET";
 
   return (
-    <Screen role="아이 화면" title="계획 ↔ 실제" sub={r.whenLabel} back={{ href: "/child/home", label: "내 방" }}>
+    <Screen title="계획 ↔ 실제" sub={r.whenLabel} back={{ href: "/child/home", label: "내 방" }}>
       <div className="grid grid-cols-2 gap-2">
         <Column head="적어둔 것" lines={r.planned} alert={false} />
         <Column head="실제로 쓴 것" lines={r.actual} alert={!met} />

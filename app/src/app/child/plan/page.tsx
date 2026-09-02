@@ -24,7 +24,7 @@ export default async function ChildPlanListPage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="계획 카드" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title="계획 카드" back={{ href: "/child/home", label: "내 방" }}>
         <Empty emoji="📝" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -40,7 +40,7 @@ export default async function ChildPlanListPage({
   const done = cards.filter((c) => c.recordId !== null);
 
   return (
-    <Screen role="아이 화면" title="계획 카드" sub={todo.length > 0 ? `${todo.length}개 맞춰볼 수 있어요` : undefined}
+    <Screen title="계획 카드" sub={todo.length > 0 ? `${todo.length}개 맞춰볼 수 있어요` : undefined}
             back={{ href: "/child/home", label: "내 방" }}>
       {sp.saved ? (
         <div className="mb-2"><Card tone="grow"><p className="text-sub">{savedNotice}</p></Card></div>

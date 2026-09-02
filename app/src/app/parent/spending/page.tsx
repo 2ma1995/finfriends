@@ -37,7 +37,7 @@ export default async function ParentSpendingPage() {
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title="소비 내역">
+      <Screen title="소비 내역">
         <Empty
           emoji="🐣"
           title="아직 등록한 아이가 없어요"
@@ -63,7 +63,7 @@ export default async function ParentSpendingPage() {
      */
     const e = view.prevRecords.length > 0 ? monthEmpty : emptyState;
     return (
-      <Screen role="부모 화면" title="소비 내역" sub={`${view.monthLabel} · ${child.displayName}`}>
+      <Screen title="소비 내역" sub={`${view.monthLabel} · ${child.displayName}`}>
         <Empty emoji={e.emoji} title={e.title} body={e.body} hint={e.hint} />
         {view.prevRecords.length > 0 ? (
           <>
@@ -83,7 +83,7 @@ export default async function ParentSpendingPage() {
   const down = view.delta < 0;
 
   return (
-    <Screen role="부모 화면" title="소비 내역" sub={`${view.monthLabel} · ${child.displayName}`}>
+    <Screen title="소비 내역" sub={`${view.monthLabel} · ${child.displayName}`}>
       {/*
         🔴 전월 대비 증감액이 상단이다 (PLN-005). 이 화면의 목적은 「얼마 썼나」가 아니라
            「지난달과 무엇이 달라졌나」다. 지난달 기록이 없으면 증감을 0으로 그리지 않는다.

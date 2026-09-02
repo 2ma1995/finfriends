@@ -25,7 +25,7 @@ export default async function ConsentPage({
   // 이미 동의한 뒤 다시 들어온 경우 — 무엇을 언제 동의했는지 보여주고 철회 경로를 준다
   if (state.completed) {
     return (
-      <Screen role="보호자 확인" title="동의 완료" sub="만 14세 미만 아동" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+      <Screen title="동의 완료" sub="만 14세 미만 아동" back={{ href: "/parent/onboarding", label: "시작하기" }}>
         <Card tone="grow">
           <h2 className="text-cap tracking-[0.03em] text-primary-d">동의가 끝났어요</h2>
           <p className="mt-1 text-sub leading-relaxed text-ink-soft">
@@ -67,7 +67,7 @@ export default async function ConsentPage({
   }
 
   return (
-    <Screen role="보호자 확인" title="시작하기 전에" sub="만 14세 미만 아동" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+    <Screen title="시작하기 전에" sub="만 14세 미만 아동" back={{ href: "/parent/onboarding", label: "시작하기" }}>
       <form action={completeConsentAction}>
         <ul className="grid gap-1.5">
           {CONSENT_ITEMS.map((i) => (

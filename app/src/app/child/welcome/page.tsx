@@ -21,7 +21,7 @@ export default async function ChildWelcomePage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="처음이지?">
+      <Screen title="처음이지?">
         <Empty emoji="👋" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -43,7 +43,7 @@ export default async function ChildWelcomePage({
   }
 
   return (
-    <Screen role="아이 화면" title="처음이지?" sub={`${step + 1} / ${TOUR_STEPS}`}>
+    <Screen title="처음이지?" sub={`${step + 1} / ${TOUR_STEPS}`}>
       {/* 어디쯤 왔는지 — 숫자보다 점이 빠르다 */}
       <div className="flex justify-center gap-1.5">
         {tour.map((_, i) => (

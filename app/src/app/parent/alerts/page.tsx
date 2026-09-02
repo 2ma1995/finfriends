@@ -28,7 +28,7 @@ export default async function ParentAlertsPage() {
   await markAllRead(guardian.guardianId);
 
   return (
-    <Screen role="부모 화면" title={title} back={{ href: "/parent/tree", label: "성장 나무" }}>
+    <Screen title={title} back={{ href: "/parent/tree", label: "성장 나무" }}>
       {list.length === 0 ? (
         <Empty emoji={empty.emoji} title={empty.title} body={empty.body} hint={empty.hint} />
       ) : (

@@ -19,7 +19,7 @@ export default async function JoinPage({
   // 🔴 등록은 보호자 행위다. 아이 기기에서 부모가 직접 로그인해 누른다
   if (!guardian) {
     return (
-      <Screen role="부모 확인" title="기기 등록" back={{ href: "/login", label: "로그인" }}>
+      <Screen title="기기 등록" back={{ href: "/login", label: "로그인" }}>
         <Empty
           emoji="🔑"
           title="부모가 먼저 로그인해 주세요"
@@ -40,7 +40,7 @@ export default async function JoinPage({
 
   if (!child) {
     return (
-      <Screen role="부모 확인" title="기기 등록" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+      <Screen title="기기 등록" back={{ href: "/parent/onboarding", label: "시작하기" }}>
         <Empty
           emoji="🐣"
           title="등록할 아이가 아직 없어요"
@@ -52,9 +52,7 @@ export default async function JoinPage({
   }
 
   return (
-    <Screen
-      role="부모 확인"
-      title={`${child.displayName}의 기기가 맞나요?`}
+    <Screen title={`${child.displayName}의 기기가 맞나요?`}
       sub={`${child.birthYear}년생 · 부모가 눌러 주세요`}
       back={{ href: "/parent/invite", label: "자녀 초대" }}
     >

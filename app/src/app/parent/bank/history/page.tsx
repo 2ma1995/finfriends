@@ -35,7 +35,7 @@ export default async function BankHistoryPage() {
   const history = child ? await getHistory(child.id, 50, "exact") : [];
 
   return (
-    <Screen role="부모 화면" title={title} sub={child ? `${child.displayName} · ${sub}` : sub}
+    <Screen title={title} sub={child ? `${child.displayName} · ${sub}` : sub}
             back={{ href: "/parent/bank", label: "아이 통장" }}>
       {history.length === 0 ? (
         <Empty emoji={empty.emoji} title={empty.title} body={empty.body} hint={empty.hint} />

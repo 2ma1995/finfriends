@@ -19,7 +19,7 @@ export default async function ChildClosedSavingsPage() {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title={savings.pastTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
+      <Screen title={savings.pastTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
         <Empty emoji="🐖" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -29,7 +29,7 @@ export default async function ChildClosedSavingsPage() {
   const closed = await getClosed(access.childId, 50);
 
   return (
-    <Screen role="아이 화면" title={savings.pastTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
+    <Screen title={savings.pastTitle} back={{ href: "/child/allowance", label: "내 통장" }}>
       {closed.length === 0 ? (
         <Empty emoji="🐖" title={savings.pastEmpty.title} body={savings.pastEmpty.body} />
       ) : (

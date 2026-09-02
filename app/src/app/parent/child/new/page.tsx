@@ -29,9 +29,7 @@ export default async function NewChildPage({
   const thisYear = new Date().getFullYear();
 
   return (
-    <Screen
-      role="부모 화면"
-      title="아이 프로필"
+    <Screen title="아이 프로필"
       sub="3 / 6단계"
       back={{ href: "/parent/onboarding", label: "시작하기" }}
     >

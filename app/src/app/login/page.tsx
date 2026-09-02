@@ -23,7 +23,7 @@ export default async function LoginPage({
   const { error, email } = await searchParams;
 
   return (
-    <Screen role="부모 화면" title="로그인" back={{ href: "/", label: "처음으로" }}>
+    <Screen title="로그인" back={{ href: "/", label: "처음으로" }}>
       <form action={signInAction} className="grid gap-2.5">
         {fields.map((f) => (
           <div key={f.key} className="grid gap-1">

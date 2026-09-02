@@ -12,7 +12,7 @@ export default async function ChildLearnPage() {
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title="배우기">
+      <Screen title="배우기">
         <Empty emoji="📚" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -21,7 +21,7 @@ export default async function ChildLearnPage() {
   const topics = await getTopicProgress(access.childId);
 
   return (
-    <Screen role="아이 화면" title="배우기" back={{ href: "/child/home", label: "내 방" }}>
+    <Screen title="배우기" back={{ href: "/child/home", label: "내 방" }}>
       <ul className="grid gap-1.5">
         {topics.map((t) => {
           const body = (

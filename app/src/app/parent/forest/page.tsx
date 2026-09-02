@@ -17,7 +17,7 @@ export default async function ParentForestPage() {
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면 · 월말 기록" title="월간 숲">
+      <Screen title="월간 숲">
         <Empty
           emoji="🐣"
           title="아직 등록한 아이가 없어요"
@@ -37,7 +37,7 @@ export default async function ParentForestPage() {
   const view = await getForestView(child.id, child.displayName);
 
   return (
-    <Screen role="부모 화면 · 월말 기록" title={`${view.monthLabel} 숲`} sub={view.childName}>
+    <Screen title={`${view.monthLabel} 숲`} sub={view.childName}>
       {/*
         ② 획득 별 — 🔴 스크롤 없이 (AC-1.4).
            별을 즉시 소진하는 아이에게 **유일한 누적 증거**다. 그래서 맨 위에 둔다.

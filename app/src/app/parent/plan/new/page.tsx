@@ -25,7 +25,7 @@ export default async function ParentPlanNewPage({
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title={title} back={{ href: "/parent/onboarding", label: "시작하기" }}>
+      <Screen title={title} back={{ href: "/parent/onboarding", label: "시작하기" }}>
         <Empty emoji="🐣" title={noChild.title} body={noChild.body} hint={noChild.hint} />
         <Link href="/parent/child/new"
               className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white">
@@ -38,7 +38,7 @@ export default async function ParentPlanNewPage({
   const sp = await searchParams;
 
   return (
-    <Screen role="부모 화면" title={title}
+    <Screen title={title}
             sub={subTpl.replace("{name}", child.displayName)}
             back={{ href: "/parent/onboarding", label: "시작하기" }}>
       {sp.error ? (

@@ -28,7 +28,7 @@ export default async function ParentOnboardingPage({
   const allDone = done === steps.length;
 
   return (
-    <Screen role="부모 화면" title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/parent/tree", label: "성장 나무" }}>
+    <Screen title="시작하기" sub={`${done} / ${steps.length}단계`} back={{ href: "/parent/tree", label: "성장 나무" }}>
       {/* 🔴 적었을 때만 말한다. 매번 띄우면 무시하게 된다 */}
       {sp.planned ? (
         <p className="mb-2 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-center text-sub font-bold text-primary-d">

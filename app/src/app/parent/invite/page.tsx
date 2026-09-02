@@ -23,7 +23,7 @@ export default async function ParentInvitePage({
 
   if (!child) {
     return (
-      <Screen role="부모 화면" title="자녀 초대" sub="4 / 6단계" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+      <Screen title="자녀 초대" sub="4 / 6단계" back={{ href: "/parent/onboarding", label: "시작하기" }}>
         <Empty
           emoji="🐣"
           title="초대할 아이가 아직 없어요"
@@ -41,9 +41,7 @@ export default async function ParentInvitePage({
   }
 
   return (
-    <Screen
-      role="부모 화면"
-      title="자녀 초대"
+    <Screen title="자녀 초대"
       sub="4 / 6단계"
       back={{ href: "/parent/onboarding", label: "시작하기" }}
     >

@@ -20,7 +20,7 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen role="아이 화면" title={TOPIC_LABEL[topic]} back={{ href: "/child/learn", label: "배우기" }}>
+      <Screen title={TOPIC_LABEL[topic]} back={{ href: "/child/learn", label: "배우기" }}>
         <Empty emoji="📚" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -31,7 +31,7 @@ export default async function LearnTopicPage({ params }: { params: Promise<{ top
 
 
   return (
-    <Screen role="아이 화면" title={`${TOPIC_ICON[topic]} ${TOPIC_LABEL[topic]}`}
+    <Screen title={`${TOPIC_ICON[topic]} ${TOPIC_LABEL[topic]}`}
             sub={`${lessons.filter((l) => l.read).length} / ${lessons.length}편`}
             back={{ href: "/child/learn", label: "배우기" }}>
       {/* 🔴 오늘 몫을 다 했으면 먼저 말한다 — 목록만 회색이면 「고장났나」로 읽힌다 */}

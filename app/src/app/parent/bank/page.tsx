@@ -40,7 +40,7 @@ export default async function ParentBankPage({
   const child = await findChild(guardian.guardianId);
   if (!child) {
     return (
-      <Screen role="부모 화면" title="아이 통장">
+      <Screen title="아이 통장">
         <Empty
           emoji="🐣"
           title="등록한 아이가 없어요"
@@ -67,7 +67,7 @@ export default async function ParentBankPage({
   const savingsRequested = savings.requested.length + savings.active.filter((a) => a.matured).length;
 
   return (
-    <Screen role="부모 화면" title="아이 통장" sub={child.displayName}>
+    <Screen title="아이 통장" sub={child.displayName}>
       {sp.saved ? (
         <div className="mb-2"><Card tone="grow"><p className="text-sub">{savedNotice}</p></Card></div>
       ) : null}
