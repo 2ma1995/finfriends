@@ -297,11 +297,44 @@ footer a{color:var(--ink-2)}
   .hero-stage{min-height:440px;padding-left:20px;padding-right:20px}
   .hero-stage .phone.side{display:none}
   .scroll-demo{display:block}
-  .demo-phone-wrap{top:88px;z-index:5;padding:16px 0;background:linear-gradient(#fff 88%,rgba(255,255,255,0))}
-  .demo-phone{width:310px}
-  .demo-viewport{height:410px}
+
+  /*
+    🔴 **폰에서 이 구간이 어긋나 있었다** (2026-09-02 사용자 지적 —
+       「컴퓨터 개발자 모드로는 잘 되는데 핸드폰으로 보면 이상하다」).
+
+       두 가지가 겹쳤다.
+
+    ① **`100vh` 는 실기기에서 「주소창이 숨은 높이」다.**
+       주소창이 보이는 동안은 화면보다 그만큼 큰 칸이 되어 아래가 잘린다.
+       **개발자 모드에는 주소창이 없어서 이 차이가 안 드러난다** — 그래서
+       거기서만 멀쩡했다. `svh` 는 반대로 「주소창이 보이는 높이」라,
+       주소창이 나오든 들어가든 **한 칸이 늘 화면에 들어온다.**
+
+    ② **글이 폰 목업 뒤에 깔려 있었다.** 목업은 위에서 `88+16+410+16 = 530px`
+       까지 차지하는데 글은 `padding-top:500px` 에서 시작했다 — **30px 가
+       목업 밑이다.** 두 숫자를 따로 적어 두면 하나를 고칠 때 반드시 어긋난다.
+
+    🔴 그래서 **목업 높이를 변수 하나로 두고 여백이 그것을 계산한다.**
+       목업을 키우거나 줄여도 글이 알아서 그 아래에서 시작한다.
+  */
+  :root{
+    --demo-top:88px;
+    /* 작은 폰에서는 화면에 맞춰 줄인다 — 고정 410px 면 글 자리가 안 남는다 */
+    --demo-h:min(410px,42svh);
+  }
+  .demo-phone-wrap{top:var(--demo-top);z-index:5;padding:16px 0;background:linear-gradient(#fff 88%,rgba(255,255,255,0))}
+  /* 폭도 화면을 넘지 않게 — 320px 폰에서 310px 는 양옆이 붙는다 */
+  .demo-phone{width:min(310px,86vw)}
+  .demo-viewport{height:var(--demo-h)}
   .demo-panel{padding:8px 14px 18px}
-  .demo-step{min-height:100vh;justify-content:flex-start;padding:500px 22px 42px;background:transparent}
+  .demo-step{
+    min-height:100vh;            /* 🔴 `svh` 를 모르는 구형 브라우저용. 아래가 이긴다 */
+    min-height:100svh;
+    justify-content:flex-start;
+    /* 목업이 끝나는 자리 + 숨 쉴 틈 */
+    padding:calc(var(--demo-top) + var(--demo-h) + 56px) 22px 42px;
+    background:transparent;
+  }
 }
 @media (max-width:620px){
   header a.mini{display:none}
@@ -313,7 +346,8 @@ footer a{color:var(--ink-2)}
   .final .wrap{border-radius:24px;padding:64px 18px}
   .screen-intro{padding-top:82px}
   .scroll-demo{margin-top:42px}
-  .demo-phone-wrap{top:76px}
+  /* 🔴 `top` 을 직접 안 쓴다 — 변수를 바꾸면 글 여백도 같이 따라온다 */
+  :root{--demo-top:76px}
 }
 </style>
 </head>
