@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { MODE_COOKIE, isGuardianPath, readMode } from "@/lib/session/device-mode";
 // 🔴 값만 쓴다 — 미들웨어는 Edge 라 `child-mode-pin` 을 통째로 import 하면 안 된다(DB 를 문다)
 const UNLOCK_COOKIE = "ff_unlock";
+// 🔴 값만 쓴다 — 이름만 필요하고 세션 모듈을 물면 Edge 가 DB 를 문다
+const GUARDIAN_COOKIE = "ff_guardian";
+const DEVICE_COOKIE = "ff_device_token";
 
 /**
  * 아동 모드 관문 — 어긋남 대장 D5.
@@ -13,6 +16,25 @@ const UNLOCK_COOKIE = "ff_unlock";
  *    각자 첫 줄에서 다시 인가를 확인한다(§6.6). 미들웨어만 믿지 않는다.
  */
 export function middleware(req: NextRequest) {
+  /**
+   * 🔴 **처음 온 사람에게는 랜딩이 먼저다** (사용자 요청).
+   *
+   * 예전엔 `/` 가 곧장 `/login` 으로 보냈다 — **제품이 무엇인지 보기도 전에**
+   * 로그인 화면이 나왔다. 아무도 모르는 서비스에서 그건 문을 잠그는 것과 같다.
+   *
+   * 🔴 **주소는 `/` 그대로 둔다.** 리다이렉트가 아니라 **rewrite** 다 —
+   *    `/landing.html` 이 주소창에 보이면 공유할 때 이상하다.
+   *
+   * 🔴 **쿠키가 있으면 안 건다.** 그때는 `/` 의 서버 코드가 세션을 제대로 보고
+   *    아이·보호자 화면으로 가른다. 쿠키는 힌트일 뿐이라 **여기서 인가를 판단하지
+   *    않는다** — 랜딩은 누구에게나 공개된 마케팅 문서다.
+   */
+  if (req.nextUrl.pathname === "/"
+      && !req.cookies.get(GUARDIAN_COOKIE)
+      && !req.cookies.get(DEVICE_COOKIE)) {
+    return NextResponse.rewrite(new URL("/landing.html", req.url));
+  }
+
   const mode = readMode(req.cookies.get(MODE_COOKIE)?.value);
   if (mode !== "CHILD") return NextResponse.next();
   if (!isGuardianPath(req.nextUrl.pathname)) return NextResponse.next();

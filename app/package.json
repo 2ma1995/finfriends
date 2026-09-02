@@ -14,6 +14,7 @@
     "db:seed": "node prisma/seed.mjs",
     "db:up": "../tools/dev_db.sh",
     "prebuild": "node tools/scan_child_bundle.mjs",
+    "db:remote": "node tools/migrate_remote.mjs",
     "postbuild": "node tools/scan_child_bundle.mjs",
     "gate:origin": "node tools/scan_child_bundle.mjs",
     "verify:logic": "tsx --conditions=react-server tools/verify_logic.ts",
