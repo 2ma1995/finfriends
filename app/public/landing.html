@@ -292,12 +292,15 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
   🔴 숨기는 것은 `.seq-cards` 가 붙었을 때뿐이다. 스크립트가 못 돌면
      네 칸이 처음부터 그대로 보인다.
 */
-.four.seq-cards .f{opacity:0;transform:translateY(16px)}
-.four.seq-cards .f.in{opacity:1;transform:none}
-.four .f{transition:opacity .42s ease,transform .42s cubic-bezier(.2,.9,.3,1),
+/* 🔴 `--shift` 는 띠 전체가 왼쪽으로 밀린 양이다. 세 상태 모두에 실어야
+      「밀림」과 「올라옴 · 강조」가 서로를 지우지 않는다 */
+.four .f{transform:translateX(var(--shift,0px));
+   transition:opacity .42s ease,transform .45s cubic-bezier(.2,.9,.3,1),
    border-color .3s ease,box-shadow .3s ease}
+.four.seq-cards .f{opacity:0;transform:translateX(var(--shift,0px)) translateY(16px)}
+.four.seq-cards .f.in{opacity:1;transform:translateX(var(--shift,0px))}
 .four .f.hl{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
-   transform:translateY(-7px) scale(1.04)}
+   transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
 
 .f .soon-t{display:inline-block;margin-top:8px;font-size:.68rem;color:var(--clay);
    background:var(--clay-bg);border:1px solid #E5CDB8;border-radius:99px;padding:2px 9px}
@@ -351,13 +354,27 @@ footer a{color:var(--ink-2)}
        아이 화면의 네 영역과 같은 묶음이라, 세로로 쌓으면 «넷이 한 벌»이라는
        것이 안 보인다.
   */
-  .four{grid-template-columns:repeat(4,1fr);gap:8px}
-  .f{aspect-ratio:1;padding:10px 6px;text-align:center;
-     display:flex;flex-direction:column;justify-content:center;gap:2px}
-  .f .ic{font-size:1.45rem;line-height:1.1}
-  .f h4{font-size:.82rem;margin:2px 0 0}
-  .f p{font-size:.6rem;line-height:1.32;word-break:keep-all}
-  .f .soon-t{margin-top:3px;font-size:.54rem;padding:1px 5px}
+  /*
+    🔴 **네 칸을 «옆으로 미는 띠»로 바꿨다** (사용자 지적 — 「모으기 다음 거 나올 때
+       벌기가 왼쪽으로 이동되게 해 줘, 마지막 게 안 보여」).
+
+       한 줄에 넷을 욱여넣으니 칸이 105px 밖에 안 돼 글이 안 읽혔고,
+       마지막 칸은 강조로 커질 자리도 없었다.
+       이제 칸을 크게 두고, 강조가 옮겨갈 때 **띠가 왼쪽으로 밀린다** —
+       지금 강조된 칸이 늘 화면 안에 있다.
+
+    🔴 미는 양은 스크립트가 실제 칸 폭을 재서 넣는다(`--shift`).
+       여기에 픽셀을 적어 두면 폭이 바뀔 때마다 어긋난다.
+  */
+  /* 🔴 `overflow:hidden` 은 위아래도 자른다. 강조된 칸이 `-7px` 떠오르고 4% 커지므로
+        그만큼 위아래 자리를 줘야 잘리지 않는다 */
+  .four{display:flex;gap:10px;overflow:hidden;margin-top:8px;padding:12px 0}
+  .f{flex:0 0 60%;aspect-ratio:1;padding:14px 10px;text-align:center;
+     display:flex;flex-direction:column;justify-content:center;gap:4px}
+  .f .ic{font-size:2rem;line-height:1.1}
+  .f h4{font-size:1rem;margin:4px 0 0}
+  .f p{font-size:.78rem;line-height:1.42;word-break:keep-all}
+  .f .soon-t{margin-top:6px;font-size:.64rem;padding:2px 7px}
 
   /*
     🔴 **폰에서는 한 구역이 한 화면에 들어와야 한다** (사용자 요청 —
@@ -383,9 +400,16 @@ footer a{color:var(--ink-2)}
 
   /* 숫자 칸 — 키운 값이라 폰에서는 한 단계 낮춘다 */
   .numstage{margin-top:16px;min-height:120px}
-  .num{padding:12px 14px;min-width:104px;border-radius:14px}
-  .num b{font-size:2rem}
-  .num span{font-size:.72rem;margin-top:2px}
+  /*
+    🔴 **셋을 «한 줄»에 붙든다** (사용자 지적 — 「한 줄로만 나오게 해 줘, 이상하게 나와」).
+       `flex-wrap:wrap` 이라 폭이 조금만 모자라도 셋째 칸이 아래로 떨어졌다 —
+       그 순간 세 숫자가 한 묶음으로 안 읽힌다.
+       `nowrap` 으로 묶고, 대신 칸이 «같이 줄어들게» 최소 폭을 푼다.
+  */
+  .nums{flex-wrap:nowrap;gap:8px;width:100%}
+  .num{flex:1 1 0;min-width:0;padding:12px 6px;border-radius:14px}
+  .num b{font-size:1.72rem}
+  .num span{font-size:.66rem;margin-top:2px;white-space:nowrap}
   .strike{font-size:clamp(1.3rem,4.8vw,2.2rem)}
 
   /* 나머지 묶음들의 위 간격 */
@@ -499,11 +523,11 @@ footer a{color:var(--ink-2)}
   .hero h1{font-size:clamp(2.55rem,14vw,4rem)}
   .hero-stage{margin-top:20px;min-height:266px;border-radius:24px 24px 0 0;padding-top:16px}
   .hero-stage .phone{width:214px}
-  /* 🔴 여기서 1열로 되돌리지 않는다 — 위에서 4열 정사각형으로 잡았다 */
-  .f{padding:8px 4px}
-  .f .ic{font-size:1.3rem}
-  .f h4{font-size:.76rem}
-  .f p{font-size:.56rem}
+  /* 🔴 여기서 1열로 되돌리지 않는다 — 위에서 「옆으로 미는 띠」로 잡았다 */
+  .f{flex-basis:64%;padding:12px 8px}
+  .f .ic{font-size:1.85rem}
+  .f h4{font-size:.94rem}
+  .f p{font-size:.74rem}
   .final .wrap{border-radius:24px;padding:64px 18px}
   .screen-intro{padding-top:44px}
   .scroll-demo{margin-top:42px}
@@ -788,7 +812,9 @@ footer a{color:var(--ink-2)}
       <div class="f"><div class="ic">🐷</div><h4>모으기</h4><p>안 쓰고 두면 쌓여요</p></div>
       <div class="f soon"><div class="ic">🌱</div><h4>불리기</h4><p>모아두면 저절로 늘어나요</p><span class="soon-t">곧 열려요</span></div>
     </div>
-    <p class="flow">💰 돈이 생기고 → 🛒 잘 쓰면 → 🐷 모이고 → 🌱 저절로 늘어나요</p>
+    <!-- 🔴 「💰 돈이 생기고 → …」 줄은 지웠다 (사용자 요청).
+            네 칸이 하나씩 «순서대로» 올라오며 강조가 옮겨가므로
+            같은 말을 글로 한 번 더 할 필요가 없다. -->
   </div>
 </section>
 
@@ -1272,7 +1298,11 @@ footer a{color:var(--ink-2)}
   grid.classList.add('seq-cards');
 
   const timers = [];
-  const clear = () => { timers.forEach(clearTimeout); timers.length = 0; };
+  const clear = () => {
+    timers.forEach(clearTimeout);
+    timers.length = 0;
+    grid.style.setProperty('--shift', '0px');
+  };
 
   const run = () => {
     clear();
@@ -1281,11 +1311,34 @@ footer a{color:var(--ink-2)}
     const RISE = 340;    // 한 칸이 올라오고 다음 칸까지의 간격
     const HOLD = 260;    // 마지막 칸이 강조를 붙잡고 있는 시간
 
+    /**
+     * 🔴 **강조가 옮겨가면 띠도 따라 민다** (사용자 지적 — 「마지막 게 안 보여」).
+     *
+     *    칸을 크게 두면 넷이 한 화면에 안 들어간다. 그래서 지금 강조된 칸이
+     *    **늘 보이도록** 띠를 왼쪽으로 민다. 끝까지 밀어도 마지막 칸의 오른쪽이
+     *    화면 밖으로 나가지 않게 **밀 수 있는 최대치에서 멈춘다.**
+     *
+     * 🔴 픽셀을 코드에 적지 않는다. 칸 폭·간격·화면 폭은 기기마다 다르므로
+     *    **그때 재서** 넣는다.
+     */
+    const shiftTo = (index) => {
+      const view = grid.clientWidth;
+      const total = grid.scrollWidth;
+      if (total <= view + 1) { grid.style.setProperty('--shift', '0px'); return; }
+      const card = cards[index].getBoundingClientRect();
+      const gap = parseFloat(getComputedStyle(grid).columnGap || '0') || 0;
+      const want = index * (card.width + gap);
+      grid.style.setProperty('--shift', `${-Math.min(want, total - view)}px`);
+    };
+
+    shiftTo(0);
+
     cards.forEach((card, index) => {
       timers.push(setTimeout(() => {
         card.classList.add('in', 'hl');
         // 🔴 앞 칸의 강조를 거둔다 — 강조가 «옮겨가는» 것이지 쌓이는 게 아니다
         if (index > 0) cards[index - 1].classList.remove('hl');
+        shiftTo(index);
       }, index * RISE));
     });
 
@@ -1301,6 +1354,12 @@ footer a{color:var(--ink-2)}
     timers.push(setTimeout(() => {
       cards.forEach((card) => card.classList.add('in'));
     }, cards.length * RISE + 1200));
+
+    /**
+     * 🔴 **끝나고 처음 자리로 되돌리지 않는다.** 되돌리면 방금 보여 준 마지막 칸이
+     *    다시 화면 밖으로 나간다 — 「마지막 게 안 보인다」로 돌아간다.
+     *    처음 자리로 돌아가는 것은 이 구역을 «떠날 때»다 (`clear`).
+     */
   };
 
   document.addEventListener('ff:arrive', (event) => {
