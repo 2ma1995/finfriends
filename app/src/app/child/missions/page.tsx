@@ -18,7 +18,7 @@ export default async function ChildMissionsPage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen title="미션" back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title="미션">
         <Empty emoji="🎯" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -29,7 +29,7 @@ export default async function ChildMissionsPage({
   const nothing = board.todo.length + board.waiting.length + board.settled.length === 0;
 
   return (
-    <Screen title="미션" back={{ href: "/child/home", label: "내 방" }}>
+    <Screen title="미션">
       {/* 🔴 사진이 올라갔는지 · 왜 안 됐는지 **말해 준다.** 조용히 넘기면 또 올린다 */}
       {photoMsg ? (
         <p className={`mb-2 rounded-card border px-3 py-2 text-center text-sub font-bold ${

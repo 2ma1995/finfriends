@@ -21,7 +21,7 @@ export default async function ChildLearnPage() {
   const topics = await getTopicProgress(access.childId);
 
   return (
-    <Screen title="배우기" back={{ href: "/child/home", label: "내 방" }}>
+    <Screen title="배우기">
       <ul className="grid gap-1.5">
         {topics.map((t) => {
           const body = (

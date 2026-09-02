@@ -35,7 +35,7 @@ export default async function ChildPassbookPage({
   const access = await currentChild();
   if (!access.ok) {
     return (
-      <Screen title={title} back={{ href: "/child/home", label: "내 방" }}>
+      <Screen title={title}>
         <Empty emoji="📒" {...(access.reason === "CONSENT_REQUIRED" ? consentRequired : noDevice)} />
       </Screen>
     );
@@ -51,7 +51,7 @@ export default async function ChildPassbookPage({
   const stage = card[p.card];
 
   return (
-    <Screen title={title} back={{ href: "/child/home", label: "내 방" }}>
+    <Screen title={title}>
       {/* 🔴 **가진 돈 전체가 먼저다.** 「쓸 수 있는 돈」만 크게 보이면
           목표에 떼어 둔 돈이 없어진 것처럼 보인다 — 부모 화면과 숫자가 갈리던 원인이다 */}
       {/*
