@@ -12,8 +12,10 @@
 import { randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { verifyDbUrl } from "./verify_db.mjs";
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:55432/finfriends" }) });
+// 🔴 대상을 여기서 정하지 않는다 — 조용히 딴 DB 로 떨어지지 않게 한 곳에 모았다 (D64)
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: verifyDbUrl() }) });
 
 let failed = 0;
 const check = (n, ok, d = "") => { console.log(`${ok ? "  OK  " : "  실패"} ${n}${d ? ` — ${d}` : ""}`); if (!ok) failed++; };

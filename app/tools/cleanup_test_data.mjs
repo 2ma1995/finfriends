@@ -14,8 +14,11 @@
  */
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { verifyDbUrl } from "./verify_db.mjs";
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "postgresql://postgres:ff@localhost:55432/finfriends" }) });
+// 🔴 대상을 조용히 고르지 않는다 (D64). 검증이 쓰는 것과 같은 DB 를 본다 —
+//    검증이 남긴 것을 거두는 스크립트이므로 대상이 갈리면 아무것도 못 거둔다
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: verifyDbUrl() }) });
 const APPLY = process.argv.includes("--yes");
 
 /**
@@ -25,7 +28,7 @@ const APPLY = process.argv.includes("--yes");
  *    이 목록에 안 걸린다. 그래서 아래 **고아 보호자** 판정이 두 번째 그물이다.
  *    새 검증 스크립트를 만들면 `verify-` 로 시작하는 이메일을 쓴다.
  */
-const PREFIXES = ["loop-", "bye-", "bank-", "cyc-", "lock-", "child-", "consent-", "verify-", "erase-check-"];
+const PREFIXES = ["loop-", "bye-", "bank-", "cyc-", "lock-", "child-", "consent-", "verify-", "erase-check-", "tut-"];
 
 const users = await prisma.devAuthUser.findMany({
   where: { OR: PREFIXES.map((p) => ({ email: { startsWith: p } })) },

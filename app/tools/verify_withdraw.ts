@@ -1,7 +1,19 @@
 import "dotenv/config";
 import { randomBytes, generateKeyPairSync } from "node:crypto";
-import { prisma } from "@/db";
-import { withdrawAccount } from "@/modules/account";
+import { verifyDbUrl } from "./verify_db.mjs";
+
+/**
+ * 🔴 **앱의 DB 를 쓰지 않는다** (어긋남 대장 D64).
+ *
+ *    이 검증은 계정·아이·원장을 **22개 표에 만들고 지운다.** `dotenv` 를 읽어
+ *    `@/db` 를 그대로 쓰면 앱이 보는 DB(지금은 Supabase)에 시험 계정을 쌓는다 —
+ *    실제로 한 번 쌓았다.
+ *
+ *    `@/db` 는 불러오는 순간 `DATABASE_URL` 을 읽으므로, **읽기 전에** 바꿔야 한다.
+ *    그래서 정적 `import` 가 아니라 `main()` 안에서 동적으로 불러온다.
+ *    (이 실행기는 top-level await 를 못 받는다 — `ERR_REQUIRE_ASYNC_MODULE`)
+ */
+process.env.DATABASE_URL = verifyDbUrl();
 
 /**
  * 탈퇴하면 정말 아무것도 안 남는가 — FR-041 · AC-041-2 · 🔴 로컬 전용
@@ -27,7 +39,14 @@ const uuid = () => randomBytes(16).toString("hex").replace(
   /^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5",
 );
 
+type Prisma = (typeof import("@/db"))["prisma"];
+let prisma: Prisma;
+
 async function main() {
+  // 🔴 `DATABASE_URL` 을 바꾼 **뒤에** 불러온다. 위에서 정적으로 불러오면 늦는다
+  ({ prisma } = await import("@/db"));
+  const { withdrawAccount } = await import("@/modules/account");
+
   console.log("탈퇴 · 파기 — 식별 가능한 것이 남는가\n");
 
   const user = await prisma.devAuthUser.create({
@@ -141,7 +160,8 @@ async function main() {
 main()
   .catch((e) => { console.error(e); failed += 1; })
   .finally(async () => {
-    await prisma.$disconnect();
+    // 🔴 `main` 이 시작 전에 터지면 아직 없다
+    await prisma?.$disconnect();
     console.log(failed === 0 ? "\n전건 통과" : `\n실패 ${failed}건`);
     process.exit(failed === 0 ? 0 : 1);
   });
