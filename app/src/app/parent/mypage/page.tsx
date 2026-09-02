@@ -34,7 +34,9 @@ function Row({ label, value }: { label: string; value: string }) {
 export default async function ParentMyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pin?: string; pinErr?: string; school?: string; schoolErr?: string }>;
+  searchParams: Promise<{
+    pin?: string; pinErr?: string; school?: string; schoolErr?: string; device?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const guardian = await currentGuardian();
@@ -102,6 +104,12 @@ export default async function ParentMyPage({
       {/* ── 등록된 아이 기기 ── */}
       <section className="mt-4">
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">등록된 아이 기기</h2>
+        {/* 🔴 해제는 되돌릴 수 있다 — 그 사실을 그 자리에서 말한다 (D65) */}
+        {sp.device === "revoked" ? (
+          <p className="mt-1.5 rounded-card border border-primary-l bg-primary-bg px-3 py-2 text-sub leading-relaxed text-primary-d">
+            {deviceNotice.revoked}
+          </p>
+        ) : null}
         {view.devices.length === 0 ? (
           <p className="mt-1.5 rounded-card border border-dashed border-line-2 px-3 py-3 text-sub leading-relaxed text-ink-mute">
             {deviceNotice.empty}
@@ -134,6 +142,20 @@ export default async function ParentMyPage({
             ))}
           </ul>
         )}
+        {/*
+          🔴 **해제한 뒤 갈 곳을 준다** (D65). 해제와 재등록이 각각 있었지만
+             **사이가 끊겨 있었다** — 해제하면 줄만 사라지고 다시 등록할 길이 없었다.
+             아이 화면이 이상할 때 부모가 스스로 되돌리는 경로가 이것이다.
+
+          🔴 기기가 있을 때도 보인다. 「지금 것을 해제하고 다시」가 아니라
+             **한 대를 더 등록하는 것**도 같은 링크다 (기기 여러 대를 막지 않는다).
+        */}
+        <Link
+          href="/parent/invite?from=mypage"
+          className="mt-1.5 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
+        >
+          {deviceNotice.reRegister}
+        </Link>
         <p className="mt-1.5 text-cap leading-relaxed text-ink-mute">{deviceNotice.hint}</p>
       </section>
 

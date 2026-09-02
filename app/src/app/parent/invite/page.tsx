@@ -4,7 +4,7 @@ import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { InviteLink } from "@/components/parent/InviteLink";
 import { findChild } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { howTo, inviteLink, noCredentialNotice, rules, previewLink } from "./invite.fixture";
+import { howTo, inviteLink, noCredentialNotice, reRegisterNotice, rules, previewLink } from "./invite.fixture";
 
 // CON-003 — 자녀 초대. 온보딩 4단계. 링크는 자격증명이 아니라 기기 등록 수단이다
 export const metadata = { title: "자녀 초대 · 핀프렌즈" };
@@ -12,18 +12,30 @@ export const metadata = { title: "자녀 초대 · 핀프렌즈" };
 export default async function ParentInvitePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; from?: string }>;
 }) {
   const guardian = await currentGuardian();
   if (!guardian) redirect("/login");
   if (!guardian.consentCompleted) redirect("/consent");
 
-  const { error } = await searchParams;
+  const { error, from } = await searchParams;
   const child = await findChild(guardian.guardianId);
+
+  /**
+   * 🔴 **온보딩 4단계일 때와 「다시 등록」일 때 머리가 달라야 한다.**
+   *
+   *    한동안 `sub` 가 「4 / 6단계」로 못박혀 있고 돌아가기가 늘 「시작하기」였다.
+   *    온보딩을 다 끝낸 부모가 기기를 다시 등록하러 오면 **끝난 단계 번호가 뜨고**
+   *    돌아가기가 할 일 목록으로 보낸다 — 자기가 어디 있는지 모르게 된다.
+   */
+  const again = from === "mypage";
+  const head = again
+    ? { sub: reRegisterNotice.sub, back: { href: "/parent/mypage", label: "내 정보" } }
+    : { sub: "4 / 6단계", back: { href: "/parent/onboarding", label: "시작하기" } };
 
   if (!child) {
     return (
-      <Screen title="자녀 초대" sub="4 / 6단계" back={{ href: "/parent/onboarding", label: "시작하기" }}>
+      <Screen title="자녀 초대" sub={head.sub} back={head.back}>
         <Empty
           emoji="🐣"
           title="초대할 아이가 아직 없어요"
@@ -41,10 +53,18 @@ export default async function ParentInvitePage({
   }
 
   return (
-    <Screen title="자녀 초대"
-      sub="4 / 6단계"
-      back={{ href: "/parent/onboarding", label: "시작하기" }}
-    >
+    <Screen title={again ? reRegisterNotice.title : "자녀 초대"} sub={head.sub} back={head.back}>
+      {/*
+        🔴 **다시 등록하러 온 부모에게는 먼저 그 사실을 말한다.**
+           온보딩 화면과 글자가 똑같으면 「내가 처음으로 되돌아갔나」로 읽는다.
+      */}
+      {again ? (
+        <div className="mb-2.5">
+          <Card tone="grow">
+            <p className="text-sub leading-relaxed">{reRegisterNotice.body}</p>
+          </Card>
+        </div>
+      ) : null}
       <Card>
         <h2 className="text-cap tracking-[0.03em] text-ink-mute">초대할 아이</h2>
         <p className="mt-1 text-body">

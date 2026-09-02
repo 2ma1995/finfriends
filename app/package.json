@@ -20,7 +20,8 @@
     "gate:origin": "node tools/scan_child_bundle.mjs",
     "verify:logic": "tsx --conditions=react-server tools/verify_logic.ts",
     "db:cleanup": "node tools/cleanup_test_data.mjs",
-    "verify:withdraw": "tsx --conditions=react-server tools/verify_withdraw.ts"
+    "verify:withdraw": "tsx --conditions=react-server tools/verify_withdraw.ts",
+    "verify:rereg": "tsx --conditions=react-server tools/verify_rereg.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

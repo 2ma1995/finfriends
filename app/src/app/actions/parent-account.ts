@@ -25,6 +25,13 @@ export async function revokeDeviceAction(formData: FormData) {
   if (deviceRef) await revokeDevice(g.guardianId, deviceRef);
   revalidatePath("/parent/mypage");
   revalidatePath("/parent/onboarding");
+  /**
+   * 🔴 **무엇이 일어났는지 말한다** (어긋남 대장 D65).
+   *    전에는 아무 말 없이 줄만 사라졌다 — 부모는 눌린 건지, 뭐가 없어진 건지,
+   *    아이 화면이 지금 어떤 상태인지 알 수 없었다.
+   *    되돌릴 수 있는 일이므로 **되돌리는 길도 같이 보여준다.**
+   */
+  redirect("/parent/mypage?device=revoked");
 }
 
 /**

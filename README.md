@@ -163,6 +163,7 @@ node tools/verify_child.mjs      # 아이 프로필 19건
 node tools/verify_mission_loop.mjs  # 미션 승인 → 실천 → 승급 12건
 node tools/verify_bank_ledger.mjs   # 아이 통장 · 용돈 원장 21건
 npm run verify:withdraw             # 🔴 탈퇴 · 파기 — **실제 withdrawAccount 를 부른다**
+npm run verify:rereg                # 기기 해제 → 재등록 — 기록이 이어지는가
 node tools/verify_cycle_audit.mjs   # 주기 전환 · 스냅샷 · 원장 정산 10건
 npm run verify:logic                # 🔴 순수 판정 — **실제 코드를 부른다** (사본이 아니다)
 npm run db:cleanup                  # 검증이 남긴 계정·고아 보호자 거두기 (--yes 로 실제 삭제)
