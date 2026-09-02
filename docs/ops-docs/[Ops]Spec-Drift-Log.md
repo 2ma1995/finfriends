@@ -4163,6 +4163,53 @@ CSS 스냅은 아예 없었다(`scroll-snap-type` 0건). 데스크톱에서 잘 
 🔴 **헤더 자리는 따로 안 준다.** `html` 에 이미 `scroll-padding-top:92px` 가 있고
 **스냅도 그 값을 쓴다.** `scroll-margin` 을 또 주면 이중으로 밀린다.
 
+### 🔴 그런데 내 스냅이 **데모 구역을 붙잡았다** — 사용자가 바로 잡아냈다
+
+> 「웹으로 볼 때랑 앱으로 볼 때 많이 다른데? 앱으로 볼 때는 **짧게짧게만 내려가고
+> 움직이는 것도 없고** 이상해」
+
+`data-snap` 이 붙은 13곳 중 **셋이 데모 단계**(`screen-tree` · `screen-plan` ·
+`screen-forest`)였다. 그 셋은 모바일에서 이렇게 생겼다.
+
+```css
+@media (max-width:880px){
+  .demo-step{min-height:100vh; padding:500px 22px 42px}
+}
+```
+
+**100vh 에 위쪽 여백 500px** — 폰 목업이 위에 붙어 있고(`sticky top:88px`),
+그 구간을 **지나가는 스크롤**이 `IntersectionObserver` 를 통해 단계를 바꾼다.
+즉 이 셋은 **머무는 자리가 아니라 지나가는 자리**다.
+
+거기에 스냅을 걸었으니 —
+
+- 시작점마다 붙잡혀서 **글은 500px 아래에 있어 화면 밖**이다
+- 지나갈 수가 없으니 **움직임을 볼 구간 자체가 없어진다**
+
+`.demo-step{scroll-snap-align:none}` 으로 뺐다. 붙잡는 것은 **큰 구역 10곳**만이다.
+
+**교훈 — 「스냅 대상」은 마크업에 붙은 표시가 아니라 «머물러도 되는 자리»다.**
+`data-snap` 을 그대로 선택자로 쓴 것이 실수였다. 그 표시는 원래
+데스크톱 휠 스크립트가 **점프 목표**로 쓰던 것이고, 「여기서 멈춰도 좋다」는
+뜻이 아니었다.
+
+### 🟠 나머지 절반 — 「움직이는 것도 없다」는 내 것이 아닐 수 있다
+
+폰 목업 전환은 **전부 CSS `transition`** 이다.
+
+```css
+.demo-panel{transition:opacity .42s ease,transform .42s ease,visibility .42s}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+```
+
+**기기에 「동작 줄이기」가 켜져 있으면 그 한 줄이 페이지의 모든 움직임을 끈다.**
+숫자 카운터도 `reduceMotion.matches` 면 최종값으로 바로 간다.
+화면은 «바뀌지만» 아무것도 «움직이지» 않는다 — 신고 문장과 정확히 맞는다.
+
+🔴 **이건 고칠 것이 아니다.** 접근성 설정을 존중하는 정상 동작이다.
+사용자에게 설정을 확인해 달라고 물었다 — 켜져 있으면 그 판단은 사용자 것이다.
+**끄는 코드를 넣지 않는다.**
+
 ### 남은 것 — 데스크톱 쪽은 손대지 않았다
 
 `wheel` 리스너는 모든 휠 이벤트에 `preventDefault()` 를 건다. 그래서
