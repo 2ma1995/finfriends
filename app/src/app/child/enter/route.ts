@@ -21,8 +21,25 @@ import { GUARDIAN_COOKIE, closeSession } from "@/lib/session/guardian-session";
  * 🔴 **실패 사유를 뭉뚱그리지 않는다.** 「만료」와 「이미 연결됨」은 아이에게 다른 말이다 —
  *    하나는 다시 요청해야 하고 하나는 이미 된 것이다 (`AC-002-2`).
  */
+/**
+ * 🔴 **링크를 통째로 붙여넣어도 받는다** (어긋남 대장 D67).
+ *
+ *    랜딩의 「초대 링크를 받았나요?」 칸에 아이가 넣는 것은 대개 **주소 전체**다 —
+ *    코드만 골라내라는 건 어른의 순서다. 통째로 오면 `t=` 를 꺼낸다.
+ *
+ * 🔴 주소로 안 보이면 **그대로 코드로 본다.** 부모가 코드만 불러 줄 수도 있다.
+ */
+function tokenFrom(raw: string | null): string | undefined {
+  const v = raw?.trim();
+  if (!v) return undefined;
+  if (!v.includes("t=")) return v;
+  // `?t=…` · `&t=…` 어느 쪽이든. 뒤에 딴 것이 붙어 있어도 첫 조각만 쓴다
+  const m = /[?&]t=([^&#\s]+)/.exec(v) ?? /(?:^|\b)t=([^&#\s]+)/.exec(v);
+  return m ? decodeURIComponent(m[1]) : v;
+}
+
 export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get("t") ?? undefined;
+  const token = tokenFrom(req.nextUrl.searchParams.get("t"));
   const r = await consumeInvite(token);
 
   const url = req.nextUrl.clone();

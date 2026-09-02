@@ -260,6 +260,13 @@ footer a{color:var(--ink-2)}
     <span class="sp"></span>
     <a class="mini" href="#how">어떻게 되나요</a>
     <a class="mini" href="#screens">화면 보기</a>
+    <!--
+      🔴 **로그인 자리가 없으면 막다른 길이 된다.** 배포본(`app/public/landing.html`)에서
+         실제로 그랬다 — 나가는 길이 「가입」뿐이었고, 홈 화면에 추가해 쓰면 주소창이
+         없어서 /login 을 칠 수도 없다. 보호자 세션이 14일이라 만료되면 갇힌다.
+         이 원본을 나중에 배포로 올릴 때 같은 구멍을 물려받지 않게 여기도 둔다.
+    -->
+    <a class="mini" href="/login">로그인</a>
     <a class="cta sm" href="#start">무료로 시작하기</a>
   </div>
 </header>
@@ -572,6 +579,33 @@ footer a{color:var(--ink-2)}
     <p class="lead">가입하고 아이가 첫 실천을 하면 나무가 움직이기 시작합니다.</p>
     <a class="cta" href="#start">무료로 시작하기</a>
     <p class="fine">부모·아이 모두 무료 · 월 구독료 없음 · 위치정보 미수집</p>
+  </div>
+</section>
+
+
+<!--
+  ⑨ 초대 코드 — 🔴 **아이 기기가 이 화면에 닿을 수 있다.**
+     홈 화면에 추가한 앱은 브라우저와 저장소가 갈릴 수 있어서, 부모가 브라우저에서
+     등록해도 앱 쪽에는 쿠키가 없다. 그러면 아이는 여기서 멈추는데 주소창이 없으니
+     나갈 방법이 없다. 초대 코드를 여기서 받으면 쿠키가 **이 앱의 저장소**에 앉는다.
+
+  🔴 평범한 GET 폼이다. `/child/enter` 는 쿠키를 굽는 Route Handler 라
+     **진짜 문서 이동**이어야 한다 (어긋남 대장 D66).
+-->
+<section class="final" id="invite" data-snap aria-labelledby="invite-title">
+  <div class="wrap">
+    <h2 id="invite-title">초대 링크를 받았나요?</h2>
+    <p class="lead">부모님이 보내 주신 링크를 아래에 붙여넣으면 아이 화면이 열려요.</p>
+    <form method="get" action="/child/enter"
+          style="display:grid;gap:10px;max-width:520px;margin:18px auto 0">
+      <label for="invite-t" style="text-align:left;font-size:14px;opacity:.7">초대 링크 또는 코드</label>
+      <input id="invite-t" name="t" required autocomplete="off"
+             placeholder="https://… 또는 코드"
+             style="min-height:48px;border:1px solid var(--line);border-radius:12px;
+                    padding:0 14px;font-size:16px;width:100%;box-sizing:border-box" />
+      <button class="cta" type="submit" style="border:0;cursor:pointer">아이 화면 열기</button>
+    </form>
+    <p class="fine">링크는 24시간 동안만 쓸 수 있어요. 지났으면 부모님께 다시 받아 주세요.</p>
   </div>
 </section>
 
