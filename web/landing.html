@@ -21,42 +21,27 @@ html{scroll-behavior:smooth;scroll-padding-top:92px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
 
 /*
-  🔴 **폰에서는 섹션이 안 잡혔다** (2026-09-02 사용자 지적).
+  🔴 **폰에서는 스냅을 걸지 않는다** (2026-09-02 사용자 지적, **두 번째**).
 
-     스냅이 아래 스크립트의 `wheel` 리스너 하나로만 돼 있었다.
-     **터치 스크롤은 `wheel` 을 발생시키지 않는다** — 손가락으로 밀면
-     `touchmove` 와 `scroll` 만 온다. 그래서 폰에서는 스냅 코드가
-     **한 번도 실행되지 않았다.**
+     처음엔 「폰에서 섹션이 안 잡힌다」로 CSS 스냅을 켰다. 그랬더니
+     「짧게짧게만 내려간다」가 나왔고, 데모 단계만 풀어 줬다(`scroll-snap-align:none`).
+     그래도 같은 제보가 또 왔다 — **푼 자리가 모자랐던 게 아니라 방향이 틀렸다.**
 
-  🔴 **터치 기기에만 켠다.** 데스크톱은 위 스크립트가 이미 잡아 주고 있어서,
-     둘을 같이 켜면 JS 가 옮기는 것과 CSS 가 붙이는 것이 서로 다툰다.
+     남은 `[data-snap]` 은 히어로·문제·해법·안전·CTA 같은 **글 구역**이고,
+     높이가 화면이 아니라 **내용**만큼이다. 스냅이 그 시작점마다 붙잡으니
+     한 번 밀 때 반 화면쯤만 가고 멈춘다 — 그게 「짧게 짧게」다.
+     관성까지 끊기니 `IntersectionObserver` 가 애니메이션을 돌릴 틈도 없다.
 
-  🔴 **`proximity` 다. `mandatory` 가 아니다.** 뷰포트보다 큰 구역이 있다
-     (`.demo-step` 은 `min-height:64vh` · `section` 은 위아래 116px 여백).
-     `mandatory` 면 그 안쪽을 읽으려고 멈출 수가 없어서, 긴 글의 가운데가
-     **손가락을 떼는 순간 튕겨 나간다.**
+  🔴 **데스크톱과 같아 보이게 하려고 CSS 스냅을 쓰면 안 된다.**
+     데스크톱은 아래 스크립트가 **한 번에 한 구역씩, 780ms 로 부드럽게** 옮긴다.
+     CSS 스냅은 손가락을 뗀 뒤 **즉시 당긴다** — 같은 지점을 쓰더라도 느낌이 반대다.
+     흉내 내려다 둘 다 아닌 것이 됐다.
 
-  🔴 헤더 자리는 위 `scroll-padding-top` 이 이미 맡는다 — 스냅도 그 값을 쓴다.
-     따로 `scroll-margin` 을 주면 이중으로 밀린다.
+  🔴 그래서 폰은 **그냥 스크롤**한다. 애니메이션은 스냅이 아니라
+     `IntersectionObserver` 가 돌리므로, 지나가기만 하면 그대로 재생된다.
+     폰에서 자연스러운 것은 원래 자유 스크롤이다.
 */
-@media (hover:none) and (pointer:coarse){
-  html{scroll-snap-type:y proximity}
-  [data-snap]{scroll-snap-align:start}
 
-  /*
-    🔴 **데모 단계는 붙잡지 않는다** (2026-09-02 사용자 지적 — 「짧게짧게만
-       내려가고 움직이는 것도 없다」).
-
-       이 셋은 «지나가면서» 폰 목업을 움직이는 자리다. 모바일에서는
-       각각 `min-height:100vh` 에 `padding-top:500px` 이라, 스냅이 시작점을
-       붙잡으면 **글은 화면 밖에 있고 지나갈 수도 없다.**
-       애니메이션은 이 구간을 «통과하는 스크롤»이 돌린다 —
-       `IntersectionObserver` 가 화면 중간 띠에서 단계를 바꾼다.
-
-       그래서 붙잡는 것은 **큰 구역만**이다. 데모 안에서는 자유롭게 흐른다.
-  */
-  .demo-step{scroll-snap-align:none}
-}
 body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);
      line-height:1.65;-webkit-font-smoothing:antialiased;word-break:keep-all}
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
