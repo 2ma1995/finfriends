@@ -135,6 +135,7 @@ npm run dev
 | --- | --- |
 | 고친 화면이 옛것으로 보인다 | `pull` 안 함 · `.next` 가 낡음 |
 | `Cannot read properties of undefined` | `db:generate` 안 함 (스키마가 바뀌었다) |
+| `'xxx' does not exist in type 'XxxWhereInput'` | 같은 원인인데 **타입 오류로** 난다. 스키마가 바뀐 커밋을 받으면 `npm run db:generate` |
 | 지운 라우트가 200 을 준다 | 그 워크트리에 아직 파일이 있다 |
 | 파일에 없는 줄 번호에서 오류가 난다 | 서버가 리베이스 전 코드를 물고 있다 |
 | **로그인해도 로그인 화면으로 돌아온다** | 🔴 **DB 컨테이너가 내려갔다.** `docker ps -a \| grep pg` 로 확인 |
