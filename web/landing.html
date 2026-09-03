@@ -306,8 +306,61 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
    border-color .3s ease,box-shadow .3s ease}
 .four.seq-cards .f{opacity:0;transform:translateX(var(--shift,0px)) translateY(16px)}
 .four.seq-cards .f.in{opacity:1;transform:translateX(var(--shift,0px))}
-.four .f.hl{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
-   transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
+/*
+  🔴 **`.hl` 은 「지금 어느 칸인지」만 말한다. 들어올리지 않는다**
+     (2026-09-03 사용자 요청 — 「4번 계속 올려져 있는 상태로 되어 있게 하지 말고」).
+
+     한동안 `.hl` 하나가 **두 일을 겸했다** — 초록 표시와 들어올림.
+     마지막 칸의 표시는 남겨 둬야 하는데(옆으로 밀 때의 기준) 들어올림까지
+     같이 남아서 **네 번째 칸이 계속 떠 있었다.**
+
+     들어올림은 아래 `.rise` 로 옮겼다. 잠깐 붙고 떨어진다.
+*/
+.four .f.hl{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10)}
+
+/*
+  🔴 **처음 들어올 때 한 칸씩 올라갔다 내려온다.** 잠깐만 붙는 클래스다 —
+     남겨 두면 그 칸이 계속 떠 있고, 그게 방금 고친 문제였다.
+     내려오는 것도 위 `transform .45s` 가 만든다.
+*/
+.four .f.rise{transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
+
+/*
+  🔴 **칸을 옮겨 다닐 때 초록 선이 «따라 움직이게» 한다** (2026-09-03 사용자 요청).
+
+     hover 에는 선색 규칙이 **아예 없었다.** 초록 선은 스크롤로 붙는 `.hl` 뿐이라,
+     마우스로 훑으면 살짝 떠오르기만 하고 **선은 그대로**였다.
+
+  🔴 위 `.hl` 과 **같은 모양**으로 맞춘다. 강조가 스크롤일 때와 마우스일 때
+     달라 보이면 같은 화면에서 두 가지 언어를 쓰는 셈이다.
+
+  🔴 **`--shift` 를 반드시 실어 준다.** 원래 있던 `.f:hover`(위쪽)는 그것을 안 실어서,
+     띠가 밀린 상태에서 hover 하면 칸이 제자리로 튕겨 돌아갔다 —
+     그래서 이 구역에서는 그 규칙이 아예 안 먹고 있었다(뒤 규칙이 덮는다).
+
+  🔴 「이동」은 위 `.four .f` 의 `border-color .3s ease` 가 만든다.
+     떠나는 칸의 초록이 옅어지는 동안 들어오는 칸이 짙어져서, 선이 **건너가는 것처럼** 보인다.
+     따로 움직이는 조각을 두지 않는다 — 칸 사이 간격을 지나갈 것이 없다.
+*/
+@media (hover:hover){
+  /*
+    🔴 **마우스가 띠 안에 있으면 초록은 「마우스가 있는 칸」 것이다.**
+
+       `.hl` 은 「지금 어느 칸인지」를 말하는 표시라(옆으로 밀 때의 기준)
+       가만히 두면 마지막 칸에 계속 붙어 있다. 그 상태에서 hover 를 더하면
+       **초록이 둘**이 되어 어느 것이 지금인지 사라진다 — 사용자가
+       「불리기에 계속 붙어 있다」고 본 것이 이것이다.
+
+       그래서 띠에 마우스가 있는 동안은 «현재 칸 표시가 잠시 물러난다».
+       마우스가 띠를 벗어나면 원래 칸으로 초록이 돌아온다 —
+       위 `border-color .3s ease` 가 그 왕복도 부드럽게 만든다.
+  */
+  .four:hover .f.hl:not(:hover){border-color:var(--line);box-shadow:none;
+     transform:translateX(var(--shift,0px))}
+
+  .four .f:hover{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
+     transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
+}
 
 .f .soon-t{display:inline-block;margin-top:8px;font-size:.68rem;color:var(--clay);
    background:var(--clay-bg);border:1px solid #E5CDB8;border-radius:99px;padding:2px 9px}
@@ -317,10 +370,34 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
   🔴 `button` 이라 글꼴이 상속되지 않는다 — `font:inherit` 가 필요하다.
 */
 .cta.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);
-  box-shadow:none;font:inherit;font-weight:800;cursor:pointer;margin-left:8px}
+  box-shadow:none;cursor:pointer;margin-left:8px}
+
+/*
+  🔴 **`button` 은 글꼴을 물려받지 않는다.** 그래서 `<a class="cta">` 와
+     `<button class="cta">` 가 **다른 글꼴로** 그려진다 — 초대 구역의
+     「아이 화면 열기」가 그랬다.
+
+  🔴 **`font:inherit` 를 쓰지 않는다.** 단축이라 **글자 크기까지** 되돌려서
+     `.cta` 의 `font-size` 를 덮는다. 물려받을 것은 «글꼴»뿐이다.
+
+  🔴 **`font-size`·`font-weight` 도 물려받게 하면 안 된다.** `button.cta` 는
+     `.cta` 보다 특이도가 높아서(요소+클래스) `.cta` 가 정한 크기를 «되돌린다» —
+     `.final` 밖의 버튼이 본문 크기로 커진다. `font-family` 하나만 물려받는다.
+*/
+button.cta{font-family:inherit}
 .cta.ghost:hover{border-color:var(--green);color:var(--green-d)}
 @media (max-width:620px){
-  /* 좁은 폰에서는 옆에 두면 밀린다 — 아래로 내리고 폭을 맞춘다 */
+  /*
+    🔴 **좁은 폰에서는 두 버튼을 같은 크기로 둔다** (2026-09-03 사용자 요청).
+
+       `.cta` 는 `inline-flex` 라 **글자 폭만큼** 넓어지는데 보조 버튼은
+       `width:100%` 였다. 그래서 「무료로 시작하기」는 좁고
+       「초대코드 입력」은 화면 폭이라 나란히 놓으면 어긋나 보였다.
+
+       마지막 두 구역(`.final`)에서만 둘 다 폭을 채운다 —
+       머리말의 작은 가입 버튼(`.cta.sm`)은 그대로 둔다.
+  */
+  .final .cta{display:block;width:100%;margin-left:auto;margin-right:auto}
   .cta.ghost{display:block;width:100%;margin:10px auto 0}
 }
 
@@ -1470,7 +1547,7 @@ footer a{color:var(--ink-2)}
 
   const run = () => {
     clear();
-    cards.forEach((card) => card.classList.remove('in', 'hl'));
+    cards.forEach((card) => card.classList.remove('in', 'hl', 'rise'));
 
     // 🔴 사용자 요청으로 늦췄다 — 340ms 는 읽기 전에 다음 칸으로 넘어갔다
     const RISE = 700;    // 한 칸이 올라오고 다음 칸까지의 간격
@@ -1511,15 +1588,34 @@ footer a{color:var(--ink-2)}
 
     goTo(0);
 
+    /**
+     * 🔴 **한 칸씩 올라갔다 내려온다** (사용자 요청).
+     *    `.rise` 를 붙였다가 떼는 것이 「올라갔다 내려옴」이다 —
+     *    안 떼면 그 칸이 계속 떠 있고, 그게 네 번째 칸에서 보이던 문제였다.
+     *
+     * 🔴 `DROP` 은 `RISE` 보다 짧다. 다음 칸이 올라오기 전에 내려와야
+     *    「하나씩」으로 읽힌다 — 같이 떠 있으면 그냥 다 떠 있는 것이다.
+     */
+    const DROP = 460;
+    const liftOnce = (card) => {
+      card.classList.add('rise');
+      timers.push(setTimeout(() => card.classList.remove('rise'), DROP));
+    };
+
+    liftOnce(cards[0]);
     cards.forEach((card, index) => {
       if (index === 0) return;
-      timers.push(setTimeout(() => goTo(index), index * RISE));
+      timers.push(setTimeout(() => { goTo(index); liftOnce(card); }, index * RISE));
     });
 
     /*
-      🔴 **마지막 강조는 놓지 않는다.** 예전엔 놓았는데, 손으로 앞뒤로 넘길 수 있게
-         되면서 강조가 **「지금 어느 칸인지」를 말해 주는 표시**가 됐다.
+      🔴 **마지막 «표시»는 놓지 않는다.** 손으로 앞뒤로 넘길 수 있게 되면서
+         초록이 **「지금 어느 칸인지」를 말해 주는 표시**가 됐다 —
          꺼 버리면 옆으로 밀 때 기준이 사라진다.
+
+      🔴 **다만 «들어올림»은 놓는다.** 한동안 `.hl` 이 둘을 겸해서
+         네 번째 칸이 계속 떠 있었다 (사용자 지적). 들어올림은 `.rise` 가 맡고
+         `DROP` 뒤에 스스로 떨어진다.
     */
 
     /**
