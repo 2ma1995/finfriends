@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
-import { DEVICE_COOKIE } from "@/lib/session/device-session";
+import { DEVICE_COOKIE, verifyChildAccess } from "@/lib/session/device-session";
 import { MODE_COOKIE } from "@/lib/session/device-mode";
 import { consumeInvite } from "@/lib/session/child-invite";
 import { GUARDIAN_COOKIE, closeSession } from "@/lib/session/guardian-session";
@@ -47,6 +47,26 @@ export async function GET(req: NextRequest) {
   url.search = "";
 
   if (!r.ok) {
+    /**
+     * 🔴 **이미 쓰인 링크여도, 그게 «이 기기»가 쓴 것이면 그냥 들여보낸다** (D78).
+     *
+     *    링크를 두 번 두드리는 일은 흔하다 — 새로고침, 뒤로 가기, 그리고
+     *    **브라우저가 주소를 미리 불러오는 것**(크롬 「페이지 미리 로드」).
+     *    미리 불러오기가 먼저 소진해 버리면, 정작 사람이 누른 진짜 이동은
+     *    「이미 연결된 링크예요」를 만난다 — 방금 «자기가» 등록해 놓고 남의 것이라고
+     *    듣는 셈이다. 실제로 그렇게 제보됐다.
+     *
+     * 🔴 **아무나 들여보내는 게 아니다.** 이 기기가 이미 «그 아이의» 살아 있는
+     *    기기 토큰을 갖고 있을 때만이다 — 새 권한을 주는 게 아니라
+     *    이미 가진 것을 확인해 주는 것이다.
+     */
+    if (r.reason === "USED") {
+      const held = await verifyChildAccess(req.cookies.get(DEVICE_COOKIE)?.value);
+      if (held.ok && held.childId === r.childId) {
+        url.pathname = "/child/home";
+        return NextResponse.redirect(url);
+      }
+    }
     url.pathname = "/child/locked";
     url.searchParams.set("reason", r.reason);
     return NextResponse.redirect(url);

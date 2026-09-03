@@ -56,7 +56,9 @@ export async function revokeInvites(guardianId: string) {
 
 export type ConsumeResult =
   | { ok: true; guardianId: string; childId: string; token: string; expiresAt: Date }
-  | { ok: false; reason: "NOT_FOUND" | "USED" | "EXPIRED" | "CONSENT_REQUIRED" };
+  /** 🔴 이미 쓰인 링크 — 그 링크가 «어느 아이» 것이었는지는 알려준다 (D78) */
+  | { ok: false; reason: "USED"; childId: string }
+  | { ok: false; reason: "NOT_FOUND" | "EXPIRED" | "CONSENT_REQUIRED" };
 
 /**
  * 초대 코드를 기기 토큰으로 교환한다 — 아이 기기에서 링크를 열 때 부른다.
@@ -78,7 +80,7 @@ export async function consumeInvite(token: string | undefined): Promise<ConsumeR
     select: { id: true, guardianId: true, childId: true, expiresAt: true, usedAt: true },
   });
   if (!row) return { ok: false, reason: "NOT_FOUND" };
-  if (row.usedAt) return { ok: false, reason: "USED" };
+  if (row.usedAt) return { ok: false, reason: "USED", childId: row.childId };
   if (row.expiresAt < new Date()) return { ok: false, reason: "EXPIRED" };
 
   const guardian = await prisma.guardianAccount.findUnique({
@@ -92,7 +94,7 @@ export async function consumeInvite(token: string | undefined): Promise<ConsumeR
     where: { id: row.id, usedAt: null, expiresAt: { gt: new Date() } },
     data: { usedAt: new Date() },
   });
-  if (won.count !== 1) return { ok: false, reason: "USED" };
+  if (won.count !== 1) return { ok: false, reason: "USED", childId: row.childId };
 
   const { token: deviceToken, expiresAt } = await issueDeviceToken(row.guardianId, row.childId);
   return { ok: true, guardianId: row.guardianId, childId: row.childId, token: deviceToken, expiresAt };
