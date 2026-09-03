@@ -88,7 +88,9 @@ export default async function ChildPlanListPage({
                   <span className="text-cap text-ink-mute">{recordTitle}</span>
 
                   <div className="flex gap-1.5">
-                    <label className="flex-1">
+                    {/* 🔴 `min-w-0` — 라벨이 자기 최소 폭(안의 숫자칸) 아래로 줄지 않으면
+                           옆의 `shrink-0` 버튼이 화면 밖으로 밀린다. PIN 버튼과 같은 모양이다 */}
+                    <label className="min-w-0 flex-1">
                       <span className="sr-only">{amountLabel}</span>
                       {/* 🔴 D66 — `recordActual` 이 범위 밖을 `BAD_AMOUNT` 로 거절하고
                              「0원부터 1,000,000원까지 적을 수 있어요.」가 이 화면에 뜬다 */}
