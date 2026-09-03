@@ -366,6 +366,31 @@ const authSrc = code("app/actions/auth.ts");
     bad.length ? `${bad.length}곳 — ${bad.slice(0, 4).join(" · ")}` : "안 줄면 옆 버튼이 화면 밖으로 나간다");
 }
 
+// ── 알림 벨 (D75) ──
+
+/**
+ * 🔴 **벨은 레이아웃에 있어야 한다.** 화면마다 붙이면 새 화면에서 반드시 빠뜨린다 —
+ *    한동안 안 읽은 알림을 **성장 나무에서만** 볼 수 있었다(`D63`).
+ *    통장·소비·숲에 있는 부모는 알림이 온 줄 몰랐다.
+ */
+{
+  const layout = code("app/parent/layout.tsx");
+  check("🔴 알림 벨이 부모 «레이아웃»에 있다", /<AlertBell/.test(layout),
+    "화면마다 붙이면 새 화면에서 빠뜨린다");
+  check("  세는 것도 레이아웃에서 한다", /countUnread\(/.test(layout),
+    "화면마다 세면 화면마다 빠뜨릴 수 있다");
+  check("  로그인 전에는 안 그린다", /guardian \? \(\s*<AlertBell/.test(layout),
+    "세션이 없으면 셀 대상도 없다");
+
+  const bell = code("components/parent/AlertBell.tsx");
+  check("🔴 0이면 숫자를 안 그린다", /unread > 0 \? \(/.test(bell),
+    "빈 배지를 늘 띄우면 아무도 안 본다");
+  check("  스크롤해도 붙어 있다", /sticky top-0/.test(bell),
+    "밀려 올라가면 긴 화면 아래쪽에서 못 본다");
+  check("  화면 읽는 사람에게 이름이 있다", /aria-label=\{label\}/.test(bell),
+    "0일 때도 그것이 무엇인지 알아야 한다");
+}
+
 // ── 「언제」 (D59) ──
 
 /**
