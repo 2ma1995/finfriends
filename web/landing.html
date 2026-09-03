@@ -309,6 +309,28 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
 .four .f.hl{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
    transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
 
+/*
+  🔴 **칸을 옮겨 다닐 때 초록 선이 «따라 움직이게» 한다** (2026-09-03 사용자 요청).
+
+     hover 에는 선색 규칙이 **아예 없었다.** 초록 선은 스크롤로 붙는 `.hl` 뿐이라,
+     마우스로 훑으면 살짝 떠오르기만 하고 **선은 그대로**였다.
+
+  🔴 위 `.hl` 과 **같은 모양**으로 맞춘다. 강조가 스크롤일 때와 마우스일 때
+     달라 보이면 같은 화면에서 두 가지 언어를 쓰는 셈이다.
+
+  🔴 **`--shift` 를 반드시 실어 준다.** 원래 있던 `.f:hover`(위쪽)는 그것을 안 실어서,
+     띠가 밀린 상태에서 hover 하면 칸이 제자리로 튕겨 돌아갔다 —
+     그래서 이 구역에서는 그 규칙이 아예 안 먹고 있었다(뒤 규칙이 덮는다).
+
+  🔴 「이동」은 위 `.four .f` 의 `border-color .3s ease` 가 만든다.
+     떠나는 칸의 초록이 옅어지는 동안 들어오는 칸이 짙어져서, 선이 **건너가는 것처럼** 보인다.
+     따로 움직이는 조각을 두지 않는다 — 칸 사이 간격을 지나갈 것이 없다.
+*/
+@media (hover:hover){
+  .four .f:hover{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
+     transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
+}
+
 .f .soon-t{display:inline-block;margin-top:8px;font-size:.68rem;color:var(--clay);
    background:var(--clay-bg);border:1px solid #E5CDB8;border-radius:99px;padding:2px 9px}
 /*
