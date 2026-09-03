@@ -92,7 +92,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
 .hero-copy{max-width:850px;margin:0 auto}
 .hero h1{font-family:var(--serif);font-size:clamp(2.75rem,7.1vw,5.75rem);line-height:1.02;
    margin:0 0 28px;font-weight:900;letter-spacing:-.065em;text-wrap:balance}
-.hero h1 em{font-style:normal;color:var(--green)}
+/*
+  🔴 제목 안의 부분 강조는 `<em>` 하나로 통일한다.
+     `<b>` 는 이미 `.strike b`(질문 강조)가 쓰고 있어서 제목에도 쓰면 두 뜻이 섞인다.
+     `em` 은 뜻이 「강조」라 맞고, 기울임만 끄면 된다.
+     🔴 색은 있는 토큰(`--green`)을 쓴다. 제목마다 새 색을 만들지 않는다.
+*/
+.hero h1 em,h2 em{font-style:normal;color:var(--green)}
 .hero .sub{font-size:clamp(1rem,2vw,1.22rem);color:var(--ink-2);margin:0 auto 30px;max-width:590px;line-height:1.7}
 .hero .row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
 .free{font-size:.83rem;color:var(--green-d);background:var(--green-bg);
@@ -382,7 +388,7 @@ footer a{color:var(--ink-2)}
 <section class="screen-intro" id="screens" data-snap aria-labelledby="screen-title">
   <div class="wrap center">
     <p class="eyebrow">세 가지 핵심 화면</p>
-    <h2 id="screen-title">배움보다 행동을<br>먼저 보여줍니다</h2>
+    <h2 id="screen-title">배움보다 <em>행동</em>을<br>먼저 보여줍니다</h2>
     <p class="lead">아이의 실천을 세 화면에 나눠 담았습니다.</p>
 
     <div class="scroll-demo" data-scroll-demo>
@@ -485,7 +491,7 @@ footer a{color:var(--ink-2)}
   <div class="wrap split">
     <div>
       <span class="badge">다른 점 하나</span>
-      <h2>배운 것을 행동으로 옮겨야<br>나무가 자랍니다</h2>
+      <h2><em>배운 것을 행동으로 옮겨야</em><br>나무가 자랍니다</h2>
       <p class="lead">나무가 다음 단계로 가려면 <b>학습 · 퀴즈 · 그리고 행동 실천</b>이 모두 필요합니다.</p>
       <ul class="pts">
         <li>그래서 <b>나무가 자랐다 = 배운 걸 실제로 했다</b> 가 성립합니다</li>
@@ -520,7 +526,7 @@ footer a{color:var(--ink-2)}
   <div class="wrap split rev">
     <div>
       <span class="badge">다른 점 둘</span>
-      <h2>쓰기 전에 적고,<br>쓴 뒤에 맞춰봅니다</h2>
+      <h2>쓰기 전에 적고,<br><em>쓴 뒤에 맞춰봅니다</em></h2>
       <p class="lead">아이에게 <b>소비 계획을 미리 세우게 하는 것</b>입니다.
       </br>어디서 · 무슨 가게에서 · 얼마까지 살지 적어두면, 결제 뒤에 그 카드와 실제를 겹쳐 보여줍니다.</p>
       <div class="branch">
@@ -570,13 +576,15 @@ footer a{color:var(--ink-2)}
 <section id="learning" data-snap>
   <div class="wrap center">
     <p class="eyebrow">배우는 것</p>
-    <h2>금융 활동의 흐름을<br>네 가지로 배웁니다</h2>
+    <h2>금융 활동의 흐름을<br><em>네 가지로 배웁니다</em></h2>
     <p class="lead">배움이 실천으로 이어지는 네 개의 카테고리를 나눴습니다.</p>
     <div class="four">
       <div class="f"><div class="ic">💰</div><h4>벌기</h4><p>미션으로 용돈 벌기</p></div>
       <div class="f"><div class="ic">🛒</div><h4>잘 쓰기</h4><p>소비 계획 세우기</p></div>
       <div class="f"><div class="ic">🐷</div><h4>모으기</h4><p>위시리스트 저금하기</p></div>
-      <div class="f soon"><div class="ic">🌱</div><h4>불리기</h4><p>예적금 가입하기</p></div>
+      <!-- 🔴 「곧 열려요」 딱지와 `soon`(흐리게)을 함께 뺐다 (사용자 요청).
+             딱지만 빼고 흐린 것을 두면 «왜 이 칸만 연한지» 설명이 사라진다 -->
+      <div class="f"><div class="ic">🌱</div><h4>불리기</h4><p>예적금 가입하기</p></div>
     </div>
     <p class="flow">💰 돈이 생기고 → 🛒 잘 쓰면 → 🐷 모이고 → 🌱 저절로 늘어나요</p>
   </div>
