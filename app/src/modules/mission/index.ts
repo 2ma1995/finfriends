@@ -635,8 +635,15 @@ export const REMIND_HOURS = 24;
  *
  * @param scope 아이 하나(`childId`) 또는 보호자 하나(`guardianId`)로 좁힌다
  */
+/**
+ * 🔴 **범위를 안 주면 «전부»다** (어긋남 대장 D77).
+ *    화면이 부를 때는 그 집만 보면 되지만, 정해진 시각에 도는 배치는
+ *    **아직 아무도 화면을 안 연 집**을 훑어야 한다 — 그게 이 기능의 요점이다.
+ */
+export type MissionScope = { childId: string } | { guardianId: string } | Record<string, never>;
+
 export async function autoCompleteStaleMissions(
-  scope: { childId: string } | { guardianId: string },
+  scope: MissionScope = {},
 ): Promise<number> {
   const cutoff = new Date(Date.now() - EXPIRE_HOURS * 3600e3);
   const stale = await prisma.mission.findMany({
@@ -747,8 +754,9 @@ export async function autoCompleteStaleMissions(
  * 🔴 **인앱 알림함이다.** 웹푸시·메일·알림톡이 없어 앱 밖으로 내보낼 방법이 없다 —
  *    부모가 앱을 열어야 본다. 발송 채널이 붙으면 보낼 대상이 그대로 이 표가 된다.
  */
+/** 🔴 범위를 안 주면 «전부»다 — 배치가 그렇게 부른다 (D77) */
 export async function remindStaleMissions(
-  scope: { childId: string } | { guardianId: string },
+  scope: MissionScope = {},
 ): Promise<number> {
   const cutoff = new Date(Date.now() - REMIND_HOURS * 3600e3);
   const late = await prisma.mission.findMany({

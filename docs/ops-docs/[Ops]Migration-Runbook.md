@@ -65,3 +65,54 @@ select activity.ensure_event_partitions(4);   -- 4주 앞까지 확보. 새로 �
 - **Supabase 프로젝트 연결** — 계정이 필요하다. `.env.example` 를 채우면 된다
 - `pg_cron` 등록 — `INF-005` 범위
 - 시드 데이터 — `DAT-003`(학습 콘텐츠 · 회고 문장 풀) · `DAT-004`(업종 사전)
+
+## 미션 리마인드 배치 — 사람이 한 번 해야 하는 것 (D77)
+
+마이그레이션 47 이 `pg_cron` 작업을 만들지만, **주소와 열쇠는 안 들어 있다.**
+마이그레이션은 저장소에 남으므로 열쇠를 적으면 그 순간 공개된다.
+설정이 없으면 **아무 일도 안 한다** — 넣는 순간부터 6시간마다 돈다.
+
+### ① 열쇠를 정한다
+
+아무 긴 무작위 문자열이면 된다. 예:
+
+```bash
+openssl rand -base64 32
+```
+
+### ② Vercel 에 넣는다
+
+`Settings → Environment Variables`
+
+```
+CRON_SECRET = <①에서 만든 값>        Production · Preview 둘 다
+```
+
+🔴 **없으면 그 문은 503 으로 닫힌다.** 열어 두는 쪽으로 실패하지 않는다 —
+설정을 빠뜨린 배포가 그대로 뚫리는 것이 제일 나쁘다.
+
+### ③ Supabase SQL Editor 에서 한 번 실행
+
+```sql
+insert into activity.cron_setting (key, value) values
+  ('app_url',     'https://<우리 도메인>'),   -- 끝에 / 를 붙이지 않는다
+  ('cron_secret', '<①에서 만든 값>')
+on conflict (key) do update set value = excluded.value;
+```
+
+### ④ 도는지 본다
+
+```sql
+select jobname, schedule, active from cron.job;
+select status, return_message, start_time
+  from cron.job_run_details order by start_time desc limit 5;
+```
+
+손으로 한 번 두드려 볼 수도 있다:
+
+```sql
+select activity.poke_mission_cron();
+```
+
+🔴 **도메인이 바뀌면 `app_url` 도 바꾼다.** 안 바꾸면 옛 주소를 계속 두드리는데
+   **조용히 실패한다** — `cron.job_run_details` 를 봐야 보인다.

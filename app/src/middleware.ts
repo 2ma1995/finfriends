@@ -76,5 +76,10 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // 정적 파일·이미지·모델은 통과시킨다
-  matcher: ["/((?!_next/static|_next/image|models|thumbs|favicon.ico).*)"],
+  /**
+   * 🔴 **`api/cron` 은 미들웨어를 태우지 않는다** (D77). 배치가 두드리는 문이라
+   *    쿠키가 없다 — 아동 모드 판정을 태울 이유가 없고, 태우면 «쿠키 없음»으로
+   *    랜딩 rewrite 에 걸릴 여지가 생긴다. 그 문의 인가는 그 안의 열쇠가 한다.
+   */
+  matcher: ["/((?!_next/static|_next/image|api/cron|models|thumbs|favicon.ico).*)"],
 };
