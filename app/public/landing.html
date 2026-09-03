@@ -517,7 +517,8 @@ footer a{color:var(--ink-2)}
   /* 🔴 데스크톱과 같은 356px 를 목표로 하되 화면을 넘지 않게 */
   .demo-phone{width:min(360px,94vw)}
   .demo-viewport{height:var(--demo-h)}
-  .demo-panel{padding:8px 14px 18px}
+  /* 🔴 목업 안 아래 여백을 반으로 (사용자 요청) — 내용이 그만큼 더 들어간다 */
+  .demo-panel{padding:8px 14px 9px}
   .demo-step{
     min-height:100vh;            /* 🔴 `svh` 를 모르는 구형 브라우저용. 아래가 이긴다 */
     min-height:100svh;
@@ -534,7 +535,18 @@ footer a{color:var(--ink-2)}
            글 시작(화면 기준)   = `--hdr + padding-top`
          둘의 차이가 `--demo-gap` 이 되게 푼 것이 아래 식이다.
     */
-    padding:calc(var(--demo-top) + 16px + var(--demo-h) + var(--demo-gap) - var(--hdr)) 22px 12px;
+    /*
+      🔴 **여백을 손으로 계산하지 않는다** (2026-09-03 사용자 지적 — 「01~03 글이
+         시연 화면에 겹쳐서 안 보여」).
+
+         계산식이 «화면 높이(--demo-h)»만 셌는데, 목업 틀에는 **상태바(9:41 ▮▮▮)가
+         얹혀 있어** 실제 높이가 28px 더 컸다. 그만큼 글이 목업 밑으로 들어갔다.
+         틀 안에 무엇이 더 붙으면 또 어긋난다 — 픽셀을 적는 한 계속 어긋난다.
+
+         그래서 스크립트가 **실제 목업 높이를 재서** `--demo-pad` 에 넣는다.
+         아래 값은 스크립트가 못 돌 때 쓰는 대비값이라 넉넉하게 잡는다.
+    */
+    padding:var(--demo-pad, calc(var(--demo-top) + 48px + var(--demo-h) + var(--demo-gap) - var(--hdr))) 22px 12px;
     background:transparent;
   }
 
@@ -1372,6 +1384,50 @@ footer a{color:var(--ink-2)}
 })();
 </script>
 
+
+<!--
+  시연 목업 아래 여백 — **재서** 넣는다.
+
+  🔴 CSS 로 계산하면 틀 안에 무엇이 붙을 때마다 어긋난다. 실제로 상태바 28px 을
+     빠뜨려 글이 목업 밑으로 들어갔다. 여기서 한 번 재고, 화면이 바뀌면 다시 잰다.
+-->
+<script>
+(() => {
+  const wrap = document.querySelector('.demo-phone-wrap');
+  const step = document.querySelector('[data-step]');
+  if (!wrap || !step) return;
+
+  const root = document.documentElement;
+  const header = document.querySelector('header');
+
+  const sync = () => {
+    /**
+     * 🔴 **쓰는 배치일 때만 넣는다.** 넓은 화면에서는 목업이 옆에 서고 `.demo-step` 이
+     *    이 값을 안 쓴다 — 그런데도 넣어 두면, 나중에 보는 사람이 「632px 이 왜 여기
+     *    있지」로 시간을 쓴다. 쓰지 않는 값은 남기지 않는다.
+     *
+     *    조건을 `position:sticky` 로 보면 안 된다 — 넓은 화면에서도 sticky 다.
+     *    이 값을 쓰는 CSS 와 **같은 조건**을 본다.
+     */
+    if (!window.matchMedia('(max-width:880px)').matches) {
+      root.style.removeProperty('--demo-pad');
+      return;
+    }
+    const stickyTop = parseFloat(window.getComputedStyle(wrap).top) || 0;
+    const wrapHeight = wrap.getBoundingClientRect().height;
+    const headerHeight = header ? header.getBoundingClientRect().height : 0;
+    const gap = parseFloat(window.getComputedStyle(root).getPropertyValue('--demo-gap')) || 8;
+    const pad = Math.max(0, Math.round(stickyTop + wrapHeight + gap - headerHeight));
+    root.style.setProperty('--demo-pad', `${pad}px`);
+  };
+
+  sync();
+  // 🔴 글꼴이 늦게 오면 높이가 바뀐다. 창을 돌려도 바뀐다
+  window.addEventListener('load', sync);
+  window.addEventListener('resize', sync);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(sync);
+})();
+</script>
 
 <!--
   마지막 칸 — 두 면 뒤집기.
