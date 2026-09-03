@@ -6,7 +6,7 @@ import { findChild } from "@/modules/consent";
 import { getGuardianEmail, getMyPage } from "@/modules/account";
 import { advanceMockCardAction, resetMockCardAction } from "@/app/actions/parent-account";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { mockBanner, whileWaiting } from "./card.fixture";
+import { mockBanner, startLabel, whileWaiting } from "./card.fixture";
 
 // 🔴 시연용 카드 신청 과정 — 어긋남 대장 D20. 실제 발급은 PTN-001(제휴사)
 export const metadata = { title: "카드 신청 · 핀프렌즈" };
@@ -131,6 +131,29 @@ export default async function ParentCardPage() {
             <p className="mt-1 text-sub leading-relaxed text-ink-soft">{whileWaiting.body}</p>
           </Card>
         </div>
+      ) : null}
+
+      {/*
+        🔴 **끝내고 갈 곳이 없었다** (2026-09-03 사용자 지적).
+
+           마지막 단계까지 누르면 「카드를 쓸 수 있어요」 문구와
+           「처음부터 다시」만 남았다. 돌아가기는 «마이페이지»로 가므로
+           온보딩에서 온 부모는 **자기가 6단계를 끝냈다는 것을 볼 자리가 없다.**
+
+        🔴 **끝났을 때만 보인다.** 중간에는 위에 「다음」 버튼이 있어서 길이 있다.
+           둘을 같이 두면 어느 쪽이 본 길인지 사라진다.
+
+        🔴 **시작하기(온보딩 목록)로 보낸다.** 나무로 곧장 보내지 않는다 —
+           6단계에 ✓ 가 찍힌 것을 «보고» 나가야 「다 끝났구나」를 안다.
+           그 화면이 「모두 끝났어요」와 「성장 나무 보기」를 이어서 말해 준다.
+      */}
+      {nextStep === null ? (
+        <Link
+          href="/parent/onboarding"
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-card bg-primary text-body font-bold text-white"
+        >
+          {startLabel}
+        </Link>
       ) : null}
 
       {card.status !== null ? (
