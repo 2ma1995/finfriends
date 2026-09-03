@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { notifyOnce } from "@/modules/notification";
 import { grantStar } from "@/modules/star-ledger";
 
 /** 실천이 귀속되는 주기 — 벌기·잘 쓰기·모으기와 같은 달 단위다 (§6.2.1) */
@@ -211,7 +212,7 @@ export async function request(
   const wanted = Number.isFinite(wantedPct) && wantedPct! >= 0
     ? Math.floor(wantedPct!) : null;
 
-  await prisma.savingsPlan.create({
+  const created = await prisma.savingsPlan.create({
     data: {
       childId, guardianId, goal: g, kind,
       amount: total,
@@ -223,6 +224,24 @@ export async function request(
       wantedPct: wanted,
     },
   });
+
+  /**
+   * 🔴 **부모가 안 누르면 아이가 못 나아간다** (어긋남 대장 D75 · 사용자 지적 —
+   *    「아이가 무슨 행동을 했을 때 알림이 왜 안 와?」).
+   *
+   *    예전엔 알림이 «미션»에만 붙어 있었다. 적금 신청은 부모 승인이 있어야
+   *    시작되는데 알릴 길이 없어서, 부모가 우연히 「우리 집 저금」 화면을 열어야
+   *    보였다. 아이는 신청해 놓고 기다리는데 부모는 온 줄도 모르는 상태였다.
+   *
+   * 🔴 **약속 id 로 묶는다.** 같은 신청으로 두 번 알리지 않는다.
+   * 🔴 **금액·아이 이름을 본문에 넣지 않는다.** 잠금화면에 뜨는 글이다.
+   */
+  await notifyOnce(
+    guardianId, "SAVINGS_REQUESTED", created.id,
+    "저금 약속을 신청했어요",
+    "아이가 예금·적금을 신청했어요. 확인하고 받아 주세요.",
+  );
+
   return { ok: true };
 }
 

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Screen, Empty } from "@/components/shared/Screen";
-import { listNotifications, markAllRead } from "@/modules/mission";
+import { listNotifications, markAllRead } from "@/modules/notification";
 import { currentGuardian } from "@/lib/session/guardian-session";
 import Link from "next/link";
 import { countSubscriptions } from "@/lib/push";
@@ -34,17 +34,26 @@ export default async function ParentAlertsPage() {
       ) : (
         <ul className="grid gap-1.5">
           {list.map((n) => (
-            <li
-              key={n.id}
-              className={`rounded-card border px-3 py-2.5 ${
-                n.unread ? "border-primary-l bg-primary-bg" : "border-line bg-surface"
-              }`}
-            >
-              <div className="flex items-baseline justify-between gap-2">
-                <b className="text-sub">{n.title}</b>
-                <span className="shrink-0 text-cap text-ink-mute">{n.whenLabel}</span>
-              </div>
-              <p className="mt-0.5 text-sub leading-relaxed text-ink-soft">{n.body}</p>
+            <li key={n.id}>
+              {/*
+                🔴 **눌러서 갈 곳을 준다** (어긋남 대장 D75 · 사용자 결정).
+                   예전엔 읽을거리로 끝났다 — 「저금 약속을 신청했어요」를 읽고도
+                   어디로 가야 받아 주는지는 부모가 알아서 찾아야 했다.
+                🔴 갈 곳은 `modules/notification` 이 정한다. 여기서 `kind` 를 보고
+                   갈라면, 새 종류를 더할 때 화면도 같이 고쳐야 하는 것을 잊는다.
+              */}
+              <Link
+                href={n.href}
+                className={`block rounded-card border px-3 py-2.5 ${
+                  n.unread ? "border-primary-l bg-primary-bg" : "border-line bg-surface"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <b className="text-sub">{n.title}</b>
+                  <span className="shrink-0 text-cap text-ink-mute">{n.whenLabel}</span>
+                </div>
+                <p className="mt-0.5 text-sub leading-relaxed text-ink-soft">{n.body}</p>
+              </Link>
             </li>
           ))}
         </ul>

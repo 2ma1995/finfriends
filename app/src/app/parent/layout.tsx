@@ -3,7 +3,7 @@ import { ModeFrame } from "@/components/shared/ModeFrame";
 import { ParentTabs } from "@/components/parent/ParentTabs";
 import { AlertBell } from "@/components/parent/AlertBell";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { countUnread } from "@/modules/mission";
+import { countUnread } from "@/modules/notification";
 import { alertsLabel, noAlertsLabel } from "@/app/parent/tree/tree.fixture";
 
 /**

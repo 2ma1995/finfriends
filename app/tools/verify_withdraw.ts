@@ -81,7 +81,7 @@ async function main() {
     prisma.deviceSession.create({ data: { guardianId: g.id, childId: c.id, deviceRef: randomBytes(6).toString("hex"), mode: "CHILD", tokenHash: randomBytes(16).toString("hex"), expiresAt: new Date(Date.now() + 864e5) } }),
     prisma.childInvite.create({ data: { guardianId: g.id, childId: c.id, tokenHash: randomBytes(16).toString("hex"), expiresAt: new Date(Date.now() + 864e5) } }),
     // 🔴 아래 열넷이 전에 없었다 — 그래서 「지워졌다」가 아무 것도 증명하지 않았다
-    prisma.notification.create({ data: { guardianId: g.id, kind: "MISSION_WAITING", missionId: m.id, title: "정리", body: "확인해 주세요" } }),
+    prisma.notification.create({ data: { guardianId: g.id, kind: "MISSION_WAITING", refId: m.id, title: "정리", body: "확인해 주세요" } }),
     prisma.pushSubscription.create({ data: { guardianId: g.id, endpoint: `https://fcm.googleapis.com/fcm/send/bye-${randomBytes(4).toString("hex")}`, p256dh: spki.subarray(spki.length - 65).toString("base64url"), auth: randomBytes(16).toString("base64url") } }),
     prisma.appEvent.create({ data: { id: uuid(), eventType: "TEST", childId: c.id, guardianId: g.id, clientTs: now, idempotencyKey: key(), payload: {} } }),
     prisma.cardTransaction.create({ data: { childId: c.id, amount: 1000, merchant: "문구점", category: "STATIONERY", occurredAt: now } }),

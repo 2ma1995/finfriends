@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/db";
+import { notifyOnce } from "@/modules/notification";
 import { relativeWhen } from "@/lib/when";
-import { sendToGuardian } from "@/lib/push";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
 import { findLesson } from "@/contracts/lessons";
@@ -189,7 +189,7 @@ export async function markDone(childId: string, missionId: string) {
  */
 export async function undoDone(childId: string, missionId: string) {
   await prisma.notification.deleteMany({
-    where: { missionId, kind: "MISSION_WAITING_NEW", readAt: null },
+    where: { refId: missionId, kind: "MISSION_WAITING_NEW", readAt: null },
   });
   const r = await prisma.mission.updateMany({
     where: { id: missionId, childId, state: "PENDING", doneAt: { not: null } },
@@ -219,10 +219,11 @@ export async function listPendingForGuardian(guardianId: string) {
  */
 export async function unseenMissionIds(guardianId: string) {
   const rows = await prisma.notification.findMany({
-    where: { guardianId, kind: "MISSION_WAITING_NEW", readAt: null, missionId: { not: null } },
-    select: { missionId: true },
+    where: { guardianId, kind: "MISSION_WAITING_NEW", readAt: null, refId: { not: null } },
+    select: { refId: true },
   });
-  return new Set(rows.map((r) => r.missionId as string));
+  // 🔴 옛 줄은 `ref_id` 가 비어 있다 — 걸러 낸다 (D75 · 두 칸이 같이 있는 구간)
+  return new Set(rows.map((r) => r.refId as string));
 }
 
 /**
@@ -735,52 +736,10 @@ export async function autoCompleteStaleMissions(
 }
 
 /**
- * 🔴 **같은 일로 두 번 알리지 않는다.** 화면을 열 때마다 판정하므로
- *    막지 않으면 알림이 쌓인다. `(guardianId, kind, missionId)` unique 가 막는다.
+ * 🔴 **알림은 `modules/notification` 이 만든다** (D75). 예전엔 이 파일 안에
+ *    `notifyOnce` 가 숨어 있었는데, 적금처럼 미션이 아닌 일도 알려야 해서 뺐다 —
+ *    저쪽에서 알리려고 미션 모듈을 부르게 두면 저금 코드가 미션에 매인다.
  */
-/**
- * 알림 한 줄 + 폰으로 밀어 보내기 — 어긋남 대장 D51 · D56.
- *
- * 🔴 **여기가 유일한 알림 생성 지점이다.** 세 종류(`MISSION_WAITING_NEW` ·
- *    `MISSION_WAITING` · `MISSION_AUTO_DONE`)가 모두 이 함수를 거치므로
- *    푸시도 여기 한 곳에만 붙인다. 각 호출부에 흩으면 새 알림을 추가할 때 빠뜨린다.
- *
- * 🔴 **표에 줄이 남는 것이 「알렸다」의 정의다.** 푸시는 그것을 폰에 띄우는 수단이다 —
- *    실패해도 던지지 않는다. 반대로 하면 푸시 서버가 잠깐 죽었을 때
- *    미션 승인 흐름 전체가 멈춘다.
- *
- * 🔴 **중복 알림에는 푸시도 안 보낸다.** `P2002` 로 잡히는 경우는 이미 알린 것이다.
- *    그때 푸시를 보내면 부모 폰에 같은 알림이 두 번 뜬다.
- */
-async function notifyOnce(
-  guardianId: string, kind: string, missionId: string | null, title: string, body: string,
-) {
-  try {
-    await prisma.notification.create({ data: { guardianId, kind, missionId, title, body } });
-  } catch (e) {
-    // 이미 알린 것 — 오류가 아니다
-    if ((e as { code?: string }).code !== "P2002") throw e;
-    return;
-  }
-
-  /**
-   * 🔴 **본문에 아이 이름·금액을 넣지 않는다.** 푸시는 잠금화면에 뜬다 —
-   *    폰을 든 사람은 누구나 읽는다. 미션 제목까지가 한계다.
-   *
-   * 🔴 tag 를 미션 단위로 묶는다. 한 미션에 리마인드가 여러 번 가도
-   *    잠금화면에 한 줄만 남는다 — 쌓이면 부모가 알림을 아예 끈다.
-   */
-  try {
-    await sendToGuardian(guardianId, {
-      title,
-      body,
-      url: "/parent/alerts",
-      tag: missionId ? `mission:${missionId}` : `kind:${kind}`,
-    });
-  } catch {
-    // 알림함에는 이미 남았다. 푸시 실패가 흐름을 멈추게 하지 않는다
-  }
-}
 
 /**
  * 24시간 넘게 기다리는 미션을 **한 번씩** 알린다 — `FR-032` 「24h 미승인 → 리마인드 1회」.
@@ -817,36 +776,10 @@ export async function countOverdue(guardianId: string) {
 // 보호자 알림함 — 어긋남 대장 D51
 // ─────────────────────────────────────────────────────────────
 
-export type NotificationView = {
-  readonly id: string;
-  readonly kind: string;
-  readonly title: string;
-  readonly body: string;
-  readonly whenLabel: string;
-  readonly unread: boolean;
-};
-
-/** 안 읽은 알림 수 — 나무 화면이 배지로 보여준다 */
 export async function countUnread(guardianId: string) {
   return prisma.notification.count({ where: { guardianId, readAt: null } });
 }
 
-export async function listNotifications(guardianId: string, take = 30): Promise<NotificationView[]> {
-  const rows = await prisma.notification.findMany({
-    where: { guardianId }, orderBy: { createdAt: "desc" }, take,
-    select: { id: true, kind: true, title: true, body: true, readAt: true, createdAt: true },
-  });
-  return rows.map((r) => ({
-    id: r.id, kind: r.kind, title: r.title, body: r.body,
-    whenLabel: whenLabel(r.createdAt) ?? "",
-    unread: r.readAt === null,
-  }));
-}
-
-/**
- * 🔴 **읽음은 화면을 열 때 찍는다.** 각 줄에 「읽음」 버튼을 두면 아무도 안 누르고
- *    배지가 영영 안 사라진다. 목록을 봤다는 것이 읽었다는 뜻이다.
- */
 export async function markAllRead(guardianId: string) {
   await prisma.notification.updateMany({
     where: { guardianId, readAt: null },

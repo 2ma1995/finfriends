@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { notifyOnce } from "@/modules/notification";
 import { relativeWhen } from "@/lib/when";
 import {
   CATEGORIES, categoryOf,
@@ -117,7 +118,7 @@ export async function createPlanCard(childId: string, input: NewPlanCard) {
   if (!known) throw new Error("모르는 업종이다");
   if (input.limitAmount <= 0) throw new Error("금액은 0보다 커야 한다");
 
-  return prisma.planCard.create({
+  const card = await prisma.planCard.create({
     data: {
       childId,
       whereText: input.where.trim(),
@@ -128,6 +129,42 @@ export async function createPlanCard(childId: string, input: NewPlanCard) {
     },
     select: { id: true },
   });
+
+  /**
+   * 🔴 **첫 장만 알린다** (어긋남 대장 D75 · 사용자 결정).
+   *
+   *    「우리 아이가 계획을 세우기 시작했다」는 부모가 알 값어치가 있다.
+   *    그런데 **매번 알리면 부모가 알림을 아예 끈다** — 그러면 정작 승인이
+   *    필요한 미션·적금 알림도 같이 죽는다. 여기서 아끼는 것이 저기를 살린다.
+   *
+   * 🔴 **아이 id 로 묶는다.** 「이 아이의 첫 계획」이므로 아이당 한 번이다.
+   *    보호자 id 로 묶으면 둘째 아이의 첫 장이 안 간다.
+   *
+   * 🔴 **보호자가 대신 적은 것은 안 알린다.** 자기가 한 일을 자기에게 알리는 셈이다.
+   */
+  if (input.author !== "보호자") await notifyFirstPlan(childId);
+  return card;
+}
+
+/**
+ * 🔴 **「처음인가」를 세는 자리는 여기 하나다.** 호출부에서 세면, 새로 부르는 곳이
+ *    생길 때 그 규칙을 빠뜨린다.
+ *    알림 표의 「한 번만」 장치가 마지막 그물이라, 여기서 새는 것도 결국 한 번만 간다.
+ */
+async function notifyFirstPlan(childId: string) {
+  const count = await prisma.planCard.count({ where: { childId, author: "CHILD" } });
+  if (count !== 1) return;
+
+  const child = await prisma.childAccount.findUnique({
+    where: { id: childId }, select: { guardianId: true },
+  });
+  if (!child) return;
+
+  await notifyOnce(
+    child.guardianId, "FIRST_PLAN", childId,
+    "첫 계획 카드를 적었어요",
+    "아이가 쓰기 전에 계획을 세웠어요. 쓴 뒤에 같이 맞춰 보세요.",
+  );
 }
 
 // ─────────────────────────────────────────────────────────────

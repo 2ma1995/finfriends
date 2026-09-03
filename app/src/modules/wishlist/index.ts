@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/db";
+import { notifyOnce } from "@/modules/notification";
 import { grantStar } from "@/modules/star-ledger";
 import { record as recordAllowance } from "@/modules/allowance";
 
@@ -130,6 +131,18 @@ export async function deposit(childId: string, wishId: string, amount: number): 
     data: { savedAmount: saved, reachedSteps: [...reached, ...newly] },
   });
 
+  /**
+   * 🔴 **첫 저금만 알린다** (어긋남 대장 D75 · 사용자 결정).
+   *
+   *    「우리 아이가 스스로 돈을 떼어 두기 시작했다」는 부모가 알 값어치가 있다.
+   *    매번 알리면 소음이 되고, 소음이 되면 부모가 알림을 끈다 —
+   *    그러면 승인이 필요한 미션·적금 알림까지 같이 죽는다.
+   *
+   * 🔴 **아이 id 로 묶는다.** 「이 아이의 첫 저금」이라 아이당 한 번이다.
+   * 🔴 **원장으로 센다.** 위시리스트 줄로 세면 지웠다 다시 만들 때 또 「처음」이 된다.
+   */
+  await notifyFirstSaving(childId);
+
   for (const m of newly) {
     const now = new Date();
     const credit = await prisma.practiceCredit.create({
@@ -194,4 +207,26 @@ export async function raiseRank(childId: string, wishId: string): Promise<WishWr
 /** 귀속 주기 — 미션과 같은 규칙 */
 function cycleOf(d: Date) {
   return d.getFullYear() * 100 + (d.getMonth() + 1);
+}
+
+/**
+ * 🔴 **「처음인가」를 세는 자리는 여기 하나다.** 호출부에서 세면 새로 부르는 곳이
+ *    생길 때 그 규칙을 빠뜨린다. 알림 표의 「한 번만」이 마지막 그물이다.
+ */
+async function notifyFirstSaving(childId: string) {
+  const count = await prisma.allowanceEntry.count({
+    where: { childId, code: "WISH_SET_ASIDE" },
+  });
+  if (count !== 1) return;
+
+  const child = await prisma.childAccount.findUnique({
+    where: { id: childId }, select: { guardianId: true },
+  });
+  if (!child) return;
+
+  await notifyOnce(
+    child.guardianId, "FIRST_SAVING", childId,
+    "처음으로 돈을 모아 뒀어요",
+    "아이가 갖고 싶은 것을 위해 스스로 돈을 떼어 뒀어요.",
+  );
 }

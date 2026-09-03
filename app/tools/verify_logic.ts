@@ -527,14 +527,26 @@ check("  통장 화면에 즉시 제출 폼이 남지 않았다",
  * 🔴 **알림함이 원본이고 푸시는 사본이다.** 푸시 발송이 알림 생성을 막으면 안 된다 —
  *    푸시 서버가 잠깐 죽었을 때 미션 승인 흐름 전체가 멈춘다.
  */
+/**
+ * 🔴 **알림은 `modules/notification` 이 만든다** (D75). 예전엔 `modules/mission`
+ *    안에 있었는데, 적금처럼 미션이 아닌 일도 알려야 해서 뺐다 —
+ *    저쪽에서 알리려고 미션 모듈을 부르게 두면 저금 코드가 미션에 매인다.
+ */
+const notify = src("modules/notification/index.ts");
 check("🔴 푸시 발송이 알림 생성 뒤에 온다",
-  /prisma\.notification\.create[\s\S]{0,700}?await sendToGuardian/.test(mission),
+  /prisma\.notification\.create[\s\S]{0,900}?await sendToGuardian/.test(notify),
   "먼저 보내면 발송이 실패할 때 알림함에 줄이 안 남는다");
-check("  발송 실패를 삼킨다", /await sendToGuardian\([\s\S]{0,400}?\} catch \{/.test(mission),
+check("  발송 실패를 삼킨다", /await sendToGuardian\([\s\S]{0,400}?\} catch \{/.test(notify),
   "던지면 푸시 서버가 죽었을 때 승인 흐름이 멈춘다");
 check("🔴 이미 알린 것에는 푸시도 안 보낸다",
-  /code !== "P2002"\) throw e;\s*\n\s*return;/.test(mission),
+  /code !== "P2002"\) throw e;\s*\n\s*return;/.test(notify),
   "중복 알림에 푸시를 보내면 부모 폰에 같은 알림이 두 번 뜬다");
+check("🔴 알림을 만드는 자리는 한 곳뿐이다",
+  !/prisma\.notification\.create/.test(mission),
+  "호출부마다 흩으면 새 알림을 더할 때 푸시를 빠뜨린다");
+check("🔴 미션 알림은 옛 칸도 같이 채운다",
+  /missionId: ref/.test(notify),
+  "두 칸이 같이 있는 동안 한쪽만 채우면 배포를 되돌릴 때 「못 본 미션」이 죽는다 (D75 1단계)");
 
 const push = src("lib/push/index.ts");
 check("🔴 죽은 구독을 지운다", /code === 404 \|\| code === 410/.test(push),
