@@ -327,6 +327,21 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
      따로 움직이는 조각을 두지 않는다 — 칸 사이 간격을 지나갈 것이 없다.
 */
 @media (hover:hover){
+  /*
+    🔴 **마우스가 띠 안에 있으면 초록은 「마우스가 있는 칸」 것이다.**
+
+       `.hl` 은 「지금 어느 칸인지」를 말하는 표시라(옆으로 밀 때의 기준)
+       가만히 두면 마지막 칸에 계속 붙어 있다. 그 상태에서 hover 를 더하면
+       **초록이 둘**이 되어 어느 것이 지금인지 사라진다 — 사용자가
+       「불리기에 계속 붙어 있다」고 본 것이 이것이다.
+
+       그래서 띠에 마우스가 있는 동안은 «현재 칸 표시가 잠시 물러난다».
+       마우스가 띠를 벗어나면 원래 칸으로 초록이 돌아온다 —
+       위 `border-color .3s ease` 가 그 왕복도 부드럽게 만든다.
+  */
+  .four:hover .f.hl:not(:hover){border-color:var(--line);box-shadow:none;
+     transform:translateX(var(--shift,0px))}
+
   .four .f:hover{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
      transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
 }
