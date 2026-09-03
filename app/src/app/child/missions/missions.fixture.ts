@@ -39,6 +39,8 @@ export const photoLabel = "사진 보여주기 (꼭 있어야 해요)";
 /** 🔴 선택인 칸은 **안 해도 된다고 적는다.** 필수와 같은 말을 쓰면 아이가 눌렀다가 막힌 줄 안다 */
 export const photoLabelOptional = "사진 보여주기 (안 해도 돼요)";
 export const photoNotice = "부모님만 보시고 바로 지워져요.";
+/** 🔴 큰 사진은 줄이는 데 한 박자 걸린다. 말 없이 멈춰 있으면 「고장」으로 읽힌다 */
+export const photoShrinking = "사진을 준비하고 있어요…";
 
 /**
  * 🔴 **완료 뒤에도 붙일 수 있어야 한다.** 예전엔 사진칸이 「했어요」 버튼과 같은 폼에만

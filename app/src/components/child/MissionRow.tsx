@@ -1,9 +1,10 @@
 import { photoRuleOf, type MissionView } from "@/contracts/mission";
 import { attachMissionPhoto, markMissionDone, undoMissionDone } from "@/app/actions/mission";
+import { PhotoPicker } from "@/components/child/PhotoPicker";
 import {
   autoDoneNotice, backfilledNotice, checkLaterLabel, checkLaterWhy,
   doneLabel, expiredBody, expiredTitle, noPhotoWhy,
-  photoAttached, photoLabel, photoLabelOptional, photoLater, photoNotice, photoReplace,
+  photoAttached, photoLabel, photoLabelOptional, photoLater, photoNotice, photoReplace, photoShrinking,
   photoWhy, photoWhyOptional, rejectedPrefix, source, undoLabel, waitingNotice,
 } from "@/app/child/missions/missions.fixture";
 
@@ -21,27 +22,21 @@ import {
  * 🔴 `capture` 는 여전히 안 넣는다 — 강제 촬영은 요구가 아니고,
  *    이미 찍어 둔 사진도 고를 수 있어야 한다.
  */
+/**
+ * 🔴 **사진 칸은 클라이언트 덩이(`PhotoPicker`)로 옮겼다** — 보내기 전에 폰에서
+ *    줄여야 하기 때문이다. 폰 원본(2~5MB)이 Server Action 기본 한도(1MB)에서
+ *    잘려 **오류 페이지**가 났다 (2026-09-03 제보).
+ *    문구는 여기(서버)가 갖고 넘긴다 — fixture 는 서버 쪽 물건이다.
+ */
 function PhotoField({ required }: { required: boolean }) {
   return (
-    <label className="grid gap-1">
-      <span className={`text-cap ${required ? "font-bold text-ink" : "text-ink-mute"}`}>
-        {required ? photoLabel : photoLabelOptional}
-      </span>
-      {/*
-        🔴 **`required` 를 뗐다.** 이게 「했어요 버튼이 안 눌려요」의 정체였다 —
-           브라우저가 폼을 조용히 막고 제 말풍선(「파일을 선택하세요」)만 띄운다.
-           그 말풍선은 폰에서 금방 사라지고, 어른 말이고, 우리가 못 고친다.
-           아이 눈에는 **버튼이 죽은 것**으로 보인다.
-
-           막는 것은 그대로 서버다 (`markMissionDone`) — 대신 아이 말로 답한다.
-           `markDone` 보다 먼저 막으므로 눌러도 미션이 올라가지는 않는다.
-      */}
-      <input type="file" name="photo" accept="image/*"
-             className={`min-h-touch w-full rounded-card border bg-surface px-2 py-2 text-cap ${
-               required ? "border-primary" : "border-line"}`} />
-      <span className="text-cap text-ink-mute">{required ? photoWhy : photoWhyOptional}</span>
-      <span className="text-cap text-ink-mute">{photoNotice}</span>
-    </label>
+    <PhotoPicker
+      required={required}
+      label={required ? photoLabel : photoLabelOptional}
+      why={required ? photoWhy : photoWhyOptional}
+      notice={photoNotice}
+      working={photoShrinking}
+    />
   );
 }
 

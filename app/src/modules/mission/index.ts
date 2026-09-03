@@ -523,7 +523,13 @@ export async function claimPractice(childId: string, guardianId: string, lessonI
 /** 받아들이는 형식. 🔴 목록에 없는 것은 받지 않는다 — 임의 바이트가 들어오면 그것도 저장된다 */
 const PHOTO_MIME = ["image/jpeg", "image/png", "image/webp"] as const;
 /** 🔴 5MB. 아이 폰 사진 한 장이고, 넘으면 브라우저가 아니라 서버가 거절한다 */
-export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+/**
+ * 🔴 **4MB 다. Vercel 함수 몸집 한도(4.5MB)보다 낮아야 한다.**
+ *    5MB 로 두면 여기서 통과시켜도 그 앞에서 잘려 우리 문구가 못 뜬다.
+ *    `next.config.ts` 의 `bodySizeLimit` 과 «같은 값»이어야 한다 — 둘이 갈리면
+ *    한쪽만 고쳐진다.
+ */
+export const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
 
 export type AttachPhotoResult =
   | { ok: true }
