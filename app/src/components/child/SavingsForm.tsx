@@ -181,7 +181,7 @@ export function SavingsForm({
         <input type="hidden" name="wantedPct" value={wanted} />
         <ul className="grid grid-cols-4 gap-1">
           {choices.map((pct) => (
-            <li key={pct}>
+            <li className="min-w-0" key={pct}>
               <button type="button" onClick={() => setWanted(pct)}
                       className={`grid min-h-touch w-full place-items-center rounded-card border text-sub tabular-nums ${
                         wanted === pct ? "border-primary bg-primary-bg font-bold" : "border-line bg-surface"}`}>

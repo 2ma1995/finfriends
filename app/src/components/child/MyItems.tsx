@@ -72,7 +72,7 @@ export function MyItems({
         items.length > 0 ? (
           <ul className="mt-1.5 grid grid-cols-4 gap-1.5">
             {items.map((i) => (
-              <li key={i.id} className="rounded-card bg-surface p-1.5 text-center">
+              <li key={i.id} className="min-w-0 rounded-card bg-surface p-1.5 text-center">
                 <div className="grid h-[52px] place-items-center rounded-card bg-sand">
                   {i.thumb ? (
                     <Image src={i.thumb} alt="" width={48} height={48} className="h-12 w-12 object-contain" />

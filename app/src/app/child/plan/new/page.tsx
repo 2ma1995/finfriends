@@ -44,7 +44,7 @@ export default async function ChildPlanNewPage({
           <span className="text-cap text-ink-mute">{labels.where}</span>
             {/* 🔴 틀린 칸만 고치면 되게 **적은 것을 되채운다** (D66) */}
             <input name="where" required defaultValue={sp.where ?? ""} placeholder={placeholders.where}
-                 className="min-h-touch rounded-card border border-line bg-surface px-3 text-body" />
+                 className="min-h-touch w-full min-w-0 rounded-card border border-line bg-surface px-3 text-body" />
         </label>
 
         <div className="grid gap-1">
@@ -52,7 +52,7 @@ export default async function ChildPlanNewPage({
           {/* 라디오로 둔다 — 아이가 고르는 것이지 적는 것이 아니다 */}
           <ul className="grid grid-cols-4 gap-1.5">
             {CATEGORIES.map((c, i) => (
-              <li key={c.code}>
+              <li className="min-w-0" key={c.code}>
                 <label className="block cursor-pointer">
                     {/* 🔴 **`sr-only` 라디오에 `required` 를 걸지 않는다** (D66) —
                            안 보이는 컨트롤이라 브라우저가 말풍선 띄울 자리조차 없다.
@@ -81,7 +81,7 @@ export default async function ChildPlanNewPage({
             */}
             <input name="limitAmount" type="number" inputMode="numeric" step={1}
                    defaultValue={sp.amount ?? ""} placeholder={placeholders.amount}
-                 className="min-h-touch rounded-card border border-line bg-surface px-3 text-right text-title font-bold tabular-nums" />
+                 className="min-h-touch w-full min-w-0 rounded-card border border-line bg-surface px-3 text-right text-title font-bold tabular-nums" />
         </label>
 
         <button type="submit" className="mt-1 min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">

@@ -107,7 +107,7 @@ export default async function ChildPlanListPage({
                   <span className="text-cap text-ink-mute">{categoryLabel}</span>
                   <ul className="grid grid-cols-4 gap-1">
                     {CATEGORIES.map((cat) => (
-                      <li key={cat.code}>
+                      <li className="min-w-0" key={cat.code}>
                         <label className="block cursor-pointer">
                           <input type="radio" name="actualCategory" value={cat.code}
                                  defaultChecked={cat.label === c.categoryLabel} className="peer sr-only" />

@@ -53,7 +53,7 @@ export function PlanAskModal({
           <>
             <div className="mt-3 grid grid-cols-2 gap-1.5">
               <button type="button" onClick={() => setWriting(true)}
-                      className="min-h-touch rounded-card bg-primary text-body font-bold text-white">
+                      className="min-h-touch w-full min-w-0 rounded-card bg-primary text-body font-bold text-white">
                 {yesLabel}
               </button>
               {/* 🔴 「없어요」는 **오늘은 끝**이다. 서버가 오늘 날짜를 적어 다시 안 묻는다 */}
@@ -74,14 +74,14 @@ export function PlanAskModal({
             <label className="grid gap-1">
               <span className="text-cap text-ink-mute">{labels.where}</span>
               <input name="where" required placeholder={placeholders.where} autoFocus
-                     className="min-h-touch rounded-card border border-line bg-canvas px-3 text-body" />
+                     className="min-h-touch w-full min-w-0 rounded-card border border-line bg-canvas px-3 text-body" />
             </label>
 
             <div className="grid gap-1">
               <span className="text-cap text-ink-mute">{labels.what}</span>
               <ul className="grid grid-cols-4 gap-1.5">
                 {CATEGORIES.map((c, i) => (
-                  <li key={c.code}>
+                  <li className="min-w-0" key={c.code}>
                     <label className="block cursor-pointer">
                       {/* 🔴 **`sr-only` 라디오에 `required` 를 걸지 않는다** (D66) — 안 보이는 컨트롤이라
                              브라우저가 말풍선 띄울 자리조차 없다. 아무 반응 없이 폼이 죽는다 */}
@@ -100,7 +100,7 @@ export function PlanAskModal({
               {/* 🔴 `step` 은 검사 도구가 아니다. 100 으로 두면 1500 이 조용히 막힌다 — 실제로 겪었다 */}
               <input name="limitAmount" type="number" inputMode="numeric"
                      step={1} placeholder={placeholders.amount}
-                     className="min-h-touch rounded-card border border-line bg-canvas px-3 text-right text-title font-bold tabular-nums" />
+                     className="min-h-touch w-full min-w-0 rounded-card border border-line bg-canvas px-3 text-right text-title font-bold tabular-nums" />
             </label>
 
             <button type="submit" className="mt-1 min-h-touch w-full rounded-card bg-primary text-body font-bold text-white">
