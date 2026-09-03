@@ -1,6 +1,6 @@
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { houseRate, listForGuardian, MAX_PCT } from "@/modules/savings";
+import { houseRate, listForGuardian } from "@/modules/savings";
 import {
   acceptSavingsAction, completeSavingsAction, rejectSavingsAction,
 } from "@/app/actions/parent-savings";
@@ -112,9 +112,6 @@ export default async function ParentSavingsPage({
                            defaultValue={sp.pct ?? s.interestPct}
                            className="min-h-touch w-20 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
                     <span className="text-sub">%</span>
-                    {/* 🔴 `max` 를 뗐으니(D66) 한도를 **틀리기 전에** 말해 준다.
-                           오류 문구로만 알리면 몇 번을 더 눌러 봐야 한다 */}
-                    <span className="text-cap text-ink-mute">0–{MAX_PCT}</span>
                   </label>
                   <p className="text-cap text-ink-mute">{interestPreview(s.interestWon)}</p>
                   {/*

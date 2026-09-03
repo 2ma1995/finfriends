@@ -19,7 +19,7 @@ import {
   blockedBy, nextRule, practiceNeeded, stageFor, subjectParticle, topRule,
 } from "@/contracts/growth";
 import { MAX_TOPUP, TOPUP_AMOUNTS } from "@/contracts/bank";
-import { MAX_PCT, WANTED_CHOICES } from "@/modules/savings";
+import { WANTED_CHOICES } from "@/modules/savings";
 import { PIN_LENGTH, PIN_MAX_TRIES } from "@/lib/session/child-mode-pin";
 import { EXPIRE_HOURS, REMIND_HOURS } from "@/modules/mission";
 // 🔴 `MAX_TOPUP` 은 `modules/allowance` 가 **계약을 그대로 재수출**한 것이다 —
@@ -121,7 +121,7 @@ check("🔴 상한이 있다", MAX_TOPUP === 500_000, "0 하나 더 눌린 실�
  *    건마다 입력받는다 — 후보 목록이 필요 없어졌다.
  *    사본을 쓰던 검증은 이 사실을 몰랐다. **실제 코드를 부르니 바로 걸렸다.**
  */
-check("이자율 상한이 있다", MAX_PCT > 0 && MAX_PCT <= 100, `${MAX_PCT}%`);
+
 check("아이가 바랄 수 있는 이자율이 오름차순",
   WANTED_CHOICES.every((v, k, a) => k === 0 || v > a[k - 1]!), WANTED_CHOICES.join(" · "));
 /**
@@ -162,6 +162,26 @@ const src = (rel: string) => readFileSync(new URL(`../src/${rel}`, import.meta.u
  */
 const code = (rel: string) =>
   src(rel).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+
+/**
+ * 🔴 **이자율에 상한이 없어야 한다** (2026-09-03 사용자 결정).
+ *    부모 돈이고 부모 집 약속이라 앱이 액수를 정하지 않는다.
+ *    한동안 `MAX_PCT = 20` 이 있었는데 근거가 없었고, 게다가 «기간» 이율에 걸려
+ *    1개월 20%(= 연 240%)는 통과시키면서 12개월만 조였다.
+ *
+ * 🔴 **음수는 여전히 막는다.** 상한이 아니라 부호다 —
+ *    이자가 음수면 만기에 아이 돈이 줄어든다.
+ */
+{
+  const sv = code("modules/savings/index.ts");
+  check("🔴 이자율에 상한이 없다", !/pct > MAX_PCT|MAX_PCT/.test(sv),
+    "부모 돈이고 부모 집 약속이다 — 앱이 액수를 정하지 않는다");
+  check("  음수는 막는다", /!Number\.isFinite\(pct\) \|\| pct < 0/.test(sv),
+    "이자가 음수면 만기에 아이 돈이 줄어든다 — 「불리기」가 아니다");
+  check("  화면이 연 환산을 보여준다",
+    /annualPct/.test(src("app/parent/bank/savings/page.tsx")),
+    "상한이 없으니 부모가 판단할 재료가 더 중요해졌다 (FR-031)");
+}
 
 /**
  * 🔴 **로그인 시도 제한** (D54). 없어서 비밀번호를 무한히 시도할 수 있었다 —

@@ -31,7 +31,23 @@ export const MAX_PERIODS = 52;
 export type SavingsKind = "DEPOSIT" | "INSTALLMENT";
 /** 아이가 골라 볼 수 있는 이자율 — 🔴 **바라는 값**이지 정해지는 값이 아니다 */
 export const WANTED_CHOICES = [3, 5, 10, 15] as const;
-export const MAX_PCT = 20;
+/**
+ * 🔴 **이자율에 상한을 두지 않는다** (2026-09-03 사용자 결정).
+ *
+ *    한동안 `MAX_PCT = 20` 이 있었는데 **근거가 어디에도 없었다** —
+ *    SRS 에도, `D25` 에도, 주석에도. 이 파일에서 근거가 안 적힌 유일한 상수였다.
+ *
+ * 🔴 그리고 **엉뚱한 숫자에 걸려 있었다.** 상한이 «기간» 이율에 붙는데
+ *    화면은 «연 환산»을 보여준다 — 1개월 20%는 연 240%다.
+ *    막는 값과 보여주는 값이 서로 달랐고, 12개월 적금에서만 우연히 맞았다.
+ *
+ * 🔴 **부모 돈이고 부모 집 약속이다.** 앱이 집안 약속의 액수를 정하지 않는다.
+ *    대신 부모가 판단할 재료를 준다 — 화면이 **연 환산**과
+ *    **시중 3.40~7.00% · Greenlight 19.84%** 를 나란히 놓는다 (`FR-031`).
+ *
+ * 🔴 **음수는 여전히 막는다.** 그건 상한이 아니라 부호다 —
+ *    이자가 음수면 만기에 아이 돈이 줄어든다. 「불리기」가 아니다.
+ */
 
 export type SavingsView = {
   readonly id: string;
@@ -191,7 +207,8 @@ export async function request(
   const guardian = await prisma.guardianAccount.findUnique({
     where: { id: guardianId }, select: { savingsInterestPct: true },
   });
-  const wanted = Number.isFinite(wantedPct) && wantedPct! >= 0 && wantedPct! <= MAX_PCT
+  // 🔴 아이는 `WANTED_CHOICES` 에서 고른다. 음수만 막으면 된다 — 상한은 없앴다
+  const wanted = Number.isFinite(wantedPct) && wantedPct! >= 0
     ? Math.floor(wantedPct!) : null;
 
   await prisma.savingsPlan.create({
@@ -239,7 +256,8 @@ export async function accept(
    * 🔴 `undefined` 는 그대로 통과시킨다 — 「칸이 아예 없다」는 **안 바꾼다**는 뜻이고,
    *    그건 잘못된 값이 아니다.
    */
-  if (pct !== undefined && (!Number.isFinite(pct) || pct < 0 || pct > MAX_PCT)) {
+  // 🔴 상한은 없다(위 주석). 음수와 숫자가 아닌 것만 막는다
+  if (pct !== undefined && (!Number.isFinite(pct) || pct < 0)) {
     return { ok: false, reason: "BAD_PCT" };
   }
 
