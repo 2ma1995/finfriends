@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 /**
  * 순수 판정 검증 — 🔴 **실제 코드를 부른다.**
  *
@@ -275,6 +276,74 @@ const authSrc = code("app/actions/auth.ts");
     "홈 화면 앱은 주소창이 없다 — 없으면 갇힌다");
   check("  초대 코드를 넣을 자리도 있다", /action="\/child\/enter"/.test(landing),
     "아이 기기가 랜딩에 닿으면 거기서 등록할 수 있어야 한다");
+}
+
+// ── 좁은 폰에서 밀려 나가는 자리 (D73) ──
+
+/**
+ * 🔴 **flex 한 줄에 든 입력칸이 줄지 못하면 옆 것이 화면 밖으로 나간다.**
+ *
+ *    flex 항목은 기본으로 자기 min-content 폭 아래로 줄지 않고,
+ *    `input` 의 그 최소 폭은 브라우저 기본값이라 제법 크다(숫자칸은 스피너까지 있다).
+ *    그래서 `flex-1` 을 줘도 입력칸이 안 줄고 **줄 수 없는 버튼이 밀려 나간다.**
+ *    오늘 같은 뿌리를 **네 번** 겪었다 — PIN 버튼 · 용돈 고치기 · 예적금 모달 · 계획 금액칸.
+ *
+ * 🔴 **`input` 이 아니라 「flex 항목」을 본다.** 저쪽 세션이 짚었다 —
+ *    `<label class="flex-1"><input …/></label>` 이면 줄지 못하는 것은 **라벨**이다.
+ *    `input` 의 className 만 보는 검사는 고친 뒤에도 계속 짚어서, 두 주면 아무도 안 본다.
+ *    그래서 **조상 중 가장 가까운 가로 행을 찾고 그 직계 자식**을 본다.
+ *
+ * 🔴 **폭이 없는 입력은 뺀다.** `hidden`·`checkbox`·`radio` 는 밀 수가 없다.
+ *    이걸 안 빼면 20곳이 걸리고 **전부 오탐**이다 — 실제로 세어 보고 넣었다.
+ *
+ * 🔴 **한 열 격자도 뺀다.** `grid-cols-` 가 없으면 한 열이라 줄 이유가 없다.
+ */
+{
+  const tsx: string[] = [];
+  (function walk(dir: string) {
+    for (const e of readdirSync(dir)) {
+      const p = `${dir}/${e}`;
+      if (statSync(p).isDirectory()) walk(p);
+      else if (e.endsWith(".tsx")) tsx.push(p);
+    }
+  })(fileURLToPath(new URL("../src", import.meta.url)));
+
+  const clsOf = (tag: string) => (tag.match(/className=\{?["`]([^"`]*)["`]/) ?? [, ""])[1] ?? "";
+  const isRow = (c: string) =>
+    (/\bflex\b/.test(c) && !/\bflex-col\b/.test(c)) || /\bgrid-cols-[2-9]\b/.test(c);
+  /** 안 줄어도 되는 항목 — 고정폭이거나 안 줄기로 선언한 것 */
+  const shrinks = (c: string) => /\bmin-w-0\b|\bshrink-0\b|\bw-\d|\bw-\[|\bw-full\b/.test(c);
+
+  const bad: string[] = [];
+  for (const f of tsx) {
+    const src2 = readFileSync(f, "utf8");
+    const stack: { name: string; cls: string }[] = [];
+    for (const m of src2.matchAll(/<\/?([A-Za-z][\w.]*)((?:[^<>{}]|\{[^{}]*\})*?)(\/?)>/g)) {
+      const [whole, name, , selfClose] = m;
+      const closing = whole.startsWith("</");
+      const noWidth = /type="(hidden|checkbox|radio)"/.test(whole);
+
+      if (!closing && !noWidth && /^(input|select)$/i.test(name)) {
+        let rowAt = -1;
+        for (let i = stack.length - 1; i >= 0; i -= 1) if (isRow(stack[i].cls)) { rowAt = i; break; }
+        if (rowAt >= 0) {
+          const item = stack[rowAt + 1];
+          if (!shrinks(item ? item.cls : clsOf(whole)) && !shrinks(clsOf(whole))) {
+            bad.push(`${f.split("/src/")[1]}:${src2.slice(0, m.index).split("\n").length}`);
+          }
+        }
+      }
+
+      if (closing) {
+        for (let i = stack.length - 1; i >= 0; i -= 1) if (stack[i].name === name) { stack.length = i; break; }
+      } else if (!selfClose && !/^(input|img|br|hr|meta|link)$/i.test(name)) {
+        stack.push({ name, cls: clsOf(whole) });
+      }
+    }
+  }
+
+  check("🔴 flex 한 줄의 입력칸이 줄 수 있다", bad.length === 0,
+    bad.length ? `${bad.length}곳 — ${bad.slice(0, 4).join(" · ")}` : "안 줄면 옆 버튼이 화면 밖으로 나간다");
 }
 
 // ── 「언제」 (D59) ──
