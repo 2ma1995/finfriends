@@ -76,7 +76,7 @@ export function SavingsForm({
     <form action={action} className="mt-2 grid gap-2">
       <input type="hidden" name="kind" value={kind} />
 
-      <label className="grid gap-1">
+      <label className="grid min-w-0 gap-1">
         <span className="text-cap text-ink-mute">{copy.goalLabel}</span>
         <input name="goal" required maxLength={30} placeholder={copy.goalPlaceholder}
                className="min-h-touch rounded-card border border-line bg-surface px-3 text-body" />
@@ -114,18 +114,30 @@ export function SavingsForm({
             🔴 **`step` 을 100 에서 1 로 내렸다.** `step` 은 증감 폭이 아니라 **검사 규칙**이다 —
                100 으로 두면 1,550원 같은 값이 조용히 막힌다. 실제로 겪은 함정이다.
           */}
+          {/*
+            🔴 **모달이 옆으로 밀려나던 자리** (사용자 지적 — 「칸이 가로로 넓게 잡혀서
+               모달이 움직여」).
+
+               격자 칸은 **자기 최소 폭 아래로 줄지 않는다.** `type="number"` 는
+               스피너까지 있어 그 최소 폭이 제법 크다 — 두 칸이 모달보다 넓어지면
+               모달 자체가 옆으로 밀린다.
+               `min-w-0` 이 그 바닥을 풀고, `w-full` 이 남은 폭을 채운다.
+
+            🔴 오늘 같은 뿌리를 세 번째 만난다 — PIN 버튼 · 용돈 고치기 · 여기.
+               「한 줄/한 칸에 나란히 두는데 한쪽이 안 줄어든다」가 그 모양이다.
+          */}
           <div className="grid grid-cols-2 gap-2">
-            <label className="grid gap-1">
+            <label className="grid min-w-0 gap-1">
               <span className="text-cap text-ink-mute">{copy.perPeriodLabel}</span>
               <input name="perPeriod" type="number" inputMode="numeric" step={1}
                      value={perPeriod} onChange={(e) => setPerPeriod(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
+                     className="min-h-touch w-full min-w-0 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
-            <label className="grid gap-1">
+            <label className="grid min-w-0 gap-1">
               <span className="text-cap text-ink-mute">{copy.periodsLabel}</span>
               <input name="periods" type="number" inputMode="numeric" step={1}
                      value={periods} onChange={(e) => setPeriods(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
+                     className="min-h-touch w-full min-w-0 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
           </div>
           <p className="text-sub font-bold text-primary-d">
@@ -135,17 +147,17 @@ export function SavingsForm({
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <label className="grid gap-1">
+            <label className="grid min-w-0 gap-1">
               <span className="text-cap text-ink-mute">{copy.amountLabel}</span>
               <input name="amount" type="number" inputMode="numeric" step={1}
                      value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
+                     className="min-h-touch w-full min-w-0 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
-            <label className="grid gap-1">
+            <label className="grid min-w-0 gap-1">
               <span className="text-cap text-ink-mute">{copy.monthsLabel}</span>
               <input name="months" type="number" inputMode="numeric" step={1}
                      value={months} onChange={(e) => setMonths(Number(e.target.value) || 0)}
-                     className="min-h-touch rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
+                     className="min-h-touch w-full min-w-0 rounded-card border border-line bg-surface px-2 text-right text-body tabular-nums" />
             </label>
           </div>
           <p className="text-sub font-bold text-primary-d">
