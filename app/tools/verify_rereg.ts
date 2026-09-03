@@ -96,9 +96,26 @@ async function main() {
     "재동의하면 바로 이어져야 한다 — 토큰을 지우면 기기를 다시 등록해야 한다");
 
   const left = code("app/child/left/route.ts");
-  check("🔴 쿠키 셋을 다 지운다",
-    /DEVICE_COOKIE, MODE_COOKIE, UNLOCK_COOKIE/.test(left),
-    "하나라도 남으면 갇힌 상태가 이어진다");
+
+  /**
+   * 🔴 **「어떻게」가 아니라 「무엇을」 본다.**
+   *
+   *    처음엔 `child/left` 안에 `DEVICE_COOKIE, MODE_COOKIE, UNLOCK_COOKIE` 가
+   *    적혀 있는지 봤다. 그 줄이 `forgetSession` 헬퍼로 옮겨지자 **검사가 깨졌다** —
+   *    동작은 오히려 나아졌는데(보호자 쿠키까지 지운다) 검사가 낡은 «형태»를 보고 있었다.
+   *    오늘 같은 종류를 여러 번 겪었다(주석 · import 줄 · 좀비 서버).
+   *
+   *    그래서 **지우는 쪽 파일에서 이름 목록을 확인**하고,
+   *    `child/left` 는 **그것을 부르는지**만 본다. 어디로 옮기든 따라간다.
+   */
+  const forget = code("lib/session/forget.ts");
+  for (const name of ["DEVICE_COOKIE", "MODE_COOKIE", "UNLOCK_COOKIE"]) {
+    check(`🔴 ${name} 를 지운다`, new RegExp(`\\b${name}\\b`).test(forget),
+      "하나라도 남으면 갇힌 상태가 이어진다");
+  }
+  check("  실제로 지우는 호출이 있다", /cookies\.delete\(/.test(forget));
+  check("  아이 기기가 그것을 부른다", /forgetSession\(/.test(left),
+    "부르지 않으면 쿠키가 남아 갇힌다");
   check("  Route Handler 다", /export async function GET/.test(left),
     "화면(RSC)은 쿠키를 지울 수 없다");
 
