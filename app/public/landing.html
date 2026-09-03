@@ -322,6 +322,19 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
 
 .f .soon-t{display:inline-block;margin-top:8px;font-size:.68rem;color:var(--clay);
    background:var(--clay-bg);border:1px solid #E5CDB8;border-radius:99px;padding:2px 9px}
+/*
+  🔴 **보조 버튼은 가입 버튼과 «다르게» 보여야 한다.** 같은 `cta` 모양 둘을
+     나란히 두면 어느 쪽이 본 길인지 사라진다. 테두리만 있는 형태로 낮춘다.
+  🔴 `button` 이라 글꼴이 상속되지 않는다 — `font:inherit` 가 필요하다.
+*/
+.cta.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);
+  box-shadow:none;font:inherit;font-weight:800;cursor:pointer;margin-left:8px}
+.cta.ghost:hover{border-color:var(--green);color:var(--green-d)}
+@media (max-width:620px){
+  /* 좁은 폰에서는 옆에 두면 밀린다 — 아래로 내리고 폭을 맞춘다 */
+  .cta.ghost{display:block;width:100%;margin:10px auto 0}
+}
+
 .flow{margin-top:22px;text-align:center;font-family:var(--serif);font-size:1.02rem;color:var(--ink-2)}
 /* 장벽 */
 .barriers{background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -886,39 +899,56 @@ footer a{color:var(--ink-2)}
 </section>
 
 <!-- ⑧ CTA -->
+<!--
+  ⑧ 마지막 칸 — **앞뒤 두 면이 한 자리를 쓴다** (사용자 요청).
+
+  🔴 예전엔 「가입」과 「초대 코드」가 «따로 선» 두 구역이었다. 그런데 이 둘은
+     **같은 질문에 대한 두 답**이다 — 「당신은 부모인가, 링크를 받은 아이인가」.
+     한 자리에서 뒤집으면 그 갈림이 보이고, 멈추는 지점도 하나로 준다.
+
+  🔴 **`data-snap` 은 하나뿐이다.** 두 면이 같은 자리를 쓰므로 멈춤 지점도 하나다.
+     숨은 면에 붙여 두면 높이가 0 인 지점이 생겨 스크롤 계산이 어긋난다.
+
+  🔴 **숨기는 것은 `hidden` 이다.** CSS 로만 감추면 화면 낭독기가 읽고,
+     숨은 폼의 `required` 가 제출을 막는다.
+-->
 <section class="final" id="start" data-snap>
   <div class="wrap">
-    <h2>이번 달에 뭐가 달라졌는지,<br>한 문장으로 보세요</h2>
-    <p class="lead">가입하고 아이가 첫 실천을 하면 나무가 움직이기 시작합니다.</p>
-    <a class="cta" href="/signup">무료로 시작하기</a>
-    <p class="fine">부모·아이 모두 무료 · 월 구독료 없음 · 위치정보 미수집</p>
-  </div>
-</section>
 
+    <div data-face="cta">
+      <h2>이번 달에 뭐가 달라졌는지,<br>한 문장으로 보세요</h2>
+      <p class="lead">가입하고 아이가 첫 실천을 하면 나무가 움직이기 시작합니다.</p>
+      <a class="cta" href="/signup">무료로 시작하기</a>
+      <!-- 🔴 가입 옆에 둔다 — 아이가 링크를 받아 왔을 때 여기서 갈라진다 -->
+      <button type="button" class="cta ghost" data-to="invite">초대코드 입력</button>
+      <p class="fine">부모·아이 모두 무료 · 월 구독료 없음 · 위치정보 미수집</p>
+    </div>
 
-<!--
-  ⑨ 초대 코드 — 🔴 **아이 기기가 이 화면에 닿을 수 있다.**
-     홈 화면에 추가한 앱은 브라우저와 저장소가 갈릴 수 있어서, 부모가 브라우저에서
-     등록해도 앱 쪽에는 쿠키가 없다. 그러면 아이는 여기서 멈추는데 주소창이 없으니
-     나갈 방법이 없다. 초대 코드를 여기서 받으면 쿠키가 **이 앱의 저장소**에 앉는다.
+    <!--
+      🔴 아이 기기가 이 화면에 닿을 수 있다. 홈 화면에 추가한 앱은 브라우저와
+         저장소가 갈릴 수 있어서, 부모가 브라우저에서 등록해도 앱 쪽에는 쿠키가 없다.
+         그러면 아이는 여기서 멈추는데 주소창이 없으니 나갈 방법이 없다.
+         초대 코드를 여기서 받으면 쿠키가 **이 앱의 저장소**에 앉는다.
+      🔴 평범한 GET 폼이다. `/child/enter` 는 쿠키를 굽는 Route Handler 라
+         **진짜 문서 이동**이어야 한다 (어긋남 대장 D66).
+    -->
+    <div data-face="invite" hidden aria-labelledby="invite-title">
+      <h2 id="invite-title">초대 링크를 받았나요?</h2>
+      <p class="lead">부모님이 보내 주신 링크를 아래에 붙여넣으면 아이 화면이 열려요.</p>
+      <form method="get" action="/child/enter"
+            style="display:grid;gap:10px;max-width:520px;margin:18px auto 0">
+        <label for="invite-t" style="text-align:left;font-size:14px;opacity:.7">초대 링크 또는 코드</label>
+        <input id="invite-t" name="t" required autocomplete="off"
+               placeholder="https://… 또는 코드"
+               style="min-height:48px;border:1px solid var(--line);border-radius:12px;
+                      padding:0 14px;font-size:16px;width:100%;box-sizing:border-box" />
+        <button class="cta" type="submit" style="border:0;cursor:pointer">아이 화면 열기</button>
+      </form>
+      <!-- 🔴 돌아갈 길 — 잘못 눌러 들어온 부모가 갇히지 않게 -->
+      <button type="button" class="cta ghost" data-to="cta">무료로 시작하기</button>
+      <p class="fine">링크는 24시간 동안만 쓸 수 있어요. 지났으면 부모님께 다시 받아 주세요.</p>
+    </div>
 
-  🔴 평범한 GET 폼이다. `/child/enter` 는 쿠키를 굽는 Route Handler 라
-     **진짜 문서 이동**이어야 한다 (어긋남 대장 D66).
--->
-<section class="final" id="invite" data-snap aria-labelledby="invite-title">
-  <div class="wrap">
-    <h2 id="invite-title">초대 링크를 받았나요?</h2>
-    <p class="lead">부모님이 보내 주신 링크를 아래에 붙여넣으면 아이 화면이 열려요.</p>
-    <form method="get" action="/child/enter"
-          style="display:grid;gap:10px;max-width:520px;margin:18px auto 0">
-      <label for="invite-t" style="text-align:left;font-size:14px;opacity:.7">초대 링크 또는 코드</label>
-      <input id="invite-t" name="t" required autocomplete="off"
-             placeholder="https://… 또는 코드"
-             style="min-height:48px;border:1px solid var(--line);border-radius:12px;
-                    padding:0 14px;font-size:16px;width:100%;box-sizing:border-box" />
-      <button class="cta" type="submit" style="border:0;cursor:pointer">아이 화면 열기</button>
-    </form>
-    <p class="fine">링크는 24시간 동안만 쓸 수 있어요. 지났으면 부모님께 다시 받아 주세요.</p>
   </div>
 </section>
 
@@ -1324,6 +1354,32 @@ footer a{color:var(--ink-2)}
 })();
 </script>
 
+
+<!--
+  마지막 칸 — 두 면 뒤집기.
+
+  🔴 작은 덩이로 따로 둔다. 이 구역만 보고, 없으면 조용히 물러난다.
+-->
+<script>
+(() => {
+  const faces = [...document.querySelectorAll('[data-face]')];
+  if (faces.length < 2) return;
+
+  const show = (name) => {
+    faces.forEach((face) => { face.hidden = face.dataset.face !== name; });
+    /**
+     * 🔴 **바꾼 뒤 그 칸의 첫 글자로 초점을 옮긴다.** 안 그러면 화면 낭독기를 쓰는
+     *    사람에게는 «아무 일도 일어나지 않은» 것이 된다 — 버튼만 눌리고 끝난다.
+     */
+    const heading = faces.find((f) => f.dataset.face === name)?.querySelector('h2');
+    if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
+  };
+
+  document.querySelectorAll('[data-to]').forEach((button) => {
+    button.addEventListener('click', () => show(button.dataset.to));
+  });
+})();
+</script>
 
 <!--
   네 칸 — 하나씩 올라오며 강조가 옮겨간다.
