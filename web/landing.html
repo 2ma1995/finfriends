@@ -370,10 +370,34 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
   🔴 `button` 이라 글꼴이 상속되지 않는다 — `font:inherit` 가 필요하다.
 */
 .cta.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);
-  box-shadow:none;font:inherit;font-weight:800;cursor:pointer;margin-left:8px}
+  box-shadow:none;cursor:pointer;margin-left:8px}
+
+/*
+  🔴 **`button` 은 글꼴을 물려받지 않는다.** 그래서 `<a class="cta">` 와
+     `<button class="cta">` 가 **다른 글꼴로** 그려진다 — 초대 구역의
+     「아이 화면 열기」가 그랬다.
+
+  🔴 **`font:inherit` 를 쓰지 않는다.** 단축이라 **글자 크기까지** 되돌려서
+     `.cta` 의 `font-size` 를 덮는다. 물려받을 것은 «글꼴»뿐이다.
+
+  🔴 **`font-size`·`font-weight` 도 물려받게 하면 안 된다.** `button.cta` 는
+     `.cta` 보다 특이도가 높아서(요소+클래스) `.cta` 가 정한 크기를 «되돌린다» —
+     `.final` 밖의 버튼이 본문 크기로 커진다. `font-family` 하나만 물려받는다.
+*/
+button.cta{font-family:inherit}
 .cta.ghost:hover{border-color:var(--green);color:var(--green-d)}
 @media (max-width:620px){
-  /* 좁은 폰에서는 옆에 두면 밀린다 — 아래로 내리고 폭을 맞춘다 */
+  /*
+    🔴 **좁은 폰에서는 두 버튼을 같은 크기로 둔다** (2026-09-03 사용자 요청).
+
+       `.cta` 는 `inline-flex` 라 **글자 폭만큼** 넓어지는데 보조 버튼은
+       `width:100%` 였다. 그래서 「무료로 시작하기」는 좁고
+       「초대코드 입력」은 화면 폭이라 나란히 놓으면 어긋나 보였다.
+
+       마지막 두 구역(`.final`)에서만 둘 다 폭을 채운다 —
+       머리말의 작은 가입 버튼(`.cta.sm`)은 그대로 둔다.
+  */
+  .final .cta{display:block;width:100%;margin-left:auto;margin-right:auto}
   .cta.ghost{display:block;width:100%;margin:10px auto 0}
 }
 
