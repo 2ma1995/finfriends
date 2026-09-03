@@ -2,9 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Screen, Card, Empty } from "@/components/shared/Screen";
 import { InviteLink } from "@/components/parent/InviteLink";
+import { WaitForDevice } from "@/components/parent/WaitForDevice";
 import { findChild } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { howTo, inviteLink, noCredentialNotice, reRegisterNotice, rules, previewLink } from "./invite.fixture";
+import { howTo, inviteLink, noCredentialNotice, reRegisterNotice, rules, previewLink, waitNotice } from "./invite.fixture";
 
 // CON-003 — 자녀 초대. 온보딩 4단계. 링크는 자격증명이 아니라 기기 등록 수단이다
 export const metadata = { title: "자녀 초대 · 핀프렌즈" };
@@ -96,6 +97,13 @@ export default async function ParentInvitePage({
                둘 다 같은 1회용 코드를 같은 `/child/enter` 로 소진한다 (D63) */}
         <InviteLink make={inviteLink.make} remake={inviteLink.remake} hint={inviteLink.hint}
                     copyLabel={inviteLink.copyLabel} copied={inviteLink.copied} failed={inviteLink.failed} />
+
+      {/*
+        🔴 **부모는 여기서 기다린다.** 링크를 넘겨주고 아이가 열기를 기다리는 중이라,
+           등록이 끝나면 화면이 스스로 다음 단계로 간다 (`D76`).
+           안 그러면 아무 일도 안 일어난 것처럼 보여 링크를 다시 만들게 된다.
+      */}
+      <WaitForDevice waiting={waitNotice.waiting} done={waitNotice.done} />
 
       <section className="mt-2.5">
         <h2 className="text-cap tracking-[0.06em] text-ink-mute">등록 규칙</h2>

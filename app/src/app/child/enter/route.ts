@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { DEVICE_COOKIE } from "@/lib/session/device-session";
 import { MODE_COOKIE } from "@/lib/session/device-mode";
 import { consumeInvite } from "@/lib/session/child-invite";
@@ -50,6 +51,16 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("reason", r.reason);
     return NextResponse.redirect(url);
   }
+
+  /**
+   * 🔴 **부모 화면의 캐시를 지운다** (어긋남 대장 D76).
+   *    등록은 «아이 기기»에서 일어나지만 그 결과를 읽는 것은 부모 화면이다.
+   *    안 지우면 부모가 돌아가도 「4단계 미완」이 그대로 보인다 —
+   *    실제로는 끝났는데 화면만 옛것이다.
+   */
+  revalidatePath("/parent/onboarding");
+  revalidatePath("/parent/invite");
+  revalidatePath("/parent/mypage");
 
   url.pathname = "/child/home";
   const res = NextResponse.redirect(url);
