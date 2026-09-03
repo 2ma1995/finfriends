@@ -57,6 +57,8 @@ export const quarantineNotice = (n: number) =>
 
 /** 🔴 안 읽은 알림이 있을 때만 보인다. 0이면 자리도 없다 */
 export const alertsLabel = (n: number) => `새 알림 ${n}건`;
+/** 🔴 벨에는 늘 이름이 필요하다 — 0일 때도 화면 읽는 사람은 그것이 무엇인지 알아야 한다 */
+export const noAlertsLabel = "알림";
 
 /**
  * 구역 제목.
