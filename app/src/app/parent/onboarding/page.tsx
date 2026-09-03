@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { Screen } from "@/components/shared/Screen";
 import { readOnboardingProgress } from "@/modules/consent";
 import { currentGuardian } from "@/lib/session/guardian-session";
-import { allDoneNotice, buildSteps, plannedNotice, readyForChild, reassurance, readyNotice } from "./onboarding.fixture";
+import {
+  allDoneNotice, buildSteps, missionNotice, plannedNotice, readyForChild, reassurance, readyNotice,
+} from "./onboarding.fixture";
 
 // CON-003 — 보호자 온보딩 6단계 (4단계 자녀 초대는 SRS 다이어그램 A의 P4 · 원장 T17)
 export const metadata = { title: "시작하기 · 핀프렌즈" };
@@ -61,6 +63,15 @@ export default async function ParentOnboardingPage({
           </li>
         ))}
       </ol>
+
+      {/*
+        🔴 **목록 «바로 아래»에 둔다** (어긋남 대장 D78).
+           5단계(계획 카드)를 미션으로 읽은 자리가 여기다 —
+           맨 아래 맺음말에 섞어 두면 목록을 보는 눈에 안 들어온다.
+      */}
+      <p className="mt-2 rounded-card bg-surface px-3 py-2 text-cap leading-relaxed text-ink-soft">
+        {missionNotice}
+      </p>
 
       {/*
         🔴 갈 곳이 없으면 버튼을 그리지 않는다.
