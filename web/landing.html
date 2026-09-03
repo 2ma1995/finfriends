@@ -306,8 +306,24 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
    border-color .3s ease,box-shadow .3s ease}
 .four.seq-cards .f{opacity:0;transform:translateX(var(--shift,0px)) translateY(16px)}
 .four.seq-cards .f.in{opacity:1;transform:translateX(var(--shift,0px))}
-.four .f.hl{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10);
-   transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
+/*
+  🔴 **`.hl` 은 「지금 어느 칸인지」만 말한다. 들어올리지 않는다**
+     (2026-09-03 사용자 요청 — 「4번 계속 올려져 있는 상태로 되어 있게 하지 말고」).
+
+     한동안 `.hl` 하나가 **두 일을 겸했다** — 초록 표시와 들어올림.
+     마지막 칸의 표시는 남겨 둬야 하는데(옆으로 밀 때의 기준) 들어올림까지
+     같이 남아서 **네 번째 칸이 계속 떠 있었다.**
+
+     들어올림은 아래 `.rise` 로 옮겼다. 잠깐 붙고 떨어진다.
+*/
+.four .f.hl{border-color:var(--green);box-shadow:0 10px 26px rgba(23,32,25,.10)}
+
+/*
+  🔴 **처음 들어올 때 한 칸씩 올라갔다 내려온다.** 잠깐만 붙는 클래스다 —
+     남겨 두면 그 칸이 계속 떠 있고, 그게 방금 고친 문제였다.
+     내려오는 것도 위 `transform .45s` 가 만든다.
+*/
+.four .f.rise{transform:translateX(var(--shift,0px)) translateY(-7px) scale(1.04)}
 
 /*
   🔴 **칸을 옮겨 다닐 때 초록 선이 «따라 움직이게» 한다** (2026-09-03 사용자 요청).
@@ -1507,7 +1523,7 @@ footer a{color:var(--ink-2)}
 
   const run = () => {
     clear();
-    cards.forEach((card) => card.classList.remove('in', 'hl'));
+    cards.forEach((card) => card.classList.remove('in', 'hl', 'rise'));
 
     // 🔴 사용자 요청으로 늦췄다 — 340ms 는 읽기 전에 다음 칸으로 넘어갔다
     const RISE = 700;    // 한 칸이 올라오고 다음 칸까지의 간격
@@ -1548,15 +1564,34 @@ footer a{color:var(--ink-2)}
 
     goTo(0);
 
+    /**
+     * 🔴 **한 칸씩 올라갔다 내려온다** (사용자 요청).
+     *    `.rise` 를 붙였다가 떼는 것이 「올라갔다 내려옴」이다 —
+     *    안 떼면 그 칸이 계속 떠 있고, 그게 네 번째 칸에서 보이던 문제였다.
+     *
+     * 🔴 `DROP` 은 `RISE` 보다 짧다. 다음 칸이 올라오기 전에 내려와야
+     *    「하나씩」으로 읽힌다 — 같이 떠 있으면 그냥 다 떠 있는 것이다.
+     */
+    const DROP = 460;
+    const liftOnce = (card) => {
+      card.classList.add('rise');
+      timers.push(setTimeout(() => card.classList.remove('rise'), DROP));
+    };
+
+    liftOnce(cards[0]);
     cards.forEach((card, index) => {
       if (index === 0) return;
-      timers.push(setTimeout(() => goTo(index), index * RISE));
+      timers.push(setTimeout(() => { goTo(index); liftOnce(card); }, index * RISE));
     });
 
     /*
-      🔴 **마지막 강조는 놓지 않는다.** 예전엔 놓았는데, 손으로 앞뒤로 넘길 수 있게
-         되면서 강조가 **「지금 어느 칸인지」를 말해 주는 표시**가 됐다.
+      🔴 **마지막 «표시»는 놓지 않는다.** 손으로 앞뒤로 넘길 수 있게 되면서
+         초록이 **「지금 어느 칸인지」를 말해 주는 표시**가 됐다 —
          꺼 버리면 옆으로 밀 때 기준이 사라진다.
+
+      🔴 **다만 «들어올림»은 놓는다.** 한동안 `.hl` 이 둘을 겸해서
+         네 번째 칸이 계속 떠 있었다 (사용자 지적). 들어올림은 `.rise` 가 맡고
+         `DROP` 뒤에 스스로 떨어진다.
     */
 
     /**
