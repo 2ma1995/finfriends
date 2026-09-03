@@ -70,7 +70,19 @@ export default async function ChildWelcomePage({
       </div>
 
       {s.peek ? (
-        <Link href={s.peek.href}
+        /*
+          🔴 **`?tour=` 를 실어 보낸다** (사용자 제보 — 「보기 버튼을 누르면 뒤로 갈 수 없다」).
+
+             돌아가는 줄(`TourReturn`)은 이 표시가 있을 때만 뜬다. 그런데 여기서
+             안 붙이고 있었다 — **줄은 만들어져 있는데 켜는 쪽이 없었다.**
+
+             그래서 아이는 어느 쪽으로도 못 나갔다. 미션 화면은 뒤로가기가 아예 없고,
+             다른 화면의 「내 방」은 튜토리얼이 안 끝났으면 **다시 튜토리얼로 튕긴다** —
+             몇 단계였는지도 잃는다.
+
+          🔴 **몇 단계에서 나갔는지까지 싣는다.** 단계를 안 실으면 돌아와서 처음부터다.
+        */
+        <Link href={`${s.peek.href}?tour=${step}`}
               className="mt-2 flex min-h-touch items-center justify-center rounded-card border border-dashed border-line-2 text-sub text-ink-soft">
           {s.peek.label} →
         </Link>
