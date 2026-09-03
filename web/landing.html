@@ -263,8 +263,22 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
 .br .tag{display:block;margin-top:9px;font-size:.78rem;font-weight:700}
 .br.met .tag{color:var(--green-d)} .br.exc .tag{color:var(--clay)}
 /* 4영역 */
-.four{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
-.f{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:28px 18px;text-align:left;transition:transform .2s,box-shadow .2s}
+/*
+  🔴 **웹 화면도 폰과 같은 물건이다** (사용자 요청 — 「웹 화면도 똑같이 해 줘」).
+
+     예전엔 데스크톱만 `grid` 로 네 칸을 늘어놓고, 폰만 「옆으로 미는 띠」였다.
+     같은 구역이 기기에 따라 다른 물건이면 고칠 때 한쪽만 고쳐진다.
+     이제 **어디서나 띠**다 — 하나씩 올라오고 강조가 옮겨간다.
+
+  🔴 **미는 것은 «안 들어갈 때만»** 일어난다. 넷이 다 들어오는 넓은 화면에서는
+     `shiftTo` 가 0 을 넣어 제자리에 선다 — 억지로 밀지 않는다.
+     좁아지면 그때부터 저절로 밀린다. 경계를 손으로 정하지 않는다.
+*/
+.four{display:flex;gap:14px;overflow:hidden;margin-top:24px;padding:12px 0}
+.f{flex:1 1 0;min-width:0;aspect-ratio:1;
+   display:flex;flex-direction:column;justify-content:center;gap:6px;
+   background:var(--paper);border:1px solid var(--line);border-radius:20px;
+   padding:22px 16px;text-align:center;transition:transform .2s,box-shadow .2s}
 .f:hover{transform:translateY(-4px);box-shadow:0 18px 45px rgba(23,32,25,.08)}
 .f .ic{font-size:1.9rem}
 .f h4{font-family:var(--serif);margin:9px 0 4px;font-size:1.02rem}
@@ -799,7 +813,9 @@ footer a{color:var(--ink-2)}
       <div class="f"><div class="ic">💰</div><h4>벌기</h4><p>일하면 돈이 생겨요</p></div>
       <div class="f"><div class="ic">🛒</div><h4>잘 쓰기</h4><p>진짜 필요한 걸까?</p></div>
       <div class="f"><div class="ic">🐷</div><h4>모으기</h4><p>안 쓰고 두면 쌓여요</p></div>
-      <div class="f soon"><div class="ic">🌱</div><h4>불리기</h4><p>모아두면 저절로 늘어나요</p><span class="soon-t">곧 열려요</span></div>
+      <!-- 🔴 「곧 열려요」 딱지와 `soon`(흐리게)을 뺐다 (사용자 요청).
+             딱지만 빼고 흐린 것을 두면 «왜 이 칸만 연한지» 설명이 사라진다 -->
+        <div class="f"><div class="ic">🌱</div><h4>불리기</h4><p>모아두면 저절로 늘어나요</p></div>
     </div>
     <!-- 🔴 「💰 돈이 생기고 → …」 줄은 지웠다 (사용자 요청).
             네 칸이 하나씩 «순서대로» 올라오며 강조가 옮겨가므로
@@ -1234,6 +1250,8 @@ footer a{color:var(--ink-2)}
    *    브라우저에게 돌려준다 — 연출을 잃을지언정 페이지가 굳지는 않는다.
    */
   let touchStartY = null;
+  let touchStartX = null;
+  let touchStartTarget = null;
 
   const blockTouchMove = (event) => {
     if (touchStartY === null) return;
@@ -1246,19 +1264,44 @@ footer a{color:var(--ink-2)}
       return;
     }
     touchStartY = event.touches[0].clientY;
+    touchStartX = event.touches[0].clientX;
+    touchStartTarget = event.target;
   }, { passive: true });
 
   window.addEventListener('touchmove', blockTouchMove, { passive: false });
 
   window.addEventListener('touchend', (event) => {
     const startY = touchStartY;
+    const startX = touchStartX;
+    const startTarget = touchStartTarget;
     touchStartY = null;
+    touchStartX = null;
+    touchStartTarget = null;
     if (startY === null || wheelLocked) return;
 
     const touch = event.changedTouches && event.changedTouches[0];
     if (!touch) return;
     // 🔴 34px 은 「밀었다」와 「눌렀다」를 가르는 선이다. 링크를 누를 때도 손은 조금 움직인다
     const delta = startY - touch.clientY;
+    const deltaX = startX === null ? 0 : startX - touch.clientX;
+
+    /**
+     * 🔴 **가로로 민 것은 세로 이동으로 치지 않는다** (사용자 요청 —
+     *    네 칸을 손으로 앞뒤로 넘기기).
+     *
+     *    세로보다 가로가 크면 「옆으로 넘겼다」는 뜻이다. 그때는 구역을 옮기지 않고
+     *    **그 자리에 있는 띠에게 알린다** — 듣는 쪽이 없으면 아무 일도 안 일어난다.
+     *
+     * 🔴 저쪽 코드를 직접 부르지 않는다. 사건으로 알려야 한쪽을 고칠 때
+     *    다른 쪽이 같이 죽지 않는다.
+     */
+    if (Math.abs(deltaX) > Math.abs(delta) && Math.abs(deltaX) >= 34) {
+      document.dispatchEvent(new CustomEvent('ff:swipe-x', {
+        detail: { direction: deltaX > 0 ? -1 : 1, from: startTarget },
+      }));
+      return;
+    }
+
     if (Math.abs(delta) < 34) return;
 
     try {
@@ -1287,6 +1330,8 @@ footer a{color:var(--ink-2)}
   grid.classList.add('seq-cards');
 
   const timers = [];
+  let current = 0;
+  let goTo = () => {};
   const clear = () => {
     timers.forEach(clearTimeout);
     timers.length = 0;
@@ -1297,8 +1342,8 @@ footer a{color:var(--ink-2)}
     clear();
     cards.forEach((card) => card.classList.remove('in', 'hl'));
 
-    const RISE = 340;    // 한 칸이 올라오고 다음 칸까지의 간격
-    const HOLD = 260;    // 마지막 칸이 강조를 붙잡고 있는 시간
+    // 🔴 사용자 요청으로 늦췄다 — 340ms 는 읽기 전에 다음 칸으로 넘어갔다
+    const RISE = 700;    // 한 칸이 올라오고 다음 칸까지의 간격
 
     /**
      * 🔴 **강조가 옮겨가면 띠도 따라 민다** (사용자 지적 — 「마지막 게 안 보여」).
@@ -1320,21 +1365,32 @@ footer a{color:var(--ink-2)}
       grid.style.setProperty('--shift', `${-Math.min(want, total - view)}px`);
     };
 
-    shiftTo(0);
+    /**
+     * 🔴 **한 칸을 세우는 일을 함수로 꺼낸다.** 자동으로 넘어갈 때와
+     *    손으로 밀 때가 **같은 함수**를 써야 두 길이 어긋나지 않는다.
+     */
+    goTo = (index) => {
+      const target = Math.max(0, Math.min(cards.length - 1, index));
+      cards.forEach((card, i) => {
+        if (i <= target) card.classList.add('in');
+        card.classList.toggle('hl', i === target);
+      });
+      shiftTo(target);
+      current = target;
+    };
+
+    goTo(0);
 
     cards.forEach((card, index) => {
-      timers.push(setTimeout(() => {
-        card.classList.add('in', 'hl');
-        // 🔴 앞 칸의 강조를 거둔다 — 강조가 «옮겨가는» 것이지 쌓이는 게 아니다
-        if (index > 0) cards[index - 1].classList.remove('hl');
-        shiftTo(index);
-      }, index * RISE));
+      if (index === 0) return;
+      timers.push(setTimeout(() => goTo(index), index * RISE));
     });
 
-    // 🔴 마지막 칸도 강조를 놓는다. 하나만 계속 켜져 있으면 그 칸이 특별해 보인다
-    timers.push(setTimeout(() => {
-      cards[cards.length - 1].classList.remove('hl');
-    }, cards.length * RISE + HOLD));
+    /*
+      🔴 **마지막 강조는 놓지 않는다.** 예전엔 놓았는데, 손으로 앞뒤로 넘길 수 있게
+         되면서 강조가 **「지금 어느 칸인지」를 말해 주는 표시**가 됐다.
+         꺼 버리면 옆으로 밀 때 기준이 사라진다.
+    */
 
     /**
      * 🔴 **프레임·시계가 어긋나도 네 칸은 결국 보여야 한다.** 위 타이머가 어떤
@@ -1354,6 +1410,28 @@ footer a{color:var(--ink-2)}
   document.addEventListener('ff:arrive', (event) => {
     const element = event.detail && event.detail.element;
     if (element && (element === section || element.contains(grid))) run();
+  });
+
+  /**
+   * 🔴 **손으로도 앞뒤로 넘긴다** (사용자 요청 — 「슬라이드를 오른쪽으로 했을 때
+   *    전 칸이 나왔으면」). 오른쪽으로 밀면 앞 칸, 왼쪽으로 밀면 다음 칸이다.
+   *
+   * 🔴 자동으로 넘어가던 타이머는 **멈춘다.** 손이 개입했는데 뒤에서 계속
+   *    넘어가면 사람이 고른 칸이 곧 지워진다.
+   */
+  document.addEventListener('ff:swipe-x', (event) => {
+    const detail = event.detail || {};
+    /*
+      🔴 **띠 «위»에서 시작한 손짓만 받으면 너무 좁다.** 사람은 이 구역 아무 데서나
+         옆으로 민다 — 제목 위에서 밀어도 「다음 칸」이라고 생각한다.
+         그래서 이 구역 안이면 받는다. 밖이면 다른 구역 일이니 지나친다.
+    */
+    const from = detail.from;
+    const inside = from && ((section && section.contains(from)) || grid.contains(from) || from === grid);
+    if (!inside) return;
+    timers.forEach(clearTimeout);
+    timers.length = 0;
+    goTo(current + (detail.direction > 0 ? -1 : 1));
   });
 
   if ('IntersectionObserver' in window) {
